@@ -234,14 +234,18 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# Routed at the shared team Mailtrap sandbox inbox, so local `supabase start`
+# sends auth email (OTP / signup confirm / password reset) to the same place
+# as the Cloud project, no matter which machine this runs on. Credentials come
+# from the project-root .env (gitignored) — see README "Environment files".
+[auth.email.smtp]
+enabled = true
+host = "sandbox.smtp.mailtrap.io"
+port = 2525
+user = "env(MAILTRAP_SMTP_USER)"
+pass = "env(MAILTRAP_SMTP_PASS)"
+admin_email = "noreply@sakinah.app"
+sender_name = "Sakīnah"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
