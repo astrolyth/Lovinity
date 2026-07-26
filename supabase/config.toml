@@ -244,8 +244,8 @@ host = "sandbox.smtp.mailtrap.io"
 port = 2525
 user = "env(MAILTRAP_SMTP_USER)"
 pass = "env(MAILTRAP_SMTP_PASS)"
-admin_email = "noreply@sakinah.app"
-sender_name = "Sakīnah"
+admin_email = "noreply@lovinity.app"
+sender_name = "Lovinity"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/shared/models/role.dart';
-import 'package:sakinah/shared/models/couple.dart';
+import 'package:lovinity/shared/models/role.dart';
+import 'package:lovinity/shared/models/couple.dart';
 
 void main() {
   test('roleOfGender maps male->husband, female->wife, null->null', () {

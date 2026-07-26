@@ -1,6 +1,7 @@
 // lib/features/settings/presentation/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/crypto/crypto_providers.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../cycle/domain/cycle_providers.dart';
@@ -94,6 +95,12 @@ class SettingsScreen extends ConsumerWidget {
           leading: const Icon(Icons.logout),
           title: const Text('Sign out'),
           onTap: () => ref.read(signOutProvider)(),
+        ),
+        const _SectionHeader('Support'),
+        ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('About Lovinity'),
+          onTap: () => context.push('/home/settings/about'),
         ),
       ]),
     );

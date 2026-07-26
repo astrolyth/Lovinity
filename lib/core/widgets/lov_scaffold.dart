@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 
-class SakScaffold extends StatelessWidget {
-  const SakScaffold({
+class LovScaffold extends StatelessWidget {
+  const LovScaffold({
     super.key,
     required this.child,
     this.title,
@@ -40,7 +40,7 @@ class SakScaffold extends StatelessWidget {
           ? AppBar(
               leading: leading,
               actions: actions,
-              titleSpacing: leading == null ? SakSpace.lg : 0,
+              titleSpacing: leading == null ? LovSpace.lg : 0,
               centerTitle: centerTitle,
               toolbarHeight: subtitle != null ? 76 : kToolbarHeight,
               title: Column(
@@ -66,7 +66,7 @@ class SakScaffold extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: padded
-              ? const EdgeInsets.symmetric(horizontal: SakSpace.lg)
+              ? const EdgeInsets.symmetric(horizontal: LovSpace.lg)
               : EdgeInsets.zero,
           child: child,
         ),

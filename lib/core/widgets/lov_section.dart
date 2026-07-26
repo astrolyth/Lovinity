@@ -5,8 +5,8 @@ import '../theme/tokens.dart';
 /// Section header — small uppercase label + optional trailing action.
 ///
 /// Used sparingly (max 1 per 3 sections per the design guideline).
-class SakSectionHeader extends StatelessWidget {
-  const SakSectionHeader({
+class LovSectionHeader extends StatelessWidget {
+  const LovSectionHeader({
     super.key,
     required this.title,
     this.subtitle,
@@ -22,8 +22,8 @@ class SakSectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(
-        top: SakSpace.xxl,
-        bottom: SakSpace.md,
+        top: LovSpace.xxl,
+        bottom: LovSpace.md,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -47,8 +47,8 @@ class SakSectionHeader extends StatelessWidget {
   }
 }
 
-class SakEmpty extends StatelessWidget {
-  const SakEmpty({
+class LovEmpty extends StatelessWidget {
+  const LovEmpty({
     super.key,
     required this.icon,
     required this.title,
@@ -66,7 +66,7 @@ class SakEmpty extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(SakSpace.xl),
+        padding: const EdgeInsets.all(LovSpace.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -83,14 +83,14 @@ class SakEmpty extends StatelessWidget {
                 color: theme.colorScheme.onSecondary,
               ),
             ),
-            const SizedBox(height: SakSpace.lg),
+            const SizedBox(height: LovSpace.lg),
             Text(
               title,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleLarge,
             ),
             if (description != null) ...[
-              const SizedBox(height: SakSpace.xs),
+              const SizedBox(height: LovSpace.xs),
               Text(
                 description!,
                 textAlign: TextAlign.center,
@@ -100,7 +100,7 @@ class SakEmpty extends StatelessWidget {
               ),
             ],
             if (action != null) ...[
-              const SizedBox(height: SakSpace.xl),
+              const SizedBox(height: LovSpace.xl),
               action!,
             ],
           ],
@@ -111,8 +111,8 @@ class SakEmpty extends StatelessWidget {
 }
 
 /// A quiet inline error strip. Use above forms; not for full-page errors.
-class SakInlineError extends StatelessWidget {
-  const SakInlineError({super.key, required this.message});
+class LovInlineError extends StatelessWidget {
+  const LovInlineError({super.key, required this.message});
   final String message;
 
   @override
@@ -120,12 +120,12 @@ class SakInlineError extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.md,
-        vertical: SakSpace.sm + 2,
+        horizontal: LovSpace.md,
+        vertical: LovSpace.sm + 2,
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(SakRadius.sm),
+        borderRadius: BorderRadius.circular(LovRadius.sm),
         border: Border.all(
           color: theme.colorScheme.error.withValues(alpha: 0.25),
         ),
@@ -138,7 +138,7 @@ class SakInlineError extends StatelessWidget {
             size: 16,
             color: theme.colorScheme.error,
           ),
-          const SizedBox(width: SakSpace.sm),
+          const SizedBox(width: LovSpace.sm),
           Expanded(
             child: Text(
               message,

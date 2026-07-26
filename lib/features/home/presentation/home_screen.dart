@@ -52,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
     final spouseName = spouse.asData?.value?.displayName;
     final profileReady = own.hasValue;
 
-    return SakScaffold(
+    return LovScaffold(
       padded: false,
       showAppBar: false,
       floatingActionButton: const _ChatFab(),
@@ -61,13 +61,13 @@ class HomeScreen extends ConsumerWidget {
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                SakSpace.lg,
-                SakSpace.md,
-                SakSpace.lg,
-                SakSpace.md,
+                LovSpace.lg,
+                LovSpace.md,
+                LovSpace.lg,
+                LovSpace.md,
               ),
               sliver: SliverToBoxAdapter(
-                child: SakEnter(
+                child: LovEnter(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -76,7 +76,7 @@ class HomeScreen extends ConsumerWidget {
                         color: theme.colorScheme.onSurface
                             .withValues(alpha: 0.75),
                       ),
-                      const SizedBox(width: SakSpace.sm),
+                      const SizedBox(width: LovSpace.sm),
                       Expanded(child: HijriDate(date: now)),
                       IconButton(
                         icon: const Icon(Icons.settings_outlined),
@@ -90,10 +90,10 @@ class HomeScreen extends ConsumerWidget {
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: SakSpace.lg),
+              padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
               sliver: SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: SakSpace.sm),
+                  padding: const EdgeInsets.only(top: LovSpace.sm),
                   child: profileReady
                       ? _Greeting(
                           greeting: greeting,
@@ -106,14 +106,14 @@ class HomeScreen extends ConsumerWidget {
             ),
 
             const SliverToBoxAdapter(
-              child: SizedBox(height: SakSpace.xxl),
+              child: SizedBox(height: LovSpace.xxl),
             ),
 
             // Next prayer card
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: SakSpace.lg),
+              padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
               sliver: SliverToBoxAdapter(
-                child: SakEnter(
+                child: LovEnter(
                   delay: const Duration(milliseconds: 380),
                   child: profileReady
                       ? _NextPrayerCard(
@@ -134,38 +134,38 @@ class HomeScreen extends ConsumerWidget {
             // Feature cards
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                SakSpace.lg,
-                SakSpace.xl,
-                SakSpace.lg,
-                SakSpace.xl,
+                LovSpace.lg,
+                LovSpace.xl,
+                LovSpace.lg,
+                LovSpace.xl,
               ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  SakStagger(
+                  LovStagger(
                     initialDelay: const Duration(milliseconds: 460),
                     stagger: const Duration(milliseconds: 90),
                     slideFrom: 16,
                     children: [
                       const PrayerLogCard(),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       const ScoreboardCard(),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       if (isWife) ...[
                         const _CycleTile(),
-                        const SizedBox(height: SakSpace.md),
+                        const SizedBox(height: LovSpace.md),
                       ],
                       _CareTile(isWife: isWife),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       const VerseCard(),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       const QuestionCard(),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       const GratitudeCard(),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       const DuaCard(),
                     ],
                   ),
-                  const SizedBox(height: SakSpace.xxxl),
+                  const SizedBox(height: LovSpace.xxxl),
                 ]),
               ),
             ),
@@ -173,8 +173,8 @@ class HomeScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: SakSpace.xxl),
-                  child: SakEnter(
+                  padding: const EdgeInsets.only(bottom: LovSpace.xxl),
+                  child: LovEnter(
                     delay: const Duration(milliseconds: 900),
                     child: Text(
                       couple.asData?.value == null
@@ -210,7 +210,7 @@ class _Greeting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SakEnter(
+        LovEnter(
           delay: const Duration(milliseconds: 120),
           child: Text(
             '$greeting,',
@@ -219,7 +219,7 @@ class _Greeting extends StatelessWidget {
             ),
           ),
         ),
-        SakEnter(
+        LovEnter(
           delay: const Duration(milliseconds: 260),
           slideFrom: 16,
           child: Text(
@@ -230,8 +230,8 @@ class _Greeting extends StatelessWidget {
           ),
         ),
         if (spouseName != null && spouseName!.isNotEmpty) ...[
-          const SizedBox(height: SakSpace.sm),
-          SakEnter(
+          const SizedBox(height: LovSpace.sm),
+          LovEnter(
             delay: const Duration(milliseconds: 380),
             child: Text(
               'You and $spouseName, together.',
@@ -254,11 +254,11 @@ class _GreetingSkeleton extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SakShimmerBox(width: 180, height: 42, radius: SakRadius.sm),
-        SizedBox(height: SakSpace.sm),
-        SakShimmerBox(width: 240, height: 42, radius: SakRadius.sm),
-        SizedBox(height: SakSpace.md),
-        SakShimmerBox(width: 200, height: 16, radius: SakRadius.xs),
+        LovShimmerBox(width: 180, height: 42, radius: LovRadius.sm),
+        SizedBox(height: LovSpace.sm),
+        LovShimmerBox(width: 240, height: 42, radius: LovRadius.sm),
+        SizedBox(height: LovSpace.md),
+        LovShimmerBox(width: 200, height: 16, radius: LovRadius.xs),
       ],
     );
   }
@@ -283,8 +283,8 @@ class _NextPrayerCard extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     if (!hasLocation) {
-      return SakCard(
-        variant: SakCardVariant.tonal,
+      return LovCard(
+        variant: LovCardVariant.tonal,
         onTap: busy ? null : onSetLocation,
         child: Row(
           children: [
@@ -294,7 +294,7 @@ class _NextPrayerCard extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: scheme.surface,
-                borderRadius: BorderRadius.circular(SakRadius.md),
+                borderRadius: BorderRadius.circular(LovRadius.md),
               ),
               child: Icon(
                 Icons.place_outlined,
@@ -302,7 +302,7 @@ class _NextPrayerCard extends StatelessWidget {
                 color: scheme.primary,
               ),
             ),
-            const SizedBox(width: SakSpace.md),
+            const SizedBox(width: LovSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,12 +338,12 @@ class _NextPrayerCard extends StatelessWidget {
     final label = nextPrayerLabel(next);
     final name = next?.prayer.displayName ?? '';
 
-    return SakBreathing(
+    return LovBreathing(
       child: Container(
-        padding: const EdgeInsets.all(SakSpace.xl),
+        padding: const EdgeInsets.all(LovSpace.xl),
         decoration: BoxDecoration(
           color: scheme.primary,
-          borderRadius: BorderRadius.circular(SakRadius.lg),
+          borderRadius: BorderRadius.circular(LovRadius.lg),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,14 +355,14 @@ class _NextPrayerCard extends StatelessWidget {
                 letterSpacing: 1.4,
               ),
             ),
-            const SizedBox(height: SakSpace.md),
+            const SizedBox(height: LovSpace.md),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 AnimatedSwitcher(
-                  duration: SakMotion.gentle,
-                  switchInCurve: SakMotion.enter,
+                  duration: LovMotion.gentle,
+                  switchInCurve: LovMotion.enter,
                   transitionBuilder: (child, anim) => FadeTransition(
                     opacity: anim,
                     child: SlideTransition(
@@ -382,7 +382,7 @@ class _NextPrayerCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: SakSpace.md),
+                const SizedBox(width: LovSpace.md),
                 Expanded(
                   child: Text(
                     label.replaceFirst('$name ', ''),
@@ -395,13 +395,13 @@ class _NextPrayerCard extends StatelessWidget {
               ],
             ),
             if (next != null) ...[
-              const SizedBox(height: SakSpace.lg),
+              const SizedBox(height: LovSpace.lg),
               AnimatedSwitcher(
-                duration: SakMotion.slow,
+                duration: LovMotion.slow,
                 child: Text(
                   _arabicNameFor(name),
                   key: ValueKey('ar_$name'),
-                  style: SakTypography.arabicText(
+                  style: LovTypography.arabicText(
                     fontSize: 22,
                     color: scheme.onPrimary.withValues(alpha: 0.85),
                   ),
@@ -453,8 +453,8 @@ class _CycleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return SakCard(
-      variant: SakCardVariant.tonal,
+    return LovCard(
+      variant: LovCardVariant.tonal,
       onTap: () => context.go('/home/cycle'),
       child: Row(
         children: [
@@ -464,7 +464,7 @@ class _CycleTile extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: scheme.surface,
-              borderRadius: BorderRadius.circular(SakRadius.md),
+              borderRadius: BorderRadius.circular(LovRadius.md),
             ),
             child: Icon(
               Icons.favorite_border,
@@ -472,7 +472,7 @@ class _CycleTile extends StatelessWidget {
               color: scheme.primary,
             ),
           ),
-          const SizedBox(width: SakSpace.md),
+          const SizedBox(width: LovSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,8 +506,8 @@ class _CareTile extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final label = isWife ? 'Caring for you' : 'Caring for her';
-    return SakCard(
-      variant: SakCardVariant.tonal,
+    return LovCard(
+      variant: LovCardVariant.tonal,
       onTap: () => context.go('/home/care'),
       child: Row(
         children: [
@@ -517,7 +517,7 @@ class _CareTile extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: scheme.surface,
-              borderRadius: BorderRadius.circular(SakRadius.md),
+              borderRadius: BorderRadius.circular(LovRadius.md),
             ),
             child: Icon(
               Icons.spa_outlined,
@@ -525,7 +525,7 @@ class _CareTile extends StatelessWidget {
               color: scheme.primary,
             ),
           ),
-          const SizedBox(width: SakSpace.md),
+          const SizedBox(width: LovSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -555,19 +555,19 @@ class _NextPrayerSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(SakSpace.xl),
+      padding: const EdgeInsets.all(LovSpace.xl),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(SakRadius.lg),
+        borderRadius: BorderRadius.circular(LovRadius.lg),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SakShimmerBox(width: 100, height: 12, radius: SakRadius.xs),
-          SizedBox(height: SakSpace.lg),
-          SakShimmerBox(width: 200, height: 28, radius: SakRadius.sm),
-          SizedBox(height: SakSpace.lg),
-          SakShimmerBox(width: 80, height: 22, radius: SakRadius.xs),
+          LovShimmerBox(width: 100, height: 12, radius: LovRadius.xs),
+          SizedBox(height: LovSpace.lg),
+          LovShimmerBox(width: 200, height: 28, radius: LovRadius.sm),
+          SizedBox(height: LovSpace.lg),
+          LovShimmerBox(width: 80, height: 22, radius: LovRadius.xs),
         ],
       ),
     );

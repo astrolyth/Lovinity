@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/features/prayer_log/presentation/prayer_log_screen.dart';
-import 'package:sakinah/shared/models/cycle_record.dart';
+import 'package:lovinity/features/prayer_log/presentation/prayer_log_screen.dart';
+import 'package:lovinity/shared/models/cycle_record.dart';
 
 CycleRecord _record({
   required DateTime startedOn,

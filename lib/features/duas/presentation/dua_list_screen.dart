@@ -22,7 +22,7 @@ class DuaListScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final async = ref.watch(duasProvider);
 
-    return SakScaffold(
+    return LovScaffold(
       title: 'Our duas',
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -42,14 +42,14 @@ class DuaListScreen extends ConsumerWidget {
           final open = all.where((d) => !d.isAnswered).toList();
           final answered = all.where((d) => d.isAnswered).toList();
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: SakSpace.lg),
+            padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (open.isEmpty && answered.isEmpty)
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(vertical: SakSpace.xxxl),
+                        const EdgeInsets.symmetric(vertical: LovSpace.xxxl),
                     child: Center(
                       child: Text(
                         'No duas yet. Tap + to add.',
@@ -59,39 +59,39 @@ class DuaListScreen extends ConsumerWidget {
                   )
                 else ...[
                   if (open.isNotEmpty) ...[
-                    SakSectionHeader(title: 'Open (${open.length})'),
-                    const SizedBox(height: SakSpace.sm),
-                    SakStagger(
+                    LovSectionHeader(title: 'Open (${open.length})'),
+                    const SizedBox(height: LovSpace.sm),
+                    LovStagger(
                       stagger: const Duration(milliseconds: 40),
                       children: [
                         for (final d in open)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: SakSpace.md),
+                            padding: const EdgeInsets.only(bottom: LovSpace.md),
                             child: _DuaTile(dua: d),
                           ),
                       ],
                     ),
-                    const SizedBox(height: SakSpace.xl),
+                    const SizedBox(height: LovSpace.xl),
                   ],
                   if (answered.isNotEmpty) ...[
-                    SakSectionHeader(
+                    LovSectionHeader(
                       title: 'Answered (${answered.length})',
                       subtitle: 'Alḥamdulillah.',
                     ),
-                    const SizedBox(height: SakSpace.sm),
-                    SakStagger(
+                    const SizedBox(height: LovSpace.sm),
+                    LovStagger(
                       stagger: const Duration(milliseconds: 40),
                       children: [
                         for (final d in answered)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: SakSpace.md),
+                            padding: const EdgeInsets.only(bottom: LovSpace.md),
                             child: _DuaTile(dua: d),
                           ),
                       ],
                     ),
                   ],
                 ],
-                const SizedBox(height: SakSpace.xxxl),
+                const SizedBox(height: LovSpace.xxxl),
               ],
             ),
           );
@@ -112,7 +112,7 @@ class DuaListScreen extends ConsumerWidget {
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(SakRadius.lg),
+          top: Radius.circular(LovRadius.lg),
         ),
       ),
       builder: (sheetContext) => _AddDuaSheet(
@@ -124,7 +124,7 @@ class DuaListScreen extends ConsumerWidget {
                 body: body,
                 visibility: visibility,
               );
-          unawaited(SakHaptics.selection());
+          unawaited(LovHaptics.selection());
           if (sheetContext.mounted) Navigator.of(sheetContext).pop();
         },
       ),
@@ -139,15 +139,15 @@ class _DuaTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return SakCard(
+    return LovCard(
       onTap: () => _openMarkAnswered(context, ref),
-      padding: const EdgeInsets.all(SakSpace.lg),
+      padding: const EdgeInsets.all(LovSpace.lg),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => _toggleAnswered(ref),
             child: AnimatedContainer(
-              duration: SakMotion.standard,
+              duration: LovMotion.standard,
               width: 24,
               height: 24,
               decoration: BoxDecoration(
@@ -168,7 +168,7 @@ class _DuaTile extends ConsumerWidget {
                   : null,
             ),
           ),
-          const SizedBox(width: SakSpace.md),
+          const SizedBox(width: LovSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +209,7 @@ class _DuaTile extends ConsumerWidget {
           ),
           if (dua.visibility == 'private')
             Padding(
-              padding: const EdgeInsets.only(left: SakSpace.sm),
+              padding: const EdgeInsets.only(left: LovSpace.sm),
               child: Icon(
                 Icons.lock_outline_rounded,
                 size: 14,
@@ -223,7 +223,7 @@ class _DuaTile extends ConsumerWidget {
 
   Future<void> _toggleAnswered(WidgetRef ref) async {
     final repo = ref.read(duaRepositoryProvider);
-    unawaited(SakHaptics.selection());
+    unawaited(LovHaptics.selection());
     if (dua.isAnswered) {
       await repo.setUnanswered(dua.id);
     } else {
@@ -246,7 +246,7 @@ class _DuaTile extends ConsumerWidget {
           FilledButton(
             onPressed: () async {
               await ref.read(duaRepositoryProvider).setAnswered(dua.id);
-              unawaited(SakHaptics.medium());
+              unawaited(LovHaptics.medium());
               if (ctx.mounted) Navigator.of(ctx).pop();
             },
             child: const Text('Alḥamdulillah'),
@@ -301,17 +301,17 @@ class _AddDuaSheetState extends State<_AddDuaSheet> {
       padding: EdgeInsets.only(bottom: bottom),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          SakSpace.lg,
-          SakSpace.xl,
-          SakSpace.lg,
-          SakSpace.xl,
+          LovSpace.lg,
+          LovSpace.xl,
+          LovSpace.lg,
+          LovSpace.xl,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Add a dua', style: theme.textTheme.titleLarge),
-            const SizedBox(height: SakSpace.lg),
+            const SizedBox(height: LovSpace.lg),
             TextField(
               controller: _title,
               autofocus: true,
@@ -320,7 +320,7 @@ class _AddDuaSheetState extends State<_AddDuaSheet> {
               ),
               textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: SakSpace.md),
+            const SizedBox(height: LovSpace.md),
             TextField(
               controller: _body,
               maxLines: 3,
@@ -329,7 +329,7 @@ class _AddDuaSheetState extends State<_AddDuaSheet> {
                 labelText: 'A little more (optional)',
               ),
             ),
-            const SizedBox(height: SakSpace.md),
+            const SizedBox(height: LovSpace.md),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(
@@ -348,8 +348,8 @@ class _AddDuaSheetState extends State<_AddDuaSheet> {
                   setState(() => _visibility = s.first),
               showSelectedIcon: false,
             ),
-            const SizedBox(height: SakSpace.lg),
-            SakButton(
+            const SizedBox(height: LovSpace.lg),
+            LovButton(
               label: 'Add',
               onPressed: _busy ? null : _submit,
               loading: _busy,
@@ -368,14 +368,14 @@ class _ListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: SakSpace.lg),
+      padding: EdgeInsets.symmetric(vertical: LovSpace.lg),
       child: Column(
         children: [
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
         ],
       ),
     );

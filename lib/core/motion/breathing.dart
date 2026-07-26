@@ -1,18 +1,18 @@
 import 'package:flutter/widgets.dart';
 
-import 'sak_motion.dart';
+import 'lov_motion.dart';
 
 /// Wraps a child in a gentle, infinite scale-pulse.
 /// Very small delta (0.998 ↔ 1.002 by default) — meant to be *felt*, not seen.
 ///
 /// Collapses to a static child when reduced motion is on.
-class SakBreathing extends StatefulWidget {
-  const SakBreathing({
+class LovBreathing extends StatefulWidget {
+  const LovBreathing({
     super.key,
     required this.child,
     this.minScale = 0.998,
     this.maxScale = 1.002,
-    this.period = SakMotion.breathe,
+    this.period = LovMotion.breathe,
     this.opacityDelta = 0.02,
   });
 
@@ -23,10 +23,10 @@ class SakBreathing extends StatefulWidget {
   final double opacityDelta;
 
   @override
-  State<SakBreathing> createState() => _SakBreathingState();
+  State<LovBreathing> createState() => _LovBreathingState();
 }
 
-class _SakBreathingState extends State<SakBreathing>
+class _LovBreathingState extends State<LovBreathing>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -42,7 +42,7 @@ class _SakBreathingState extends State<SakBreathing>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (SakMotion.motionEnabled(context)) {
+    if (LovMotion.motionEnabled(context)) {
       if (!_controller.isAnimating) _controller.repeat(reverse: true);
     } else {
       _controller.stop();
@@ -57,7 +57,7 @@ class _SakBreathingState extends State<SakBreathing>
 
   @override
   Widget build(BuildContext context) {
-    if (!SakMotion.motionEnabled(context)) return widget.child;
+    if (!LovMotion.motionEnabled(context)) return widget.child;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {

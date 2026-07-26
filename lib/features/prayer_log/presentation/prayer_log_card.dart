@@ -37,9 +37,9 @@ class PrayerLogCard extends ConsumerWidget {
       return 'today';
     }
 
-    return SakCard(
+    return LovCard(
       onTap: () => context.push('/home/prayer'),
-      padding: const EdgeInsets.all(SakSpace.xl),
+      padding: const EdgeInsets.all(LovSpace.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -63,7 +63,7 @@ class PrayerLogCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: SakSpace.md),
+          const SizedBox(height: LovSpace.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -75,7 +75,7 @@ class PrayerLogCard extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: SakSpace.md),
+          const SizedBox(height: LovSpace.md),
           Row(
             children: [
               Icon(
@@ -83,7 +83,7 @@ class PrayerLogCard extends ConsumerWidget {
                 size: 14,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
               ),
-              const SizedBox(width: SakSpace.xs),
+              const SizedBox(width: LovSpace.xs),
               Expanded(
                 child: Text(
                   spouseCount == 0
@@ -126,8 +126,8 @@ class _PrayerDot extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             AnimatedContainer(
-              duration: SakMotion.standard,
-              curve: SakMotion.enter,
+              duration: LovMotion.standard,
+              curve: LovMotion.enter,
               width: 32,
               height: 32,
               decoration: BoxDecoration(
@@ -165,7 +165,7 @@ class _PrayerDot extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: SakSpace.xs),
+        const SizedBox(height: LovSpace.xs),
         Text(
           _shortLabel(prayer),
           style: theme.textTheme.labelSmall?.copyWith(

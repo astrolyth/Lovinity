@@ -19,7 +19,7 @@
 // `public.users`.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:sakinah/features/onboarding/data/onboarding_repository.dart';
+import 'package:lovinity/features/onboarding/data/onboarding_repository.dart';
 
 const _supabaseUrl = 'http://127.0.0.1:54321';
 const _anonKey =

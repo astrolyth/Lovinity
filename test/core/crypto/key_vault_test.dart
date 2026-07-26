@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/core/crypto/key_vault.dart';
-import 'package:sakinah/core/crypto/secure_store.dart';
-import 'package:sakinah/core/crypto/signal_keys.dart';
+import 'package:lovinity/core/crypto/key_vault.dart';
+import 'package:lovinity/core/crypto/secure_store.dart';
+import 'package:lovinity/core/crypto/signal_keys.dart';
 
 void main() {
   test('round-trips registration id and device number', () async {

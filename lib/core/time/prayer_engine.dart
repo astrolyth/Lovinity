@@ -2,7 +2,7 @@ import 'package:adhan/adhan.dart' as adhan;
 import 'package:hijri/hijri_calendar.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-/// The five daily prayers Sakīnah tracks.
+/// The five daily prayers Lovinity tracks.
 ///
 /// The upstream [adhan.Prayer] enum also includes `sunrise` and `none`;
 /// this app deliberately only surfaces the five obligatory salāt.
@@ -36,7 +36,7 @@ enum Madhab { shafi, hanafi }
 
 /// Which set of Fajr/Isha angles to use.
 ///
-/// Wraps [adhan.CalculationMethod]. Sakīnah exposes the common presets;
+/// Wraps [adhan.CalculationMethod]. Lovinity exposes the common presets;
 /// users can extend later.
 enum CalcMethod {
   muslimWorldLeague,

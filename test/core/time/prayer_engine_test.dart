@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/core/time/prayer_engine.dart';
-import 'package:sakinah/core/time/timezone_bootstrap.dart';
+import 'package:lovinity/core/time/prayer_engine.dart';
+import 'package:lovinity/core/time/timezone_bootstrap.dart';
 
 void main() {
   setUpAll(() async {

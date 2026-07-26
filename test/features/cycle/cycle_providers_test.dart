@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/shared/models/cycle_record.dart';
-import 'package:sakinah/shared/models/user_profile.dart';
-import 'package:sakinah/features/home/domain/home_providers.dart';
-import 'package:sakinah/features/cycle/domain/cycle_providers.dart';
+import 'package:lovinity/shared/models/cycle_record.dart';
+import 'package:lovinity/shared/models/user_profile.dart';
+import 'package:lovinity/features/home/domain/home_providers.dart';
+import 'package:lovinity/features/cycle/domain/cycle_providers.dart';
 
 void main() {
   test('activeCycleProvider picks the record active today', () async {

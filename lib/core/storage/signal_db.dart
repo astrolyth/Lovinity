@@ -100,7 +100,7 @@ class ChatReactions extends Table {
   ChatReactions,
 ])
 class SignalDb extends _$SignalDb {
-  SignalDb() : super(driftDatabase(name: 'sakinah_signal'));
+  SignalDb() : super(driftDatabase(name: 'lovinity_signal'));
 
   /// In-memory instance for tests.
   SignalDb.memory() : super(NativeDatabase.memory());

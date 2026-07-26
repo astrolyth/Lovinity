@@ -16,7 +16,7 @@ class VerseReaderScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final async = ref.watch(dailyContentProvider);
 
-    return SakScaffold(
+    return LovScaffold(
       title: 'Verse',
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -24,7 +24,7 @@ class VerseReaderScreen extends ConsumerWidget {
       ),
       child: async.when(
         loading: () => const Center(
-          child: SakShimmerBox(width: 240, height: 24, radius: SakRadius.sm),
+          child: LovShimmerBox(width: 240, height: 24, radius: LovRadius.sm),
         ),
         error: (e, _) => Center(
           child: Text('Could not load', style: theme.textTheme.bodyMedium),
@@ -37,11 +37,11 @@ class VerseReaderScreen extends ConsumerWidget {
             );
           }
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: SakSpace.xl),
+            padding: const EdgeInsets.symmetric(vertical: LovSpace.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SakEnter(
+                LovEnter(
                   child: Text(
                     '${v.surahName} · ${v.surahNumber}:${v.ayahNumber}',
                     style: theme.textTheme.labelMedium?.copyWith(
@@ -50,22 +50,22 @@ class VerseReaderScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xxl),
-                SakEnter(
+                const SizedBox(height: LovSpace.xxl),
+                LovEnter(
                   delay: const Duration(milliseconds: 80),
                   child: Text(
                     v.arabicText,
                     textAlign: TextAlign.right,
                     textDirection: TextDirection.rtl,
-                    style: SakTypography.arabicText(
+                    style: LovTypography.arabicText(
                       fontSize: 32,
                       color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
                 if (v.transliteration != null) ...[
-                  const SizedBox(height: SakSpace.lg),
-                  SakEnter(
+                  const SizedBox(height: LovSpace.lg),
+                  LovEnter(
                     delay: const Duration(milliseconds: 160),
                     child: Text(
                       v.transliteration!,
@@ -77,8 +77,8 @@ class VerseReaderScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: SakSpace.xl),
-                SakEnter(
+                const SizedBox(height: LovSpace.xl),
+                LovEnter(
                   delay: const Duration(milliseconds: 240),
                   child: Text(
                     v.translation,
@@ -89,8 +89,8 @@ class VerseReaderScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xxl),
-                SakEnter(
+                const SizedBox(height: LovSpace.xxl),
+                LovEnter(
                   delay: const Duration(milliseconds: 320),
                   child: Text(
                     v.reference,

@@ -41,7 +41,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   // re-enables roughly when the server will accept another request.
   static const _resendCooldownSeconds = 60;
 
-  final _slots = SakDigitSlotsController();
+  final _slots = LovDigitSlotsController();
   bool _busy = false;
   String? _error;
   bool _resending = false;
@@ -85,7 +85,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     try {
       await ref.read(authRepositoryProvider).sendEmailOtp(widget.email);
       _slots.clear();
-      unawaited(SakHaptics.light());
+      unawaited(LovHaptics.light());
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -118,10 +118,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           await repo.verifySignupOtp(email: widget.email, token: code);
       }
       await ref.read(ensureRegisteredProvider)();
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
     } on AppFailure catch (e) {
       _slots.shake();
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
       _slots.shake();
@@ -136,7 +136,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SakScaffold(
+    return LovScaffold(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
@@ -148,15 +148,15 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SakEnter(
+                LovEnter(
                   child: Text(
                     'Enter your code',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.displaySmall,
                   ),
                 ),
-                const SizedBox(height: SakSpace.sm),
-                SakEnter(
+                const SizedBox(height: LovSpace.sm),
+                LovEnter(
                   delay: const Duration(milliseconds: 60),
                   child: Text(
                     'Sent to ${widget.email}',
@@ -167,10 +167,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xxxl),
-                SakDigitSlots(
+                const SizedBox(height: LovSpace.xxxl),
+                LovDigitSlots(
                   length: Env.otpLength,
-                  mode: SakDigitMode.numeric,
+                  mode: LovDigitMode.numeric,
                   controller: _slots,
                   onCompleted: _verify,
                   onChanged: (_) {
@@ -178,10 +178,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   },
                 ),
                 if (_error != null) ...[
-                  const SizedBox(height: SakSpace.lg),
-                  SakInlineError(message: _error!),
+                  const SizedBox(height: LovSpace.lg),
+                  LovInlineError(message: _error!),
                 ],
-                const SizedBox(height: SakSpace.xxl),
+                const SizedBox(height: LovSpace.xxl),
                 if (_busy)
                   Center(
                     child: SizedBox(
@@ -195,7 +195,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     ),
                   )
                 else
-                  SakEnter(
+                  LovEnter(
                     delay: const Duration(milliseconds: 200),
                     child: Text(
                       'Auto-verifies when you finish typing.',
@@ -203,7 +203,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
-                const SizedBox(height: SakSpace.lg),
+                const SizedBox(height: LovSpace.lg),
                 Center(
                   child: _secondsLeft > 0
                       ? Text(

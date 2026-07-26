@@ -31,10 +31,10 @@ class QuestionCard extends ConsumerWidget {
     final spouseAnswered = answers.any((a) => a.authorId != myId);
     final bothAnswered = myAnswered && spouseAnswered;
 
-    return SakCard(
+    return LovCard(
       onTap: () => context.push('/home/question'),
-      padding: const EdgeInsets.all(SakSpace.xl),
-      variant: SakCardVariant.tonal,
+      padding: const EdgeInsets.all(LovSpace.xl),
+      variant: LovCardVariant.tonal,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -45,7 +45,7 @@ class QuestionCard extends ConsumerWidget {
                 size: 16,
                 color: theme.colorScheme.primary,
               ),
-              const SizedBox(width: SakSpace.xs),
+              const SizedBox(width: LovSpace.xs),
               Text(
                 'Question of the day',
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -55,7 +55,7 @@ class QuestionCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: SakSpace.md),
+          const SizedBox(height: LovSpace.md),
           Text(
             q.question,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -63,14 +63,14 @@ class QuestionCard extends ConsumerWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: SakSpace.lg),
+          const SizedBox(height: LovSpace.lg),
           Row(
             children: [
               _AnswerChip(
                 label: ownName ?? 'You',
                 answered: myAnswered,
               ),
-              const SizedBox(width: SakSpace.sm),
+              const SizedBox(width: LovSpace.sm),
               _AnswerChip(
                 label: spouseName ?? 'Spouse',
                 answered: spouseAnswered,
@@ -107,17 +107,17 @@ class _AnswerChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AnimatedContainer(
-      duration: SakMotion.standard,
-      curve: SakMotion.enter,
+      duration: LovMotion.standard,
+      curve: LovMotion.enter,
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.sm + 2,
+        horizontal: LovSpace.sm + 2,
         vertical: 4,
       ),
       decoration: BoxDecoration(
         color: answered
             ? theme.colorScheme.primary
             : theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(SakRadius.pill),
+        borderRadius: BorderRadius.circular(LovRadius.pill),
         border: answered
             ? null
             : Border.all(color: theme.colorScheme.outlineVariant),

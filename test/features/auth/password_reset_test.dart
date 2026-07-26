@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:sakinah/features/auth/data/auth_repository.dart';
-import 'package:sakinah/features/auth/domain/auth_controller.dart';
-import 'package:sakinah/features/auth/presentation/forgot_password_screen.dart';
-import 'package:sakinah/features/auth/presentation/reset_password_screen.dart';
+import 'package:lovinity/features/auth/data/auth_repository.dart';
+import 'package:lovinity/features/auth/domain/auth_controller.dart';
+import 'package:lovinity/features/auth/presentation/forgot_password_screen.dart';
+import 'package:lovinity/features/auth/presentation/reset_password_screen.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 

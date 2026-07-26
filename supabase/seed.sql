@@ -3,10 +3,10 @@
 -- DO NOT deploy this seed to a production project — the password hashes are known.
 --
 -- Test accounts:
---   ridwan@sakinah.test   / password123
---   aisha@sakinah.test    / password123
---   khadijah@sakinah.test / password123
---   naziha@sakinah.test   / password123
+--   ridwan@lovinity.test   / password123
+--   aisha@lovinity.test    / password123
+--   khadijah@lovinity.test / password123
+--   naziha@lovinity.test   / password123
 
 do $$
 declare
@@ -24,7 +24,7 @@ begin
   ) values
     ('00000000-0000-0000-0000-000000000000', v_ridwan_id,
      'authenticated', 'authenticated',
-     'ridwan@sakinah.test',
+     'ridwan@lovinity.test',
      crypt('password123', gen_salt('bf')),
      now(),
      '{"provider":"email","providers":["email"]}'::jsonb,
@@ -33,7 +33,7 @@ begin
      '', '', '', ''),
     ('00000000-0000-0000-0000-000000000000', v_aisha_id,
      'authenticated', 'authenticated',
-     'aisha@sakinah.test',
+     'aisha@lovinity.test',
      crypt('password123', gen_salt('bf')),
      now(),
      '{"provider":"email","providers":["email"]}'::jsonb,
@@ -42,7 +42,7 @@ begin
      '', '', '', ''),
     ('00000000-0000-0000-0000-000000000000', v_khadijah_id,
      'authenticated', 'authenticated',
-     'khadijah@sakinah.test',
+     'khadijah@lovinity.test',
      crypt('password123', gen_salt('bf')),
      now(),
      '{"provider":"email","providers":["email"]}'::jsonb,
@@ -51,7 +51,7 @@ begin
      '', '', '', ''),
     ('00000000-0000-0000-0000-000000000000', v_naziha_id,
      'authenticated', 'authenticated',
-     'naziha@sakinah.test',
+     'naziha@lovinity.test',
      crypt('password123', gen_salt('bf')),
      now(),
      '{"provider":"email","providers":["email"]}'::jsonb,

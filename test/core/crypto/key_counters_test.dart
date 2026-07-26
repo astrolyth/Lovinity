@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/core/crypto/key_counters.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
+import 'package:lovinity/core/crypto/key_counters.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
 
 void main() {
   late SignalDb db;

@@ -27,7 +27,7 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
-  final _slots = SakDigitSlotsController();
+  final _slots = LovDigitSlotsController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
 
@@ -69,7 +69,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       await repo.verifyRecoveryOtp(email: widget.email, token: _code);
       await repo.updatePassword(_password.text);
       await ref.read(ensureRegisteredProvider)();
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
       if (mounted) context.go('/home');
     } on AppFailure catch (e) {
       _slots.shake();
@@ -86,7 +86,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SakScaffold(
+    return LovScaffold(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
@@ -103,7 +103,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.displaySmall,
                 ),
-                const SizedBox(height: SakSpace.sm),
+                const SizedBox(height: LovSpace.sm),
                 Text(
                   'Sent to ${widget.email}',
                   textAlign: TextAlign.center,
@@ -111,10 +111,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xxl),
-                SakDigitSlots(
+                const SizedBox(height: LovSpace.xxl),
+                LovDigitSlots(
                   length: Env.otpLength,
-                  mode: SakDigitMode.numeric,
+                  mode: LovDigitMode.numeric,
                   controller: _slots,
                   // No auto-submit: the password fields still need filling.
                   onCompleted: (v) => _code = v,
@@ -123,7 +123,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     if (_error != null) setState(() => _error = null);
                   },
                 ),
-                const SizedBox(height: SakSpace.xl),
+                const SizedBox(height: LovSpace.xl),
                 TextField(
                   controller: _password,
                   obscureText: true,
@@ -134,7 +134,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     prefixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
                 ),
-                const SizedBox(height: SakSpace.md),
+                const SizedBox(height: LovSpace.md),
                 TextField(
                   controller: _confirm,
                   obscureText: true,
@@ -147,11 +147,11 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   onSubmitted: (_) => _submit(),
                 ),
                 if (_error != null) ...[
-                  const SizedBox(height: SakSpace.md),
-                  SakInlineError(message: _error!),
+                  const SizedBox(height: LovSpace.md),
+                  LovInlineError(message: _error!),
                 ],
-                const SizedBox(height: SakSpace.xl),
-                SakButton(
+                const SizedBox(height: LovSpace.xl),
+                LovButton(
                   label: 'Set new password',
                   onPressed: _busy ? null : _submit,
                   loading: _busy,

@@ -18,7 +18,7 @@ class JoinTab extends ConsumerStatefulWidget {
 }
 
 class _JoinTabState extends ConsumerState<JoinTab> {
-  final _slots = SakDigitSlotsController();
+  final _slots = LovDigitSlotsController();
   bool _busy = false;
   String? _error;
 
@@ -30,10 +30,10 @@ class _JoinTabState extends ConsumerState<JoinTab> {
     });
     try {
       await ref.read(pairingRepositoryProvider).acceptInvite(code);
-      unawaited(SakHaptics.heartbeats());
+      unawaited(LovHaptics.heartbeats());
     } on AppFailure catch (e) {
       _slots.shake();
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
       _slots.shake();
@@ -48,16 +48,16 @@ class _JoinTabState extends ConsumerState<JoinTab> {
     final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.lg,
-        vertical: SakSpace.xl,
+        horizontal: LovSpace.lg,
+        vertical: LovSpace.xl,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: SakSpace.xl),
-          SakEnter(
+          const SizedBox(height: LovSpace.xl),
+          LovEnter(
             child: Center(
-              child: SakBreathing(
+              child: LovBreathing(
                 child: Container(
                   width: 72,
                   height: 72,
@@ -75,8 +75,8 @@ class _JoinTabState extends ConsumerState<JoinTab> {
               ),
             ),
           ),
-          const SizedBox(height: SakSpace.lg),
-          SakEnter(
+          const SizedBox(height: LovSpace.lg),
+          LovEnter(
             delay: const Duration(milliseconds: 80),
             child: Text(
               "Enter your spouse's code",
@@ -84,8 +84,8 @@ class _JoinTabState extends ConsumerState<JoinTab> {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: SakSpace.xs),
-          SakEnter(
+          const SizedBox(height: LovSpace.xs),
+          LovEnter(
             delay: const Duration(milliseconds: 140),
             child: Text(
               'Six characters. Not case-sensitive.',
@@ -95,12 +95,12 @@ class _JoinTabState extends ConsumerState<JoinTab> {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: SakSpace.xxxl),
-          SakEnter(
+          const SizedBox(height: LovSpace.xxxl),
+          LovEnter(
             delay: const Duration(milliseconds: 220),
-            child: SakDigitSlots(
+            child: LovDigitSlots(
               length: 6,
-              mode: SakDigitMode.alphanumericUppercase,
+              mode: LovDigitMode.alphanumericUppercase,
               controller: _slots,
               onCompleted: _submit,
               onChanged: (_) {
@@ -109,10 +109,10 @@ class _JoinTabState extends ConsumerState<JoinTab> {
             ),
           ),
           if (_error != null) ...[
-            const SizedBox(height: SakSpace.lg),
-            SakInlineError(message: _error!),
+            const SizedBox(height: LovSpace.lg),
+            LovInlineError(message: _error!),
           ],
-          const SizedBox(height: SakSpace.xxl),
+          const SizedBox(height: LovSpace.xxl),
           if (_busy)
             Center(
               child: SizedBox(
@@ -125,7 +125,7 @@ class _JoinTabState extends ConsumerState<JoinTab> {
               ),
             )
           else
-            SakEnter(
+            LovEnter(
               delay: const Duration(milliseconds: 300),
               child: Text(
                 'Joins automatically when you finish typing.',

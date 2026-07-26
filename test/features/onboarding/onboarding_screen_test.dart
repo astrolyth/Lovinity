@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:lovinity/features/onboarding/presentation/onboarding_screen.dart';
 
 void main() {
   testWidgets('onboarding shows male/female selection and disables continue until chosen',

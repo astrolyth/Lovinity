@@ -44,7 +44,7 @@ class HijriDate extends StatelessWidget {
           style: effectiveStyle,
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: SakSpace.sm),
+          padding: const EdgeInsets.symmetric(horizontal: LovSpace.sm),
           child: Text('/', style: effectiveStyle),
         ),
         Text(

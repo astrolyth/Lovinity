@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/shared/models/cycle_record.dart';
-import 'package:sakinah/features/cycle/domain/cycle_providers.dart';
-import 'package:sakinah/features/cycle/presentation/cycle_screen.dart';
+import 'package:lovinity/shared/models/cycle_record.dart';
+import 'package:lovinity/features/cycle/domain/cycle_providers.dart';
+import 'package:lovinity/features/cycle/presentation/cycle_screen.dart';
 
 void main() {
   testWidgets('shows Start button when no active cycle', (tester) async {

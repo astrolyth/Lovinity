@@ -39,16 +39,16 @@ class MessageBubble extends StatelessWidget {
             maxWidth: MediaQuery.sizeOf(context).width * 0.75,
           ),
           margin: const EdgeInsets.symmetric(
-            horizontal: SakSpace.lg,
-            vertical: SakSpace.xs,
+            horizontal: LovSpace.lg,
+            vertical: LovSpace.xs,
           ),
           padding: const EdgeInsets.symmetric(
-            horizontal: SakSpace.md,
-            vertical: SakSpace.sm,
+            horizontal: LovSpace.md,
+            vertical: LovSpace.sm,
           ),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(SakRadius.lg),
+            borderRadius: BorderRadius.circular(LovRadius.lg),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,15 +56,15 @@ class MessageBubble extends StatelessWidget {
             children: [
               if (message.replyToMessageId != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: SakSpace.xs),
+                  padding: const EdgeInsets.only(bottom: LovSpace.xs),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: SakSpace.sm,
-                      vertical: SakSpace.xxs,
+                      horizontal: LovSpace.sm,
+                      vertical: LovSpace.xxs,
                     ),
                     decoration: BoxDecoration(
                       color: fg.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(SakRadius.xs),
+                      borderRadius: BorderRadius.circular(LovRadius.xs),
                     ),
                     child: Text(
                       'Replying to a message',
@@ -79,7 +79,7 @@ class MessageBubble extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(color: fg),
               ),
               if (isOwn) ...[
-                const SizedBox(height: SakSpace.xxs),
+                const SizedBox(height: LovSpace.xxs),
                 Align(
                   alignment: Alignment.centerRight,
                   child: _Receipt(message: message, baseColor: fg),
@@ -100,7 +100,7 @@ class MessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: SakSpace.md),
+              padding: const EdgeInsets.symmetric(vertical: LovSpace.md),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -152,7 +152,7 @@ class _Receipt extends StatelessWidget {
 
   (String, Color) _derive() {
     if (message.status == 'failed') {
-      return ('!', SakColors.error);
+      return ('!', LovColors.error);
     }
     if (message.status == 'sending') {
       return ('🕓', baseColor.withValues(alpha: 0.6));

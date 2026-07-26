@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/core/crypto/key_vault.dart';
-import 'package:sakinah/core/crypto/secure_store.dart';
-import 'package:sakinah/core/crypto/signal_keys.dart';
-import 'package:sakinah/core/crypto/signal_registration.dart';
-import 'package:sakinah/core/crypto/stores/drift_signal_store.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
-import 'package:sakinah/features/chat/data/chat_store.dart';
+import 'package:lovinity/core/crypto/key_vault.dart';
+import 'package:lovinity/core/crypto/secure_store.dart';
+import 'package:lovinity/core/crypto/signal_keys.dart';
+import 'package:lovinity/core/crypto/signal_registration.dart';
+import 'package:lovinity/core/crypto/stores/drift_signal_store.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
+import 'package:lovinity/features/chat/data/chat_store.dart';
 
 class _FakeRegistrar implements DeviceRegistrar {
   int? registeredDeviceNum;

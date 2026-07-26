@@ -58,7 +58,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final typingChannel = ref.watch(typingChannelProvider);
     final spouseTyping = ref.watch(spouseTypingProvider).asData?.value ?? false;
 
-    return SakScaffold(
+    return LovScaffold(
       title: 'Chat',
       padded: false,
       child: Column(
@@ -76,7 +76,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 if (messages.isEmpty) {
                   return Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(SakSpace.xl),
+                      padding: const EdgeInsets.all(LovSpace.xl),
                       child: Text(
                         'Say salam to start the conversation',
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -92,7 +92,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 final newestFirst = messages.reversed.toList();
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(vertical: SakSpace.lg),
+                  padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
                   itemCount: newestFirst.length,
                   itemBuilder: (context, index) {
                     final message = newestFirst[index];
@@ -131,8 +131,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           if (!ready)
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: SakSpace.lg,
-                vertical: SakSpace.xs,
+                horizontal: LovSpace.lg,
+                vertical: LovSpace.xs,
               ),
               child: setupError
                   ? Row(
@@ -164,8 +164,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           if (spouseTyping)
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: SakSpace.lg,
-                vertical: SakSpace.xs,
+                horizontal: LovSpace.lg,
+                vertical: LovSpace.xs,
               ),
               child: Text(
                 'typing…',
@@ -212,18 +212,18 @@ class _ReplyBanner extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(
-        SakSpace.lg,
+        LovSpace.lg,
         0,
-        SakSpace.lg,
-        SakSpace.xs,
+        LovSpace.lg,
+        LovSpace.xs,
       ),
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.md,
-        vertical: SakSpace.sm,
+        horizontal: LovSpace.md,
+        vertical: LovSpace.sm,
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(SakRadius.sm),
+        borderRadius: BorderRadius.circular(LovRadius.sm),
         border: Border(
           left: BorderSide(color: theme.colorScheme.primary, width: 3),
         ),
@@ -279,10 +279,10 @@ class _Composer extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        SakSpace.lg,
-        SakSpace.xs,
-        SakSpace.lg,
-        SakSpace.lg,
+        LovSpace.lg,
+        LovSpace.xs,
+        LovSpace.lg,
+        LovSpace.lg,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -300,17 +300,17 @@ class _Composer extends StatelessWidget {
                 filled: true,
                 fillColor: theme.colorScheme.surfaceContainerLow,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: SakSpace.lg,
-                  vertical: SakSpace.md,
+                  horizontal: LovSpace.lg,
+                  vertical: LovSpace.md,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(SakRadius.pill),
+                  borderRadius: BorderRadius.circular(LovRadius.pill),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: SakSpace.sm),
+          const SizedBox(width: LovSpace.sm),
           IconButton.filled(
             onPressed: enabled ? onSend : null,
             icon: const Icon(Icons.arrow_upward_rounded),

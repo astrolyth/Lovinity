@@ -14,13 +14,13 @@ import '../theme/tokens.dart';
 ///
 /// Accepts either digits (numeric keyboard) or uppercase letters+digits
 /// (text keyboard with auto-uppercase).
-class SakDigitSlots extends StatefulWidget {
-  const SakDigitSlots({
+class LovDigitSlots extends StatefulWidget {
+  const LovDigitSlots({
     super.key,
     required this.length,
     required this.onCompleted,
     this.onChanged,
-    this.mode = SakDigitMode.numeric,
+    this.mode = LovDigitMode.numeric,
     this.controller,
     this.autofocus = true,
   });
@@ -28,19 +28,19 @@ class SakDigitSlots extends StatefulWidget {
   final int length;
   final ValueChanged<String> onCompleted;
   final ValueChanged<String>? onChanged;
-  final SakDigitMode mode;
-  final SakDigitSlotsController? controller;
+  final LovDigitMode mode;
+  final LovDigitSlotsController? controller;
   final bool autofocus;
 
   @override
-  State<SakDigitSlots> createState() => _SakDigitSlotsState();
+  State<LovDigitSlots> createState() => _LovDigitSlotsState();
 }
 
-enum SakDigitMode { numeric, alphanumericUppercase }
+enum LovDigitMode { numeric, alphanumericUppercase }
 
-class SakDigitSlotsController {
-  _SakDigitSlotsState? _state;
-  void _attach(_SakDigitSlotsState s) => _state = s;
+class LovDigitSlotsController {
+  _LovDigitSlotsState? _state;
+  void _attach(_LovDigitSlotsState s) => _state = s;
   void _detach() => _state = null;
 
   /// Trigger a shake animation. Also clears the input.
@@ -50,7 +50,7 @@ class SakDigitSlotsController {
   void clear() => _state?._clear();
 }
 
-class _SakDigitSlotsState extends State<SakDigitSlots>
+class _LovDigitSlotsState extends State<LovDigitSlots>
     with SingleTickerProviderStateMixin {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
@@ -72,7 +72,7 @@ class _SakDigitSlotsState extends State<SakDigitSlots>
   }
 
   @override
-  void didUpdateWidget(covariant SakDigitSlots oldWidget) {
+  void didUpdateWidget(covariant LovDigitSlots oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller?._detach();
@@ -117,7 +117,7 @@ class _SakDigitSlotsState extends State<SakDigitSlots>
 
   String _normalize(String v) {
     var out = v;
-    if (widget.mode == SakDigitMode.alphanumericUppercase) {
+    if (widget.mode == LovDigitMode.alphanumericUppercase) {
       out = out.toUpperCase();
     }
     if (out.length > widget.length) out = out.substring(0, widget.length);
@@ -156,20 +156,20 @@ class _SakDigitSlotsState extends State<SakDigitSlots>
                 controller: _controller,
                 focusNode: _focusNode,
                 autofocus: widget.autofocus,
-                keyboardType: widget.mode == SakDigitMode.numeric
+                keyboardType: widget.mode == LovDigitMode.numeric
                     ? TextInputType.number
                     : TextInputType.visiblePassword,
                 enableSuggestions: false,
                 autocorrect: false,
                 textCapitalization:
-                    widget.mode == SakDigitMode.alphanumericUppercase
+                    widget.mode == LovDigitMode.alphanumericUppercase
                         ? TextCapitalization.characters
                         : TextCapitalization.none,
                 inputFormatters: [
                   LengthLimitingTextInputFormatter(widget.length),
-                  if (widget.mode == SakDigitMode.numeric)
+                  if (widget.mode == LovDigitMode.numeric)
                     FilteringTextInputFormatter.digitsOnly,
-                  if (widget.mode == SakDigitMode.alphanumericUppercase)
+                  if (widget.mode == LovDigitMode.alphanumericUppercase)
                     FilteringTextInputFormatter.allow(
                       RegExp(r'[a-zA-Z0-9]'),
                     ),
@@ -186,7 +186,7 @@ class _SakDigitSlotsState extends State<SakDigitSlots>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 for (var i = 0; i < widget.length; i++) ...[
-                  if (i > 0) const SizedBox(width: SakSpace.sm),
+                  if (i > 0) const SizedBox(width: LovSpace.sm),
                   _Slot(
                     key: ValueKey('slot_$i'),
                     char: chars[i],
@@ -222,19 +222,19 @@ class _Slot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filled = char.isNotEmpty;
-    return SakEnter(
+    return LovEnter(
       delay: delay,
-      duration: SakMotion.standard,
+      duration: LovMotion.standard,
       child: AnimatedContainer(
-        duration: SakMotion.standard,
-        curve: SakMotion.enter,
+        duration: LovMotion.standard,
+        curve: LovMotion.enter,
         width: 48,
         height: 60,
         decoration: BoxDecoration(
           color: filled
               ? theme.colorScheme.secondary
               : theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(SakRadius.md),
+          borderRadius: BorderRadius.circular(LovRadius.md),
           border: Border.all(
             color: isActive
                 ? theme.colorScheme.primary.withValues(alpha: 0.6)
@@ -244,8 +244,8 @@ class _Slot extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: AnimatedSwitcher(
-          duration: SakMotion.standard,
-          switchInCurve: SakMotion.springOut,
+          duration: LovMotion.standard,
+          switchInCurve: LovMotion.springOut,
           transitionBuilder: (child, animation) => ScaleTransition(
             scale: animation,
             child: FadeTransition(opacity: animation, child: child),

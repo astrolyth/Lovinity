@@ -22,7 +22,7 @@ Future<void> main() async {
       overrides: [
         supabaseClientProvider.overrideWithValue(Supabase.instance.client),
       ],
-      child: const SakinahApp(),
+      child: const LovinityApp(),
     ),
   );
 }

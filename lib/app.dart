@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/theme.dart';
 
-class SakinahApp extends ConsumerWidget {
-  const SakinahApp({super.key});
+class LovinityApp extends ConsumerWidget {
+  const LovinityApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'Sakīnah',
-      theme: SakTheme.light(),
-      darkTheme: SakTheme.dark(),
+      title: 'Lovinity',
+      theme: LovTheme.light(),
+      darkTheme: LovTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: router,
       debugShowCheckedModeBanner: false,

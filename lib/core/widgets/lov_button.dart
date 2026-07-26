@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 
-enum SakButtonVariant { filled, outlined, text, tonal }
-enum SakButtonSize { small, medium, large }
+enum LovButtonVariant { filled, outlined, text, tonal }
+enum LovButtonSize { small, medium, large }
 
-class SakButton extends StatefulWidget {
-  const SakButton({
+class LovButton extends StatefulWidget {
+  const LovButton({
     super.key,
     required this.label,
     required this.onPressed,
-    this.variant = SakButtonVariant.filled,
-    this.size = SakButtonSize.medium,
+    this.variant = LovButtonVariant.filled,
+    this.size = LovButtonSize.medium,
     this.icon,
     this.trailingIcon,
     this.loading = false,
@@ -20,18 +20,18 @@ class SakButton extends StatefulWidget {
 
   final String label;
   final VoidCallback? onPressed;
-  final SakButtonVariant variant;
-  final SakButtonSize size;
+  final LovButtonVariant variant;
+  final LovButtonSize size;
   final IconData? icon;
   final IconData? trailingIcon;
   final bool loading;
   final bool expand;
 
   @override
-  State<SakButton> createState() => _SakButtonState();
+  State<LovButton> createState() => _LovButtonState();
 }
 
-class _SakButtonState extends State<SakButton> {
+class _LovButtonState extends State<LovButton> {
   bool _pressed = false;
 
   @override
@@ -58,11 +58,11 @@ class _SakButtonState extends State<SakButton> {
             children: [
               if (widget.icon != null) ...[
                 Icon(widget.icon, size: iconSize, color: fg),
-                const SizedBox(width: SakSpace.sm),
+                const SizedBox(width: LovSpace.sm),
               ],
               Text(widget.label, style: textStyle.copyWith(color: fg)),
               if (widget.trailingIcon != null) ...[
-                const SizedBox(width: SakSpace.sm),
+                const SizedBox(width: LovSpace.sm),
                 Icon(widget.trailingIcon, size: iconSize, color: fg),
               ],
             ],
@@ -70,8 +70,8 @@ class _SakButtonState extends State<SakButton> {
 
     return AnimatedScale(
       scale: _pressed && enabled ? 0.98 : 1.0,
-      duration: SakDuration.quick,
-      curve: SakCurves.standard,
+      duration: LovDuration.quick,
+      curve: LovCurves.standard,
       child: GestureDetector(
         onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
         onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
@@ -79,12 +79,12 @@ class _SakButtonState extends State<SakButton> {
         child: Material(
           color: bg,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(SakRadius.pill),
+            borderRadius: BorderRadius.circular(LovRadius.pill),
             side: border,
           ),
           child: InkWell(
             onTap: enabled ? widget.onPressed : null,
-            borderRadius: BorderRadius.circular(SakRadius.pill),
+            borderRadius: BorderRadius.circular(LovRadius.pill),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
               child: widget.expand
@@ -102,17 +102,17 @@ class _SakButtonState extends State<SakButton> {
 
   (Color fg, Color bg, BorderSide border) _colors(ColorScheme scheme) {
     switch (widget.variant) {
-      case SakButtonVariant.filled:
+      case LovButtonVariant.filled:
         return (scheme.onPrimary, scheme.primary, BorderSide.none);
-      case SakButtonVariant.tonal:
+      case LovButtonVariant.tonal:
         return (scheme.onSecondary, scheme.secondary, BorderSide.none);
-      case SakButtonVariant.outlined:
+      case LovButtonVariant.outlined:
         return (
           scheme.onSurface,
           Colors.transparent,
           BorderSide(color: scheme.outlineVariant),
         );
-      case SakButtonVariant.text:
+      case LovButtonVariant.text:
         return (scheme.primary, Colors.transparent, BorderSide.none);
     }
   }
@@ -121,24 +121,24 @@ class _SakButtonState extends State<SakButton> {
     ThemeData theme,
   ) {
     switch (widget.size) {
-      case SakButtonSize.small:
+      case LovButtonSize.small:
         return (
-          SakSpace.sm,
-          SakSpace.lg,
+          LovSpace.sm,
+          LovSpace.lg,
           theme.textTheme.labelMedium!,
           16.0,
         );
-      case SakButtonSize.medium:
+      case LovButtonSize.medium:
         return (
-          SakSpace.md + 2,
-          SakSpace.xl,
+          LovSpace.md + 2,
+          LovSpace.xl,
           theme.textTheme.labelLarge!,
           18.0,
         );
-      case SakButtonSize.large:
+      case LovButtonSize.large:
         return (
-          SakSpace.lg,
-          SakSpace.xxl,
+          LovSpace.lg,
+          LovSpace.xxl,
           theme.textTheme.labelLarge!.copyWith(fontSize: 16),
           20.0,
         );

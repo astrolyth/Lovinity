@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/features/chat/domain/chat_payload.dart';
+import 'package:lovinity/features/chat/domain/chat_payload.dart';
 
 void main() {
   test('text round-trips, including reply', () {

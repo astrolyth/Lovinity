@@ -7,9 +7,9 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:sakinah/core/crypto/prekey_bundle_source.dart';
-import 'package:sakinah/core/crypto/signal_keys.dart';
-import 'package:sakinah/core/crypto/signal_registration.dart';
+import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
+import 'package:lovinity/core/crypto/signal_keys.dart';
+import 'package:lovinity/core/crypto/signal_registration.dart';
 
 const _url = 'http://127.0.0.1:54321';
 const _anon =

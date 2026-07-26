@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
-import 'package:sakinah/core/crypto/stores/drift_prekey_store.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
+import 'package:lovinity/core/crypto/stores/drift_prekey_store.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
 
 void main() {
   late SignalDb db;

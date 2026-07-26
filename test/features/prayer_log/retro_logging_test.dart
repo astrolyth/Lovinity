@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/features/prayer_log/domain/prayer_log_providers.dart';
+import 'package:lovinity/features/prayer_log/domain/prayer_log_providers.dart';
 
 void main() {
   test('only today and yesterday are loggable', () {

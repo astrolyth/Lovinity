@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
 
-/// The single source of truth for motion in Sakīnah.
+/// The single source of truth for motion in Lovinity.
 ///
 /// All animation curves and durations flow from here so screens speak
 /// one motion language. Every consumer should honor
-/// [MediaQuery.disableAnimationsOf] via [SakMotion.motionEnabled].
-class SakMotion {
-  const SakMotion._();
+/// [MediaQuery.disableAnimationsOf] via [LovMotion.motionEnabled].
+class LovMotion {
+  const LovMotion._();
 
   // Durations
   static const Duration quick = Duration(milliseconds: 150);

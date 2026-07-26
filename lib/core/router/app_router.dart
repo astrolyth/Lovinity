@@ -21,6 +21,7 @@ import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pairing/domain/pairing_providers.dart';
 import '../../features/pairing/presentation/pair_screen.dart';
 import '../../features/prayer_log/presentation/prayer_log_screen.dart';
+import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../motion/motion.dart';
 import '../theme/tokens.dart';
@@ -166,6 +167,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'settings',
             builder: (_, _) => const SettingsScreen(),
+            routes: [
+              GoRoute(
+                path: 'about',
+                builder: (_, _) => const AboutScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: 'chat',
@@ -194,7 +201,7 @@ class _SplashScreenState extends State<_SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: SakMotion.slow,
+      duration: LovMotion.slow,
     )..forward();
   }
 
@@ -208,7 +215,7 @@ class _SplashScreenState extends State<_SplashScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final anim =
-        CurvedAnimation(parent: _controller, curve: SakMotion.enter);
+        CurvedAnimation(parent: _controller, curve: LovMotion.enter);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
@@ -222,26 +229,30 @@ class _SplashScreenState extends State<_SplashScreen>
             ),
           ),
           child: Hero(
-            tag: 'sakinah-mark',
+            tag: 'lovinity-mark',
             flightShuttleBuilder: (_, _, _, _, _) => Material(
               type: MaterialType.transparency,
               child: Text(
-                'سَكِينَة',
-                style: SakTypography.arabicText(
+                'Lovinity',
+                style: TextStyle(
+                  fontFamily: LovTypography.display,
                   fontSize: 42,
-                  color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: -1.2,
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ),
             child: Material(
               type: MaterialType.transparency,
               child: Text(
-                'سَكِينَة',
-                style: SakTypography.arabicText(
+                'Lovinity',
+                style: TextStyle(
+                  fontFamily: LovTypography.display,
                   fontSize: 42,
-                  color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: -1.2,
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ),
@@ -262,24 +273,24 @@ class _RouteErrorScreen extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(SakSpace.xl),
+          padding: const EdgeInsets.all(LovSpace.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.error_outline_rounded,
                   size: 32, color: theme.colorScheme.error),
-              const SizedBox(height: SakSpace.md),
+              const SizedBox(height: LovSpace.md),
               Text(
                 "Something went wrong",
                 style: theme.textTheme.titleLarge,
               ),
-              const SizedBox(height: SakSpace.xs),
+              const SizedBox(height: LovSpace.xs),
               Text(
                 error?.toString() ?? 'Unknown route error',
                 style: theme.textTheme.bodySmall,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: SakSpace.xl),
+              const SizedBox(height: LovSpace.xl),
               TextButton(
                 onPressed: () => GoRouter.of(context).go('/splash'),
                 child: const Text('Back to start'),

@@ -1,7 +1,7 @@
 // test/features/cycle/cycle_prediction_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/shared/models/cycle_record.dart';
-import 'package:sakinah/features/cycle/domain/cycle_prediction.dart';
+import 'package:lovinity/shared/models/cycle_record.dart';
+import 'package:lovinity/features/cycle/domain/cycle_prediction.dart';
 
 void main() {
   CycleRecord r(String id, DateTime s, DateTime? e) =>

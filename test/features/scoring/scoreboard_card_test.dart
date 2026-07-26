@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/features/scoring/domain/score_engine.dart';
-import 'package:sakinah/features/scoring/domain/scoreboard_providers.dart';
-import 'package:sakinah/features/scoring/presentation/scoreboard_card.dart';
+import 'package:lovinity/features/scoring/domain/score_engine.dart';
+import 'package:lovinity/features/scoring/domain/scoreboard_providers.dart';
+import 'package:lovinity/features/scoring/presentation/scoreboard_card.dart';
 
 void main() {
   testWidgets('renders both percentages', (tester) async {

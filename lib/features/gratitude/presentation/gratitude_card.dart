@@ -16,9 +16,9 @@ class GratitudeCard extends ConsumerWidget {
     final notes = ref.watch(gratitudeNotesProvider).asData?.value ?? const [];
     final jarCount = notes.length;
 
-    return SakCard(
+    return LovCard(
       onTap: () => context.push('/home/gratitude'),
-      padding: const EdgeInsets.all(SakSpace.xl),
+      padding: const EdgeInsets.all(LovSpace.xl),
       child: Row(
         children: [
           Container(
@@ -27,7 +27,7 @@ class GratitudeCard extends ConsumerWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: theme.colorScheme.secondary,
-              borderRadius: BorderRadius.circular(SakRadius.md),
+              borderRadius: BorderRadius.circular(LovRadius.md),
             ),
             child: Icon(
               Icons.favorite_outline_rounded,
@@ -35,7 +35,7 @@ class GratitudeCard extends ConsumerWidget {
               color: theme.colorScheme.onSecondary,
             ),
           ),
-          const SizedBox(width: SakSpace.md),
+          const SizedBox(width: LovSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

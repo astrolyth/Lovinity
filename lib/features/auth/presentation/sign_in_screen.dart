@@ -58,7 +58,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             password: password,
           );
       await ref.read(ensureRegisteredProvider)();
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
     } on AppFailure catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
@@ -95,7 +95,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SakScaffold(
+    return LovScaffold(
       showAppBar: false,
       padded: true,
       child: Center(
@@ -109,34 +109,36 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 Center(
                   child: _GlyphStagger(
                     text: 'ٱلسَّلَامُ عَلَيْكُمْ',
-                    style: SakTypography.arabicText(
+                    style: LovTypography.arabicText(
                       fontSize: 34,
                       color: theme.colorScheme.primary,
                     ),
                     perGlyph: const Duration(milliseconds: 40),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xs),
+                const SizedBox(height: LovSpace.xs),
 
                 // Wordmark hero — flies from splash.
                 Hero(
-                  tag: 'sakinah-mark',
+                  tag: 'lovinity-mark',
                   flightShuttleBuilder: (_, _, _, _, _) => Material(
                     type: MaterialType.transparency,
                     child: Text(
-                      'سَكِينَة',
+                      'Lovinity',
                       textAlign: TextAlign.center,
-                      style: SakTypography.arabicText(
-                        fontSize: 34,
-                        color: theme.colorScheme.primary,
+                      style: TextStyle(
+                        fontFamily: LovTypography.display,
+                        fontSize: 38,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: -1.2,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                   ),
                   child: Material(
                     type: MaterialType.transparency,
                     child: Text(
-                      'Sakīnah',
+                      'Lovinity',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.displayMedium?.copyWith(
                         letterSpacing: -1.2,
@@ -144,8 +146,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: SakSpace.sm),
-                SakEnter(
+                const SizedBox(height: LovSpace.sm),
+                LovEnter(
                   delay: const Duration(milliseconds: 420),
                   child: Text(
                     'A private space, for the two of you.',
@@ -156,9 +158,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xxxl),
+                const SizedBox(height: LovSpace.xxxl),
 
-                SakEnter(
+                LovEnter(
                   delay: const Duration(milliseconds: 520),
                   child: TextField(
                     controller: _emailController,
@@ -174,8 +176,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ),
                 ),
                 if (_mode == _Mode.password) ...[
-                  const SizedBox(height: SakSpace.md),
-                  SakEnter(
+                  const SizedBox(height: LovSpace.md),
+                  LovEnter(
                     delay: const Duration(milliseconds: 580),
                     child: TextField(
                       controller: _passwordController,
@@ -191,13 +193,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ),
                 ],
                 if (_error != null) ...[
-                  const SizedBox(height: SakSpace.md),
-                  SakInlineError(message: _error!),
+                  const SizedBox(height: LovSpace.md),
+                  LovInlineError(message: _error!),
                 ],
-                const SizedBox(height: SakSpace.xl),
-                SakEnter(
+                const SizedBox(height: LovSpace.xl),
+                LovEnter(
                   delay: const Duration(milliseconds: 640),
-                  child: SakButton(
+                  child: LovButton(
                     label: _mode == _Mode.password
                         ? 'Sign in'
                         : 'Send verification code',
@@ -210,15 +212,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     expand: true,
                   ),
                 ),
-                const SizedBox(height: SakSpace.md),
-                SakEnter(
+                const SizedBox(height: LovSpace.md),
+                LovEnter(
                   delay: const Duration(milliseconds: 720),
-                  child: SakButton(
+                  child: LovButton(
                     label: _mode == _Mode.password
                         ? 'Use a one-time code instead'
                         : 'Use password instead',
-                    variant: SakButtonVariant.text,
-                    size: SakButtonSize.small,
+                    variant: LovButtonVariant.text,
+                    size: LovButtonSize.small,
                     onPressed: () {
                       setState(() {
                         _mode = _mode == _Mode.password
@@ -230,27 +232,27 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ),
                 ),
                 if (_mode == _Mode.password)
-                  SakEnter(
+                  LovEnter(
                     delay: const Duration(milliseconds: 760),
-                    child: SakButton(
+                    child: LovButton(
                       label: 'Forgot password?',
-                      variant: SakButtonVariant.text,
-                      size: SakButtonSize.small,
+                      variant: LovButtonVariant.text,
+                      size: LovButtonSize.small,
                       onPressed: () => context.push('/auth/forgot-password'),
                     ),
                   ),
-                const SizedBox(height: SakSpace.lg),
-                SakEnter(
+                const SizedBox(height: LovSpace.lg),
+                LovEnter(
                   delay: const Duration(milliseconds: 800),
-                  child: SakButton(
+                  child: LovButton(
                     label: 'Create an account',
-                    variant: SakButtonVariant.text,
-                    size: SakButtonSize.small,
+                    variant: LovButtonVariant.text,
+                    size: LovButtonSize.small,
                     onPressed: () => context.push('/auth/sign-up'),
                   ),
                 ),
-                const SizedBox(height: SakSpace.lg),
-                SakEnter(
+                const SizedBox(height: LovSpace.lg),
+                LovEnter(
                   delay: const Duration(milliseconds: 840),
                   child: Text(
                     _mode == _Mode.otp
@@ -293,9 +295,9 @@ class _GlyphStagger extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (var i = 0; i < chars.length; i++)
-            SakEnter(
+            LovEnter(
               delay: _initialDelay + perGlyph * i,
-              duration: SakMotion.gentle,
+              duration: LovMotion.gentle,
               slideFrom: 6,
               child: Text(chars[i], style: style),
             ),

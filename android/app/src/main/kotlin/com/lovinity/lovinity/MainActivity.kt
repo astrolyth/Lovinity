@@ -1,4 +1,4 @@
-package com.sakinah.sakinah
+package com.lovinity.lovinity
 
 import io.flutter.embedding.android.FlutterActivity
 

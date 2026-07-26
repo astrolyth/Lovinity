@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/features/chat/data/chat_store.dart';
-import 'package:sakinah/features/chat/domain/chat_providers.dart';
-import 'package:sakinah/features/chat/presentation/chat_screen.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
+import 'package:lovinity/features/chat/data/chat_store.dart';
+import 'package:lovinity/features/chat/domain/chat_providers.dart';
+import 'package:lovinity/features/chat/presentation/chat_screen.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
 
 void main() {
   testWidgets('renders messages from the store', (tester) async {

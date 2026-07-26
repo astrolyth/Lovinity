@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart' as sig;
-import 'package:sakinah/core/crypto/signal_keys.dart';
+import 'package:lovinity/core/crypto/signal_keys.dart';
 
 void main() {
   test('generateBundle produces a signed prekey verifiable against identity',

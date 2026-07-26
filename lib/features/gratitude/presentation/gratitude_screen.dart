@@ -46,7 +46,7 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
             body: text,
             revealToSpouse: _revealNow,
           );
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
       _controller.clear();
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -60,7 +60,7 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
     final session = ref.watch(authSessionProvider).asData?.value;
     final myId = session?.user.id;
 
-    return SakScaffold(
+    return LovScaffold(
       title: 'Jar of good memories',
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -68,20 +68,20 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
       ),
       child: notesAsync.when(
         loading: () => const Center(
-          child: SakShimmerBox(height: 200, radius: SakRadius.lg),
+          child: LovShimmerBox(height: 200, radius: LovRadius.lg),
         ),
         error: (e, _) => Center(
           child: Text('Could not load', style: theme.textTheme.bodyMedium),
         ),
         data: (notes) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: SakSpace.lg),
+          padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SakEnter(
-                child: SakCard(
-                  variant: SakCardVariant.tonal,
-                  padding: const EdgeInsets.all(SakSpace.xl),
+              LovEnter(
+                child: LovCard(
+                  variant: LovCardVariant.tonal,
+                  padding: const EdgeInsets.all(LovSpace.xl),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -89,7 +89,7 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
                         'One thing you appreciated today',
                         style: theme.textTheme.titleMedium,
                       ),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       TextField(
                         controller: _controller,
                         maxLines: 5,
@@ -98,7 +98,7 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
                           hintText: 'Small things count.',
                         ),
                       ),
-                      const SizedBox(height: SakSpace.md),
+                      const SizedBox(height: LovSpace.md),
                       Row(
                         children: [
                           Expanded(
@@ -117,8 +117,8 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: SakSpace.sm),
-                      SakButton(
+                      const SizedBox(height: LovSpace.sm),
+                      LovButton(
                         label: 'Drop in the jar',
                         icon: Icons.favorite_outline_rounded,
                         onPressed: _submitting ? null : _submit,
@@ -129,12 +129,12 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: SakSpace.xl),
+              const SizedBox(height: LovSpace.xl),
               if (notes.isEmpty)
-                SakEnter(
+                LovEnter(
                   delay: const Duration(milliseconds: 100),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: SakSpace.xxl),
+                    padding: const EdgeInsets.symmetric(vertical: LovSpace.xxl),
                     child: Center(
                       child: Text(
                         'The jar is empty for now. Fill it together.',
@@ -144,13 +144,13 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
                   ),
                 )
               else
-                SakStagger(
+                LovStagger(
                   initialDelay: const Duration(milliseconds: 100),
                   stagger: const Duration(milliseconds: 40),
                   children: [
                     for (final n in notes)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: SakSpace.md),
+                        padding: const EdgeInsets.only(bottom: LovSpace.md),
                         child: _NoteTile(
                           note: n,
                           isOwn: n.authorId == myId,
@@ -163,7 +163,7 @@ class _GratitudeScreenState extends ConsumerState<GratitudeScreen> {
                       ),
                   ],
                 ),
-              const SizedBox(height: SakSpace.xxl),
+              const SizedBox(height: LovSpace.xxl),
             ],
           ),
         ),
@@ -182,9 +182,9 @@ class _NoteTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hidden = !isOwn && !note.revealToSpouse;
-    return SakCard(
-      variant: SakCardVariant.plain,
-      padding: const EdgeInsets.all(SakSpace.lg),
+    return LovCard(
+      variant: LovCardVariant.plain,
+      padding: const EdgeInsets.all(LovSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -200,7 +200,7 @@ class _NoteTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: SakSpace.sm),
+              const SizedBox(width: LovSpace.sm),
               Text(
                 isOwn ? 'From you' : 'From your spouse',
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -214,7 +214,7 @@ class _NoteTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: SakSpace.sm),
+          const SizedBox(height: LovSpace.sm),
           hidden
               ? Row(
                   children: [
@@ -224,7 +224,7 @@ class _NoteTile extends StatelessWidget {
                       color:
                           theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
-                    const SizedBox(width: SakSpace.xs),
+                    const SizedBox(width: LovSpace.xs),
                     Text(
                       'Kept for now.',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -240,13 +240,13 @@ class _NoteTile extends StatelessWidget {
                   style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
                 ),
           if (onReveal != null && !note.revealToSpouse) ...[
-            const SizedBox(height: SakSpace.sm),
+            const SizedBox(height: LovSpace.sm),
             Align(
               alignment: Alignment.centerRight,
-              child: SakButton(
+              child: LovButton(
                 label: 'Reveal to your spouse',
-                variant: SakButtonVariant.text,
-                size: SakButtonSize.small,
+                variant: LovButtonVariant.text,
+                size: LovButtonSize.small,
                 onPressed: onReveal,
               ),
             ),

@@ -15,8 +15,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:sakinah/core/crypto/signal_session_service.dart';
-import 'package:sakinah/features/chat/data/chat_repository.dart';
+import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/features/chat/data/chat_repository.dart';
 
 const _url = 'http://127.0.0.1:54321';
 const _anon =

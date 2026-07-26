@@ -1,6 +1,6 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/features/chat/data/typing_channel.dart';
+import 'package:lovinity/features/chat/data/typing_channel.dart';
 
 void main() {
   test('debouncer emits true once then false after the quiet window', () {

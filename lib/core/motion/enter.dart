@@ -1,18 +1,18 @@
 import 'package:flutter/widgets.dart';
 
-import 'sak_motion.dart';
+import 'lov_motion.dart';
 
 /// Wraps a widget in a one-shot entrance animation: fade + subtle y-slide.
 ///
 /// Honors `MediaQuery.disableAnimationsOf`.
-class SakEnter extends StatefulWidget {
-  const SakEnter({
+class LovEnter extends StatefulWidget {
+  const LovEnter({
     super.key,
     required this.child,
     this.delay = Duration.zero,
-    this.duration = SakMotion.gentle,
+    this.duration = LovMotion.gentle,
     this.slideFrom = 12.0,
-    this.curve = SakMotion.enter,
+    this.curve = LovMotion.enter,
   });
 
   final Widget child;
@@ -22,10 +22,10 @@ class SakEnter extends StatefulWidget {
   final Curve curve;
 
   @override
-  State<SakEnter> createState() => _SakEnterState();
+  State<LovEnter> createState() => _LovEnterState();
 }
 
-class _SakEnterState extends State<SakEnter>
+class _LovEnterState extends State<LovEnter>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -53,7 +53,7 @@ class _SakEnterState extends State<SakEnter>
 
   @override
   Widget build(BuildContext context) {
-    if (!SakMotion.motionEnabled(context)) {
+    if (!LovMotion.motionEnabled(context)) {
       // Reduced motion: instant reveal.
       return widget.child;
     }

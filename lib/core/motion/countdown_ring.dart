@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
-import 'sak_motion.dart';
+import 'lov_motion.dart';
 
 /// A thin circular arc that shrinks as time runs out. Turns to [warningColor]
 /// under the last minute.
@@ -54,8 +54,8 @@ class _CountdownRingState extends State<CountdownRing> {
         children: [
           TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: fraction, end: fraction),
-            duration: SakMotion.gentle,
-            curve: SakMotion.standardCurve,
+            duration: LovMotion.gentle,
+            curve: LovMotion.standardCurve,
             builder: (context, value, _) => CustomPaint(
               size: Size(widget.size, widget.size),
               painter: _RingPainter(
@@ -68,7 +68,7 @@ class _CountdownRingState extends State<CountdownRing> {
           ),
           if (widget.child != null)
             Padding(
-              padding: const EdgeInsets.all(SakSpace.xl),
+              padding: const EdgeInsets.all(LovSpace.xl),
               child: widget.child,
             ),
         ],

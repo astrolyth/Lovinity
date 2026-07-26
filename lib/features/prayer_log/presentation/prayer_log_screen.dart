@@ -59,7 +59,7 @@ class PrayerLogScreen extends ConsumerWidget {
       selectedDate: selectedDate,
     );
 
-    return SakScaffold(
+    return LovScaffold(
       title: 'Prayer log',
       subtitle: Text(
         isToday
@@ -97,7 +97,7 @@ class PrayerLogScreen extends ConsumerWidget {
               style: theme.textTheme.bodyMedium),
         ),
         data: (logs) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: SakSpace.lg),
+          padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -110,8 +110,8 @@ class PrayerLogScreen extends ConsumerWidget {
                 today: today,
                 yesterday: yesterday,
               ),
-              const SizedBox(height: SakSpace.lg),
-              SakEnter(
+              const SizedBox(height: LovSpace.lg),
+              LovEnter(
                 child: _TogetherStrip(
                   ownCount: summary.ownCount,
                   spouseCount: summary.spouseCount,
@@ -121,17 +121,17 @@ class PrayerLogScreen extends ConsumerWidget {
                 ),
               ),
               if (isExempt) ...[
-                const SizedBox(height: SakSpace.lg),
+                const SizedBox(height: LovSpace.lg),
                 const _ExemptionNote(),
               ],
-              const SizedBox(height: SakSpace.xl),
-              SakStagger(
+              const SizedBox(height: LovSpace.xl),
+              LovStagger(
                 initialDelay: const Duration(milliseconds: 80),
                 stagger: const Duration(milliseconds: 50),
                 children: [
                   for (final p in Prayer.values)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: SakSpace.md),
+                      padding: const EdgeInsets.only(bottom: LovSpace.md),
                       child: _PrayerRow(
                         prayer: p,
                         isEditable: loggable && !isExempt,
@@ -150,7 +150,7 @@ class PrayerLogScreen extends ConsumerWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: SakSpace.xxxl),
+              const SizedBox(height: LovSpace.xxxl),
             ],
           ),
         ),
@@ -185,9 +185,9 @@ class PrayerLogScreen extends ConsumerWidget {
     final repo = ref.read(prayerLogRepositoryProvider);
     // Distinct haptic per direction: heavier for a log, light for an unlog.
     if (newStatus == null) {
-      unawaited(SakHaptics.light());
+      unawaited(LovHaptics.light());
     } else {
-      unawaited(SakHaptics.medium());
+      unawaited(LovHaptics.medium());
     }
     if (newStatus == null) {
       await repo.unlogPrayer(
@@ -237,7 +237,7 @@ class _DayToggle extends StatelessWidget {
             theme: theme,
           ),
         ),
-        const SizedBox(width: SakSpace.sm),
+        const SizedBox(width: LovSpace.sm),
         Expanded(
           child: _DayToggleButton(
             label: 'Yesterday',
@@ -269,15 +269,15 @@ class _DayToggleButton extends StatelessWidget {
     return GestureDetector(
       onTap: selected ? null : onTap,
       child: AnimatedContainer(
-        duration: SakMotion.standard,
-        curve: SakMotion.enter,
-        padding: const EdgeInsets.symmetric(vertical: SakSpace.sm),
+        duration: LovMotion.standard,
+        curve: LovMotion.enter,
+        padding: const EdgeInsets.symmetric(vertical: LovSpace.sm),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected
               ? theme.colorScheme.primary
               : theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(SakRadius.md),
+          borderRadius: BorderRadius.circular(LovRadius.md),
           border: selected
               ? null
               : Border.all(color: theme.colorScheme.outlineVariant),
@@ -317,10 +317,10 @@ class _TogetherStrip extends StatelessWidget {
     final togetherOK = togetherWindowSeconds != null;
 
     return Container(
-      padding: const EdgeInsets.all(SakSpace.lg),
+      padding: const EdgeInsets.all(LovSpace.lg),
       decoration: BoxDecoration(
         color: theme.colorScheme.secondary,
-        borderRadius: BorderRadius.circular(SakRadius.lg),
+        borderRadius: BorderRadius.circular(LovRadius.lg),
       ),
       child: Row(
         children: [
@@ -336,7 +336,7 @@ class _TogetherStrip extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                SakDigitRow(
+                LovDigitRow(
                   value: ownCount,
                   minDigits: 1,
                   style: theme.textTheme.displaySmall?.copyWith(
@@ -364,7 +364,7 @@ class _TogetherStrip extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                SakDigitRow(
+                LovDigitRow(
                   value: spouseCount,
                   minDigits: 1,
                   style: theme.textTheme.displaySmall?.copyWith(
@@ -387,11 +387,11 @@ class _ExemptionNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SakCard(
-      variant: SakCardVariant.tonal,
+    return LovCard(
+      variant: LovCardVariant.tonal,
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.lg,
-        vertical: SakSpace.md,
+        horizontal: LovSpace.lg,
+        vertical: LovSpace.md,
       ),
       child: Text(
         'Resting — prayers are excused 🤍',
@@ -426,11 +426,11 @@ class _PrayerRow extends StatelessWidget {
     final ownDone = ownLog?.status == PrayerStatus.prayed;
     final spouseDone = spouseLog?.status == PrayerStatus.prayed;
 
-    return SakCard(
-      variant: SakCardVariant.plain,
+    return LovCard(
+      variant: LovCardVariant.plain,
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.lg,
-        vertical: SakSpace.md,
+        horizontal: LovSpace.lg,
+        vertical: LovSpace.md,
       ),
       child: Row(
         children: [
@@ -448,10 +448,10 @@ class _PrayerRow extends StatelessWidget {
                         prayer.displayName,
                         style: theme.textTheme.titleLarge,
                       ),
-                      const SizedBox(width: SakSpace.sm),
+                      const SizedBox(width: LovSpace.sm),
                       Text(
                         _arabicName(prayer),
-                        style: SakTypography.arabicText(
+                        style: LovTypography.arabicText(
                           fontSize: 18,
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.55),
@@ -470,7 +470,7 @@ class _PrayerRow extends StatelessWidget {
           ),
           if (spouseDone)
             Container(
-              margin: const EdgeInsets.only(right: SakSpace.sm),
+              margin: const EdgeInsets.only(right: LovSpace.sm),
               width: 8,
               height: 8,
               decoration: BoxDecoration(
@@ -587,8 +587,8 @@ class _CheckToggleState extends State<_CheckToggle>
           return Transform.scale(scale: bounce * pressScale, child: child);
         },
         child: AnimatedContainer(
-          duration: SakMotion.standard,
-          curve: SakMotion.enter,
+          duration: LovMotion.standard,
+          curve: LovMotion.enter,
           width: 48,
           height: 48,
           decoration: BoxDecoration(
@@ -611,9 +611,9 @@ class _CheckToggleState extends State<_CheckToggle>
           ),
           alignment: Alignment.center,
           child: AnimatedSwitcher(
-            duration: SakMotion.standard,
-            switchInCurve: SakMotion.springOut,
-            switchOutCurve: SakMotion.enter,
+            duration: LovMotion.standard,
+            switchInCurve: LovMotion.springOut,
+            switchOutCurve: LovMotion.enter,
             transitionBuilder: (c, a) => ScaleTransition(
               scale: Tween<double>(begin: 0.4, end: 1.0).animate(a),
               child: FadeTransition(opacity: a, child: c),
@@ -639,20 +639,20 @@ class _LogSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: SakSpace.lg),
+      padding: EdgeInsets.symmetric(vertical: LovSpace.lg),
       child: Column(
         children: [
-          SakShimmerBox(height: 88, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.lg),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 72, radius: SakRadius.lg),
+          LovShimmerBox(height: 88, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.lg),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 72, radius: LovRadius.lg),
         ],
       ),
     );

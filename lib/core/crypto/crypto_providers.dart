@@ -9,7 +9,7 @@ import 'prekey_bundle_source.dart';
 import 'signal_registration.dart';
 import 'signal_session_service.dart';
 
-/// One SignalDb for the app's lifetime (opens the on-disk `sakinah_signal` db).
+/// One SignalDb for the app's lifetime (opens the on-disk `lovinity_signal` db).
 final signalDbProvider = Provider<SignalDb>((ref) {
   final db = SignalDb();
   ref.onDispose(db.close);

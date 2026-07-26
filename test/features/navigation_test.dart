@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/features/settings/presentation/settings_screen.dart';
-import 'package:sakinah/features/care/presentation/care_screen.dart';
-import 'package:sakinah/features/cycle/presentation/cycle_screen.dart';
+import 'package:lovinity/features/settings/presentation/settings_screen.dart';
+import 'package:lovinity/features/care/presentation/care_screen.dart';
+import 'package:lovinity/features/cycle/presentation/cycle_screen.dart';
 
 void main() {
   test('destination screens are const-constructible (smoke)', () {

@@ -56,7 +56,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SakScaffold(
+    return LovScaffold(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
@@ -73,7 +73,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.displaySmall,
                 ),
-                const SizedBox(height: SakSpace.sm),
+                const SizedBox(height: LovSpace.sm),
                 Text(
                   "Enter your email and we'll send you a code.",
                   textAlign: TextAlign.center,
@@ -81,7 +81,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: SakSpace.xxl),
+                const SizedBox(height: LovSpace.xxl),
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -94,11 +94,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   onSubmitted: (_) => _send(),
                 ),
                 if (_error != null) ...[
-                  const SizedBox(height: SakSpace.md),
-                  SakInlineError(message: _error!),
+                  const SizedBox(height: LovSpace.md),
+                  LovInlineError(message: _error!),
                 ],
-                const SizedBox(height: SakSpace.xl),
-                SakButton(
+                const SizedBox(height: LovSpace.xl),
+                LovButton(
                   label: 'Send reset code',
                   onPressed: _busy ? null : _send,
                   loading: _busy,

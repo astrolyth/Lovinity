@@ -6,14 +6,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:sakinah/core/crypto/crypto_providers.dart';
-import 'package:sakinah/core/crypto/key_vault.dart';
-import 'package:sakinah/core/crypto/prekey_bundle_source.dart';
-import 'package:sakinah/core/crypto/signal_registration.dart';
-import 'package:sakinah/core/crypto/secure_store.dart';
-import 'package:sakinah/core/crypto/signal_session_service.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
-import 'package:sakinah/features/auth/domain/auth_controller.dart';
+import 'package:lovinity/core/crypto/crypto_providers.dart';
+import 'package:lovinity/core/crypto/key_vault.dart';
+import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
+import 'package:lovinity/core/crypto/signal_registration.dart';
+import 'package:lovinity/core/crypto/secure_store.dart';
+import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
+import 'package:lovinity/features/auth/domain/auth_controller.dart';
 
 /// No-op stand-in for the real Supabase-backed bundle source. Real
 /// [SupabasePreKeyBundleSource] needs a live [SupabaseClient], which

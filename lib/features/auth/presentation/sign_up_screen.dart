@@ -91,7 +91,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SakScaffold(
+    return LovScaffold(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
@@ -108,7 +108,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.displaySmall,
                 ),
-                const SizedBox(height: SakSpace.xxl),
+                const SizedBox(height: LovSpace.xxl),
                 TextField(
                   controller: _name,
                   textCapitalization: TextCapitalization.words,
@@ -119,7 +119,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     prefixIcon: Icon(Icons.person_outline, size: 20),
                   ),
                 ),
-                const SizedBox(height: SakSpace.md),
+                const SizedBox(height: LovSpace.md),
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -130,9 +130,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     prefixIcon: Icon(Icons.mail_outline, size: 20),
                   ),
                 ),
-                const SizedBox(height: SakSpace.lg),
+                const SizedBox(height: LovSpace.lg),
                 Text('I am a', style: theme.textTheme.bodyMedium),
-                const SizedBox(height: SakSpace.sm),
+                const SizedBox(height: LovSpace.sm),
                 Row(
                   children: [
                     Expanded(
@@ -142,7 +142,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         onTap: () => setState(() => _gender = 'male'),
                       ),
                     ),
-                    const SizedBox(width: SakSpace.md),
+                    const SizedBox(width: LovSpace.md),
                     Expanded(
                       child: _GenderChip(
                         label: 'Woman',
@@ -152,7 +152,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: SakSpace.lg),
+                const SizedBox(height: LovSpace.lg),
                 DropdownButtonFormField<String>(
                   initialValue: _madhhab,
                   decoration: const InputDecoration(
@@ -166,7 +166,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ],
                   onChanged: (v) => setState(() => _madhhab = v ?? 'shafi'),
                 ),
-                const SizedBox(height: SakSpace.md),
+                const SizedBox(height: LovSpace.md),
                 TextField(
                   controller: _password,
                   obscureText: true,
@@ -177,7 +177,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     prefixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
                 ),
-                const SizedBox(height: SakSpace.md),
+                const SizedBox(height: LovSpace.md),
                 TextField(
                   controller: _confirm,
                   obscureText: true,
@@ -190,24 +190,24 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   onSubmitted: (_) => _submit(),
                 ),
                 if (_error != null) ...[
-                  const SizedBox(height: SakSpace.md),
-                  SakInlineError(message: _error!),
+                  const SizedBox(height: LovSpace.md),
+                  LovInlineError(message: _error!),
                 ],
-                const SizedBox(height: SakSpace.xl),
-                SakButton(
+                const SizedBox(height: LovSpace.xl),
+                LovButton(
                   label: 'Create account',
                   onPressed: _busy ? null : _submit,
                   loading: _busy,
                   expand: true,
                 ),
-                const SizedBox(height: SakSpace.md),
-                SakButton(
+                const SizedBox(height: LovSpace.md),
+                LovButton(
                   label: 'I already have an account',
-                  variant: SakButtonVariant.text,
-                  size: SakButtonSize.small,
+                  variant: LovButtonVariant.text,
+                  size: LovButtonSize.small,
                   onPressed: () => context.go('/auth/sign-in'),
                 ),
-                const SizedBox(height: SakSpace.lg),
+                const SizedBox(height: LovSpace.lg),
                 Text(
                   "We'll email you a code to confirm your address.",
                   textAlign: TextAlign.center,

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/core/time/prayer_engine.dart';
-import 'package:sakinah/shared/models/cycle_record.dart';
-import 'package:sakinah/features/scoring/domain/score_engine.dart';
+import 'package:lovinity/core/time/prayer_engine.dart';
+import 'package:lovinity/shared/models/cycle_record.dart';
+import 'package:lovinity/features/scoring/domain/score_engine.dart';
 
 void main() {
   final all = {Prayer.fajr, Prayer.dhuhr, Prayer.asr, Prayer.maghrib, Prayer.isha};

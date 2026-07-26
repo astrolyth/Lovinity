@@ -24,9 +24,9 @@ class VerseCard extends ConsumerWidget {
       data: (content) {
         final v = content?.verse;
         if (v == null) return _VerseError(theme: theme);
-        return SakCard(
+        return LovCard(
           onTap: () => context.push('/home/verse'),
-          padding: const EdgeInsets.all(SakSpace.xl),
+          padding: const EdgeInsets.all(LovSpace.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -37,17 +37,17 @@ class VerseCard extends ConsumerWidget {
                   letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: SakSpace.md),
+              const SizedBox(height: LovSpace.md),
               Text(
                 v.arabicText,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
-                style: SakTypography.arabicText(
+                style: LovTypography.arabicText(
                   fontSize: 22,
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(height: SakSpace.md),
+              const SizedBox(height: LovSpace.md),
               Text(
                 v.translation,
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -55,7 +55,7 @@ class VerseCard extends ConsumerWidget {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
                 ),
               ),
-              const SizedBox(height: SakSpace.md),
+              const SizedBox(height: LovSpace.md),
               Row(
                 children: [
                   Text(
@@ -94,10 +94,10 @@ class _VerseSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(SakSpace.xl),
+      padding: const EdgeInsets.all(LovSpace.xl),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(SakRadius.lg),
+        borderRadius: BorderRadius.circular(LovRadius.lg),
         border: Border.all(
           color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4),
           width: 0.5,
@@ -106,13 +106,13 @@ class _VerseSkeleton extends StatelessWidget {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SakShimmerBox(width: 120, height: 12, radius: SakRadius.xs),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 60, radius: SakRadius.sm),
-          SizedBox(height: SakSpace.md),
-          SakShimmerBox(height: 16, radius: SakRadius.xs),
-          SizedBox(height: SakSpace.xs),
-          SakShimmerBox(height: 16, radius: SakRadius.xs),
+          LovShimmerBox(width: 120, height: 12, radius: LovRadius.xs),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 60, radius: LovRadius.sm),
+          SizedBox(height: LovSpace.md),
+          LovShimmerBox(height: 16, radius: LovRadius.xs),
+          SizedBox(height: LovSpace.xs),
+          LovShimmerBox(height: 16, radius: LovRadius.xs),
         ],
       ),
     );
@@ -125,8 +125,8 @@ class _VerseError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SakCard(
-      padding: const EdgeInsets.all(SakSpace.xl),
+    return LovCard(
+      padding: const EdgeInsets.all(LovSpace.xl),
       child: Text(
         "Couldn't load today's verse.",
         style: theme.textTheme.bodyMedium,

@@ -4,9 +4,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/shared/models/care_tip.dart';
-import 'package:sakinah/features/care/domain/care_providers.dart';
-import 'package:sakinah/features/care/presentation/care_screen.dart';
+import 'package:lovinity/shared/models/care_tip.dart';
+import 'package:lovinity/features/care/domain/care_providers.dart';
+import 'package:lovinity/features/care/presentation/care_screen.dart';
 
 void main() {
   testWidgets('shows a tip, its pending-review note, and medical disclaimer',

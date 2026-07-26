@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
-import 'package:sakinah/core/crypto/prekey_bundle_source.dart';
+import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
 
 void main() {
   test('DeviceBundle converts to a libsignal PreKeyBundle', () {

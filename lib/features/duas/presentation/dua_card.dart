@@ -16,9 +16,9 @@ class DuaCard extends ConsumerWidget {
     final answered = ref.watch(answeredDuasProvider).length;
     final peek = open.take(3).toList();
 
-    return SakCard(
+    return LovCard(
       onTap: () => context.push('/home/duas'),
-      padding: const EdgeInsets.all(SakSpace.xl),
+      padding: const EdgeInsets.all(LovSpace.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -29,7 +29,7 @@ class DuaCard extends ConsumerWidget {
                 size: 16,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
               ),
-              const SizedBox(width: SakSpace.xs),
+              const SizedBox(width: LovSpace.xs),
               Text(
                 'Our duas',
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -48,7 +48,7 @@ class DuaCard extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: SakSpace.md),
+          const SizedBox(height: LovSpace.md),
           if (peek.isEmpty)
             Text(
               'No duas yet. Add the first one.',
@@ -61,7 +61,7 @@ class DuaCard extends ConsumerWidget {
               children: [
                 for (final d in peek)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: SakSpace.sm),
+                    padding: const EdgeInsets.only(bottom: LovSpace.sm),
                     child: Row(
                       children: [
                         Container(
@@ -73,7 +73,7 @@ class DuaCard extends ConsumerWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: SakSpace.sm),
+                        const SizedBox(width: LovSpace.sm),
                         Expanded(
                           child: Text(
                             d.title,
@@ -87,7 +87,7 @@ class DuaCard extends ConsumerWidget {
                   ),
               ],
             ),
-          const SizedBox(height: SakSpace.sm),
+          const SizedBox(height: LovSpace.sm),
           Row(
             children: [
               Text(

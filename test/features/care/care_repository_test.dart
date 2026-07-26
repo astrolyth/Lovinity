@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/shared/models/care_tip.dart';
+import 'package:lovinity/shared/models/care_tip.dart';
 
 void main() {
   test('CareTip.fromRow maps columns + flags pending review', () {

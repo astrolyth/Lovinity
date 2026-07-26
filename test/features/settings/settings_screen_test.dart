@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakinah/features/home/domain/home_providers.dart';
-import 'package:sakinah/features/settings/domain/settings_providers.dart';
-import 'package:sakinah/features/settings/presentation/settings_screen.dart';
-import 'package:sakinah/shared/models/user_profile.dart';
+import 'package:lovinity/features/home/domain/home_providers.dart';
+import 'package:lovinity/features/settings/domain/settings_providers.dart';
+import 'package:lovinity/features/settings/presentation/settings_screen.dart';
+import 'package:lovinity/shared/models/user_profile.dart';
 
 UserProfile _profile({required String gender, String madhhab = 'shafi'}) =>
     UserProfile(

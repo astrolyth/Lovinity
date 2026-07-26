@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
-import 'package:sakinah/core/crypto/key_vault.dart';
-import 'package:sakinah/core/crypto/secure_store.dart';
-import 'package:sakinah/core/crypto/signal_keys.dart';
-import 'package:sakinah/core/crypto/stores/drift_signal_store.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
+import 'package:lovinity/core/crypto/key_vault.dart';
+import 'package:lovinity/core/crypto/secure_store.dart';
+import 'package:lovinity/core/crypto/signal_keys.dart';
+import 'package:lovinity/core/crypto/stores/drift_signal_store.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
 
 void main() {
   test('satisfies SignalProtocolStore across all four interfaces', () async {

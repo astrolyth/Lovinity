@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:sakinah/features/auth/domain/auth_controller.dart';
-import 'package:sakinah/features/location/data/location_repository.dart';
-import 'package:sakinah/features/location/data/location_service.dart';
-import 'package:sakinah/features/location/domain/location_providers.dart';
+import 'package:lovinity/features/auth/domain/auth_controller.dart';
+import 'package:lovinity/features/location/data/location_repository.dart';
+import 'package:lovinity/features/location/data/location_service.dart';
+import 'package:lovinity/features/location/domain/location_providers.dart';
 
 class _MockSession extends Mock implements Session {}
 

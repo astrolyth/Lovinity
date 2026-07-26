@@ -4,13 +4,13 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
-import 'package:sakinah/core/crypto/key_vault.dart';
-import 'package:sakinah/core/crypto/prekey_bundle_source.dart';
-import 'package:sakinah/core/crypto/secure_store.dart';
-import 'package:sakinah/core/crypto/signal_keys.dart';
-import 'package:sakinah/core/crypto/signal_registration.dart';
-import 'package:sakinah/core/crypto/signal_session_service.dart';
-import 'package:sakinah/core/storage/signal_db.dart';
+import 'package:lovinity/core/crypto/key_vault.dart';
+import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
+import 'package:lovinity/core/crypto/secure_store.dart';
+import 'package:lovinity/core/crypto/signal_keys.dart';
+import 'package:lovinity/core/crypto/signal_registration.dart';
+import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/storage/signal_db.dart';
 
 /// One simulated device: its own DB, vault and published bundle.
 class _Device {

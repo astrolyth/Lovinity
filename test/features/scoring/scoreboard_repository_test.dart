@@ -22,8 +22,8 @@
 //   - `fetchCycles` is asserted against a real `cycle_records` row.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:sakinah/core/time/prayer_engine.dart';
-import 'package:sakinah/features/scoring/data/scoreboard_repository.dart';
+import 'package:lovinity/core/time/prayer_engine.dart';
+import 'package:lovinity/features/scoring/data/scoreboard_repository.dart';
 
 const _supabaseUrl = 'http://127.0.0.1:54321';
 const _anonKey =

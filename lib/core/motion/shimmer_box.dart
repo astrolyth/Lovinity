@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
-import 'sak_motion.dart';
+import 'lov_motion.dart';
 
 /// A shape-preserving skeleton placeholder with a slow shimmer.
 ///
 /// Prefer this over CircularProgressIndicator for content-shaped loading.
-class SakShimmerBox extends StatefulWidget {
-  const SakShimmerBox({
+class LovShimmerBox extends StatefulWidget {
+  const LovShimmerBox({
     super.key,
     this.width,
     this.height = 16,
-    this.radius = SakRadius.sm,
+    this.radius = LovRadius.sm,
   });
 
   final double? width;
@@ -19,10 +19,10 @@ class SakShimmerBox extends StatefulWidget {
   final double radius;
 
   @override
-  State<SakShimmerBox> createState() => _SakShimmerBoxState();
+  State<LovShimmerBox> createState() => _LovShimmerBoxState();
 }
 
-class _SakShimmerBoxState extends State<SakShimmerBox>
+class _LovShimmerBoxState extends State<LovShimmerBox>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -38,7 +38,7 @@ class _SakShimmerBoxState extends State<SakShimmerBox>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (SakMotion.motionEnabled(context)) {
+    if (LovMotion.motionEnabled(context)) {
       if (!_controller.isAnimating) _controller.repeat();
     } else {
       _controller.stop();
@@ -55,8 +55,8 @@ class _SakShimmerBoxState extends State<SakShimmerBox>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final base = isDark ? SakColors.surfaceMutedDark : SakColors.surfaceMuted;
-    final highlight = isDark ? SakColors.surfaceDark : Colors.white;
+    final base = isDark ? LovColors.surfaceMutedDark : LovColors.surfaceMuted;
+    final highlight = isDark ? LovColors.surfaceDark : Colors.white;
 
     return SizedBox(
       width: widget.width,

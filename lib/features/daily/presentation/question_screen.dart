@@ -48,7 +48,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
             questionId: content!.question!.id,
             answer: text,
           );
-      unawaited(SakHaptics.selection());
+      unawaited(LovHaptics.selection());
       _controller.clear();
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -75,20 +75,20 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
         .cast<QuestionAnswer?>()
         .firstOrNull;
 
-    return SakScaffold(
+    return LovScaffold(
       title: 'Question',
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
       ),
       child: q == null
-          ? const Center(child: SakShimmerBox(height: 24, width: 240))
+          ? const Center(child: LovShimmerBox(height: 24, width: 240))
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: SakSpace.xl),
+              padding: const EdgeInsets.symmetric(vertical: LovSpace.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SakEnter(
+                  LovEnter(
                     child: Text(
                       q.question,
                       style: theme.textTheme.displaySmall?.copyWith(
@@ -96,10 +96,10 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: SakSpace.xxxl),
+                  const SizedBox(height: LovSpace.xxxl),
 
                   // Your answer
-                  SakEnter(
+                  LovEnter(
                     delay: const Duration(milliseconds: 100),
                     child: _AnswerBlock(
                       label: myAnswer == null
@@ -111,8 +111,8 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                   ),
 
                   if (myAnswer == null) ...[
-                    const SizedBox(height: SakSpace.md),
-                    SakEnter(
+                    const SizedBox(height: LovSpace.md),
+                    LovEnter(
                       delay: const Duration(milliseconds: 160),
                       child: TextField(
                         controller: _controller,
@@ -123,10 +123,10 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: SakSpace.md),
-                    SakEnter(
+                    const SizedBox(height: LovSpace.md),
+                    LovEnter(
                       delay: const Duration(milliseconds: 220),
-                      child: SakButton(
+                      child: LovButton(
                         label: 'Send answer',
                         icon: Icons.send_rounded,
                         loading: _submitting,
@@ -136,10 +136,10 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: SakSpace.xxl),
+                  const SizedBox(height: LovSpace.xxl),
 
                   // Spouse's answer (blurred until you've answered)
-                  SakEnter(
+                  LovEnter(
                     delay: const Duration(milliseconds: 280),
                     child: _AnswerBlock(
                       label: spouseName ?? 'Your spouse',
@@ -184,15 +184,15 @@ class _AnswerBlock extends StatelessWidget {
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: SakSpace.sm),
+        const SizedBox(height: LovSpace.sm),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(SakSpace.lg),
+          padding: const EdgeInsets.all(LovSpace.lg),
           decoration: BoxDecoration(
             color: isOwn
                 ? theme.colorScheme.secondary
                 : theme.colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(SakRadius.lg),
+            borderRadius: BorderRadius.circular(LovRadius.lg),
           ),
           child: pending
               ? Text(
@@ -213,7 +213,7 @@ class _AnswerBlock extends StatelessWidget {
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.55),
                         ),
-                        const SizedBox(width: SakSpace.xs),
+                        const SizedBox(width: LovSpace.xs),
                         Text(
                           'Answer to reveal.',
                           style: theme.textTheme.bodyMedium?.copyWith(
