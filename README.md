@@ -18,7 +18,7 @@ Design docs live in [`docs/superpowers/specs/`](docs/superpowers/specs/).
 2. [Windows setup (dev machine → Android target)](#windows-setup-dev-machine--android-target)
 3. [Installation from scratch](#installation-from-scratch)
 4. [Environment files, explained](#environment-files-explained)
-5. [Email testing — everything goes to Mailtrap](#email-testing--everything-goes-to-mailtrap)
+5. [Email testing — Mailpit (free, no account)](#email-testing--mailpit-free-no-account)
 6. [Run path A — local Supabase (Docker)](#run-path-a--local-supabase-docker)
 7. [Run path B — Supabase Cloud (no Docker)](#run-path-b--supabase-cloud-no-docker)
 8. [Choosing a target device](#choosing-a-target-device)
@@ -69,7 +69,7 @@ flutter devices                                                   # confirm the 
 flutter run -d emulator-5554 --dart-define-from-file=config/supabase.local.json
 ```
 
-Everything else — Supabase (Docker or Cloud), Mailtrap, `.env`, `flutter test` — behaves identically to macOS/Linux once the target is Android.
+Everything else — Supabase (Docker or Cloud), Mailpit, `.env`, `flutter test` — behaves identically to macOS/Linux once the target is Android.
 
 ---
 
@@ -105,7 +105,7 @@ cp config/supabase.cloud.example.json config/supabase.cloud.json
 - **Path A (local Docker Supabase)** — recommended for day-to-day development (schema changes, migrations, RLS work). See [Run path A](#run-path-a--local-supabase-docker).
 - **Path B (Supabase Cloud)** — no Docker required, talks to the team's hosted project. See [Run path B](#run-path-b--supabase-cloud-no-docker).
 
-Both paths read app config from `config/supabase.local.json` / `config/supabase.cloud.json`, and both read `MAILTRAP_SMTP_USER` / `MAILTRAP_SMTP_PASS` from the root `.env` — see the next two sections before running anything.
+Both paths read app config from `config/supabase.local.json` / `config/supabase.cloud.json`. Auth email needs no extra setup for local dev — it's caught by the bundled Mailpit inbox (see [Email testing](#email-testing--mailpit-free-no-account)).
 
 **5. Run the app**
 
@@ -123,7 +123,7 @@ Every developer's machine needs three local files. All three are gitignored — 
 
 | Real file (gitignored) | Tracked example | Used for |
 |---|---|---|
-| `.env` | `.env.example` | Local Supabase connection details (auto-generated) **+ shared Mailtrap SMTP credentials** |
+| `.env` | `.env.example` | Local Supabase connection details (auto-generated); optional self-hosted-Mailpit SMTP vars (blank for local dev) |
 | `config/supabase.local.json` | `config/supabase.local.example.json` | App `--dart-define` config for path A (local Docker Supabase) |
 | `config/supabase.cloud.json` | `config/supabase.cloud.example.json` | App `--dart-define` config for path B (Supabase Cloud) |
 
@@ -133,7 +133,7 @@ Every developer's machine needs three local files. All three are gitignored — 
   ```bash
   supabase status -o env >> .env
   ```
-- `MAILTRAP_SMTP_USER` and `MAILTRAP_SMTP_PASS` are read by `supabase/config.toml` (`[auth.email.smtp]`, via `env(...)`) when you run `supabase start` — this is what makes local auth email land in Mailtrap instead of the default local inbox. **Ask a teammate for these two values** (they're the shared team Mailtrap inbox credentials, not something you generate yourself).
+- `MAILPIT_SMTP_HOST` / `MAILPIT_SMTP_USER` / `MAILPIT_SMTP_PASS` are **only** needed if you enable `[auth.email.smtp]` in `supabase/config.toml` to point at a self-hosted Mailpit (cloud/staging). For local dev leave them blank — the bundled Mailpit inbox needs no credentials. See [Email testing](#email-testing--mailpit-free-no-account).
 
 **`config/supabase.*.json`** feed the app at compile time via `--dart-define-from-file`. Never commit real ones — the anon/publishable key for path B and the URL for path A are per-environment.
 
@@ -160,22 +160,36 @@ Every developer's machine needs three local files. All three are gitignored — 
 
 ---
 
-## Email testing — everything goes to Mailtrap
+## Email testing — Mailpit (free, no account)
 
-This project uses **one shared Mailtrap sandbox inbox** for all auth email (OTP codes, signup confirmation, password reset) across **every** environment and **every** machine:
+All auth email (OTP codes, signup confirmation, password reset) is caught by **[Mailpit](https://mailpit.axllent.org/)** — a fake SMTP inbox with a web UI. Mailpit is **100% free, open-source, and self-hosted**: no account, no API key, no external service, no rate limits. Supabase's local stack **bundles Mailpit and runs it automatically** — there is nothing to install or configure for local development.
 
-- **Path B (Cloud)** already has custom SMTP configured in the Supabase dashboard to send through that Mailtrap inbox.
-- **Path A (local Docker)** is configured the same way in [`supabase/config.toml`](supabase/config.toml) (`[auth.email.smtp]`), reading the inbox credentials from your local `.env` (`MAILTRAP_SMTP_USER` / `MAILTRAP_SMTP_PASS`) via `env(...)`.
+### Path A (local Docker) — zero setup
 
-So it doesn't matter whose laptop the project is running on, or whether it's pointed at local Docker or Cloud — **every auth email always lands in the same Mailtrap inbox.** To find a code:
+`supabase start` already runs Mailpit for you. GoTrue routes every auth email into it because `[auth.email.smtp]` in [`supabase/config.toml`](supabase/config.toml) is left **disabled** (its presence would override the built-in inbox). To read a code:
 
-1. Log in to [mailtrap.io](https://mailtrap.io) with the team's shared credentials (ask a teammate if you don't have them).
-2. Open the project's sandbox inbox.
-3. Find the latest message and copy the 6-digit code.
+1. Open the Mailpit web UI: **<http://127.0.0.1:54324>**
+2. Click the latest message.
+3. Copy the 6-digit code (or click the confirm/reset link).
 
-There is no need to check a personal email client, and — since local SMTP is overridden — the old Mailpit inbox (`http://127.0.0.1:54324`) will stay empty.
+That's it — no `.env` values are needed for local email.
 
-> Without `MAILTRAP_SMTP_USER`/`MAILTRAP_SMTP_PASS` set in `.env`, `supabase start` will still boot, but Auth will fail to send email (`env()` resolves to an empty string). Fill in `.env` **before** running path A.
+### Path B (Cloud) — pick one
+
+Supabase Cloud does not bundle Mailpit, so choose whichever fits:
+
+- **Simplest & recommended for testing:** do all email-based flows (signup, OTP, password reset) against **Path A**, where Mailpit already catches everything. Cloud is then only needed for non-email work.
+- **Cloud with Mailpit too (still free, you host it):** run the Mailpit container on any host reachable from the internet (a small VPS, a free-tier container host, etc.) with its SMTP port exposed:
+
+  ```bash
+  docker run -d --restart unless-stopped \
+    -p 8025:8025 -p 1025:1025 axllent/mailpit
+  ```
+
+  Then in the Supabase **dashboard → Authentication → SMTP**, point custom SMTP at that host's `1025` (host/user/pass as configured) and read mail at its `:8025` web UI. For a local-only stack you'd instead set `MAILPIT_SMTP_HOST`/`MAILPIT_SMTP_USER`/`MAILPIT_SMTP_PASS` in `.env` and flip `[auth.email.smtp] enabled = true` in `config.toml`.
+- **Supabase's built-in Cloud email:** fine for a couple of manual tests, but rate-limited — not for repeated testing.
+
+> **Bottom line:** for day-to-day testing, use **Path A** and read mail at <http://127.0.0.1:54324>. It's free, instant, and needs no setup.
 
 ---
 
@@ -201,7 +215,7 @@ Confirm `config/supabase.local.json` matches (see [example above](#environment-f
 flutter run --dart-define-from-file=config/supabase.local.json
 ```
 
-- **Auth emails (OTP / signup confirm / password reset):** check the shared **Mailtrap** inbox — see [Email testing](#email-testing--everything-goes-to-mailtrap).
+- **Auth emails (OTP / signup confirm / password reset):** open the bundled **Mailpit** inbox at <http://127.0.0.1:54324> — see [Email testing](#email-testing--mailpit-free-no-account).
 - To reset the database at any time: `supabase db reset`. To stop the stack: `supabase stop`.
 
 ---
@@ -229,7 +243,7 @@ flutter run --dart-define-from-file=config/supabase.cloud.json
 
 1. **Authentication → Providers → Email:** set **Email OTP Length** to **6** (or match `OTP_LENGTH` in the config to whatever the project issues).
 2. **Authentication → Email Templates:** *Confirm signup*, *Magic Link*, and *Reset Password* templates must each include `{{ .Token }}` (the defaults only contain a link).
-3. **Authentication → SMTP:** custom SMTP pointing at `sandbox.smtp.mailtrap.io` — this is what routes all Cloud auth email into the shared Mailtrap inbox (see [Email testing](#email-testing--everything-goes-to-mailtrap)).
+3. **Authentication → SMTP:** for repeated email testing on Cloud, point custom SMTP at a self-hosted Mailpit host (see [Email testing](#email-testing--mailpit-free-no-account)); otherwise the built-in Cloud email works for a handful of manual tests.
 
 ---
 
@@ -243,7 +257,7 @@ flutter run -d <device-id> --dart-define-from-file=config/supabase.local.json
 - **iOS Simulator:** its "location" is a hardcoded default (San Francisco). To get correct prayer times, set **Features → Location → Custom Location** to your real coordinates.
 - **Physical iPhone:** open `ios/Runner.xcworkspace` in Xcode and set a Signing Team once, then `flutter run -d <device>`.
 
-**Testing chat / pairing** needs **two** signed-in, paired accounts on **two** devices at once (e.g. two simulators, or an iOS simulator + the macOS app), both pointed at the same backend. Pair them with the invite code from the pairing screen. Both accounts' OTP/confirmation codes will show up in the same shared Mailtrap inbox — check timestamps/recipient address to tell them apart.
+**Testing chat / pairing** needs **two** signed-in, paired accounts on **two** devices at once (e.g. two simulators, or an iOS simulator + the macOS app), both pointed at the same backend. Pair them with the invite code from the pairing screen. Both accounts' OTP/confirmation codes show up in the same Mailpit inbox (<http://127.0.0.1:54324>) — check timestamps/recipient address to tell them apart.
 
 ---
 
@@ -279,10 +293,10 @@ lib/
 └── shared/              models + app-scope providers
 
 supabase/migrations/     schema, RLS, RPCs (source of truth for both paths)
-supabase/config.toml     local stack config, incl. Mailtrap SMTP wiring
+supabase/config.toml     local stack config (bundled Mailpit inbox for auth email)
 docs/superpowers/        design specs + implementation plans
 config/                  dart-define configs (gitignored; *.example.json tracked)
-.env                     local Supabase snapshot + Mailtrap creds (gitignored; .env.example tracked)
+.env                     local Supabase snapshot (gitignored; .env.example tracked)
 ```
 
 ---
@@ -291,6 +305,6 @@ config/                  dart-define configs (gitignored; *.example.json tracked
 
 - **`refresh_token_not_found` on launch** — a stale session in the Keychain (common after `supabase db reset` wipes local auth). Uninstall the app from the device/simulator, or Simulator → *Erase All Content and Settings*, then re-run.
 - **OTP code doesn't match** — the app's slot count (`OTP_LENGTH`) must equal the project's Email OTP Length. Request a fresh code after changing either.
-- **No email arriving anywhere** — check `MAILTRAP_SMTP_USER`/`MAILTRAP_SMTP_PASS` are set in `.env` (path A) or that Cloud SMTP is still configured in the dashboard (path B); then check the shared Mailtrap inbox, not Mailpit or your personal email.
+- **No email arriving (path A)** — open the Mailpit web UI at <http://127.0.0.1:54324>; confirm the local stack is up (`supabase status`). Local auth email never goes to a real inbox, so don't check a personal email client. (Path B: if you enabled self-hosted Mailpit, verify the dashboard SMTP host/port are reachable.)
 - **`Could not choose the best candidate function` (PGRST203)** — a migration left two overloads of an RPC; re-run `supabase db reset` (path A) after pulling the latest migrations.
 - **dart-define changes not taking effect** — dart-defines are compile-time; stop and re-run (a hot restart won't pick them up).

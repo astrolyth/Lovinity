@@ -233,17 +233,21 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# Routed at the shared team Mailtrap sandbox inbox, so local `supabase start`
-# sends auth email (OTP / signup confirm / password reset) to the same place
-# as the Cloud project, no matter which machine this runs on. Credentials come
-# from the project-root .env (gitignored) — see README "Environment files".
+# Auth email (OTP / signup confirm / password reset) for LOCAL development is
+# captured by the built-in Mailpit inbox — see [local_smtp] above and open the
+# web UI at http://127.0.0.1:54324. Nothing to configure: leaving
+# [auth.email.smtp] disabled makes GoTrue route all local auth mail to Mailpit.
+# This is 100% free and self-contained; no external email provider or account.
+#
+# To point at a SELF-HOSTED Mailpit for cloud/staging (also free — you just run
+# the Mailpit container somewhere reachable and expose its SMTP port), fill in
+# MAILPIT_SMTP_* in the project-root .env and flip enabled = true:
 [auth.email.smtp]
-enabled = true
-host = "sandbox.smtp.mailtrap.io"
-port = 2525
-user = "env(MAILTRAP_SMTP_USER)"
-pass = "env(MAILTRAP_SMTP_PASS)"
+enabled = false
+host = "env(MAILPIT_SMTP_HOST)"
+port = 1025
+user = "env(MAILPIT_SMTP_USER)"
+pass = "env(MAILPIT_SMTP_PASS)"
 admin_email = "noreply@lovinity.app"
 sender_name = "Lovinity"
 
