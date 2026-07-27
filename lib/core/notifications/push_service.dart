@@ -174,11 +174,24 @@ class PushService {
   bool _available = false;
   bool _loggedInitFailure = false;
 
+  /// Monotonic id for locally-shown notifications. All chat pushes carry
+  /// identical title/body, so `notification.hashCode` (the previous id
+  /// source) would collapse distinct notifications into one the moment
+  /// `RemoteNotification` gained value-equality; a simple incrementing
+  /// counter can't collide.
+  int _localNotifId = 0;
+
   StreamSubscription<RemoteMessage>? _onMessageSub;
   StreamSubscription<RemoteMessage>? _onMessageOpenedSub;
   StreamSubscription<String>? _onTokenRefreshSub;
 
   final _tapController = StreamController<NotificationTap>.broadcast();
+
+  /// The tap that launched the app from a terminated state (cold start via
+  /// `getInitialMessage()`), captured during [init] and consumed once via
+  /// [takeInitialTap]. See that getter's doc for why this can't just be
+  /// pushed onto [_tapController] like the other tap sources.
+  NotificationTap? _pendingInitialTap;
 
   /// True once [init] has completed successfully. Everything else is a
   /// no-op while this is false.
@@ -188,7 +201,28 @@ class PushService {
   /// system tray notification opened/relaunched the app), carrying the
   /// content-free `data.type` routing hint. The app shell (Task 4) listens
   /// here to deep-link.
+  ///
+  /// Deliberately does NOT also carry the cold-start ("initial message")
+  /// tap -- see [takeInitialTap].
   Stream<NotificationTap> get taps => _tapController.stream;
+
+  /// Returns (and clears) the tap that launched the app from a terminated
+  /// state, or `null` if there wasn't one (or it was already consumed).
+  ///
+  /// This exists separately from [taps] because [_tapController] is a
+  /// *broadcast* stream: an event added while nobody is listening is
+  /// dropped, not buffered. [init] resolves `getInitialMessage()` and
+  /// finishes before `app.dart` gets a chance to attach its `taps`
+  /// listener, so pushing the cold-start tap onto that stream during
+  /// [init] would silently lose it -- which is exactly the bug this seam
+  /// fixes. Callers should read this once, right after attaching [taps],
+  /// and defer acting on it until the first frame (the router isn't
+  /// guaranteed to exist yet at that point).
+  NotificationTap? takeInitialTap() {
+    final tap = _pendingInitialTap;
+    _pendingInitialTap = null;
+    return tap;
+  }
 
   /// Initializes Firebase + local notifications, requests permission, and
   /// wires message/tap listeners. Returns `false` (and does nothing further)
@@ -219,8 +253,7 @@ class PushService {
         _handleRemoteMessageTap,
       );
 
-      final initial = await _messaging.getInitialMessage();
-      if (initial != null) _handleRemoteMessageTap(initial);
+      await _captureInitialTap();
 
       _available = true;
       return true;
@@ -322,7 +355,7 @@ class PushService {
     final notification = message.notification;
     if (notification == null) return;
     await _notifications.show(
-      id: notification.hashCode,
+      id: _localNotifId++,
       title: notification.title,
       body: notification.body,
       notificationDetails: const NotificationDetails(
@@ -338,6 +371,25 @@ class PushService {
       payload: jsonEncode(message.data),
     );
   }
+
+  /// Resolves `getInitialMessage()` and, if it carries a recognized routing
+  /// hint, stashes it in [_pendingInitialTap] for [takeInitialTap]. Split
+  /// out of [init] so a test can drive this exact cold-start capture logic
+  /// (via [captureInitialTapForTesting]) against an injected [PushMessaging]
+  /// fake, without needing a real Firebase app to reach it.
+  Future<void> _captureInitialTap() async {
+    final initial = await _messaging.getInitialMessage();
+    if (initial == null) return;
+    final tap = tapFromData(initial.data);
+    if (tap != null) _pendingInitialTap = tap;
+  }
+
+  /// Test-only seam: exercises [_captureInitialTap] -- the same cold-start
+  /// `getInitialMessage()` handling [init] performs on a real launch --
+  /// without going through `Firebase.initializeApp()`. Used to prove
+  /// [takeInitialTap] surfaces a tap captured this way.
+  @visibleForTesting
+  Future<void> captureInitialTapForTesting() => _captureInitialTap();
 
   void _handleRemoteMessageTap(RemoteMessage message) {
     final tap = tapFromData(message.data);

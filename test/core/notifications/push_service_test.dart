@@ -1,4 +1,5 @@
 // test/core/notifications/push_service_test.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -145,6 +146,65 @@ void main() {
     test('returns null for a non-string type', () {
       expect(tapFromData({'type': 42}), isNull);
     });
+  });
+
+  group('cold-start initial tap', () {
+    late _MockPushMessaging messaging;
+    late PushService service;
+
+    setUp(() {
+      messaging = _MockPushMessaging();
+      service = PushService.availableForTesting(messaging: messaging);
+    });
+
+    test(
+      'a getInitialMessage() with a routable type is surfaced via '
+      'takeInitialTap() (proves cold-start pushes are not dropped, since '
+      'the broadcast `taps` stream has no subscriber yet at this point)',
+      () async {
+        when(() => messaging.getInitialMessage()).thenAnswer(
+          (_) async => const RemoteMessage(data: {'type': 'chat'}),
+        );
+
+        await service.captureInitialTapForTesting();
+
+        expect(service.takeInitialTap(), const NotificationTap(type: 'chat'));
+      },
+    );
+
+    test('takeInitialTap() only returns the tap once', () async {
+      when(() => messaging.getInitialMessage()).thenAnswer(
+        (_) async => const RemoteMessage(data: {'type': 'chat'}),
+      );
+
+      await service.captureInitialTapForTesting();
+
+      expect(service.takeInitialTap(), isNotNull);
+      expect(service.takeInitialTap(), isNull);
+    });
+
+    test('no initial message means no pending tap', () async {
+      when(
+        () => messaging.getInitialMessage(),
+      ).thenAnswer((_) async => null);
+
+      await service.captureInitialTapForTesting();
+
+      expect(service.takeInitialTap(), isNull);
+    });
+
+    test(
+      'an initial message with no recognized routing hint is not surfaced',
+      () async {
+        when(() => messaging.getInitialMessage()).thenAnswer(
+          (_) async => const RemoteMessage(data: {}),
+        );
+
+        await service.captureInitialTapForTesting();
+
+        expect(service.takeInitialTap(), isNull);
+      },
+    );
   });
 
   group('NotificationTap equality', () {

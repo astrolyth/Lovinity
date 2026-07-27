@@ -12,6 +12,13 @@
 -- no-op and every RPC that calls it keeps working exactly as before.
 
 ------------------------------------------------------------------
+-- pg_net: dispatch_push below uses net.http_post to call the push-dispatch
+-- edge function. Already enabled on this stack, but ensure it explicitly so
+-- a fresh/other project applying this migration doesn't silently lack it.
+------------------------------------------------------------------
+create extension if not exists pg_net with schema extensions;
+
+------------------------------------------------------------------
 -- private schema: server-only config, never exposed via PostgREST
 ------------------------------------------------------------------
 create schema if not exists private;
@@ -147,8 +154,11 @@ begin
       )
     );
   exception when others then
-    -- best-effort: never let push dispatch break the caller's transaction.
-    null;
+    -- best-effort: never let push dispatch break the caller's transaction,
+    -- but surface real operator misconfig (e.g. bad function_url, pg_net
+    -- missing) instead of swallowing it silently -- config-absent above is
+    -- the only case that's expected and stays a clean, silent `return`.
+    raise warning 'dispatch_push: push delivery failed: %', sqlerrm;
   end;
 end;
 $$;

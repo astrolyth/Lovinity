@@ -23,6 +23,17 @@ import 'core/theme/theme.dart';
 /// calling `FirebaseMessaging.onBackgroundMessage` before a Firebase app
 /// exists throws, which would otherwise crash boot on the (default, expected)
 /// no-native-config setup.
+///
+/// Deliberate deviation from the plugin docs, which register this top-level
+/// before `runApp` rather than from `initState`: doing it eagerly would mean
+/// calling `onBackgroundMessage` unconditionally, before we know whether
+/// Firebase actually initialized (it doesn't with no native config, the
+/// default state for this repo) -- and that call throws without a Firebase
+/// app. Deferring it to after [PushService.init] succeeds is what makes the
+/// no-config case safe. This is harmless because the handler itself is an
+/// intentional content-free no-op: the OS renders the notification from the
+/// FCM payload's `notification` block directly, so there is nothing for
+/// this isolate to do even when it is registered a little later.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
@@ -76,6 +87,22 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
       }
 
       _tapSub = pushService.taps.listen(_handleTap);
+
+      // Cold-start deep link: if the app was launched by tapping a push
+      // (from a fully terminated state), that tap was captured by
+      // PushService.init() into a pending field rather than the `taps`
+      // broadcast stream above -- emitting it into that stream during
+      // init() would be silently dropped, since nothing subscribes until
+      // the `listen` call just above returns. Consume it once here, and
+      // defer the actual routing to after the first frame: the router
+      // isn't guaranteed to be attached yet at this point in boot.
+      final initialTap = pushService.takeInitialTap();
+      if (initialTap != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _handleTap(initialTap);
+        });
+      }
     } catch (e, st) {
       developer.log(
         'PushService.init failed',
