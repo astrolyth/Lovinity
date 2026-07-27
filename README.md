@@ -23,8 +23,9 @@ Design docs live in [`docs/superpowers/specs/`](docs/superpowers/specs/).
 7. [Run path B — Supabase Cloud (no Docker)](#run-path-b--supabase-cloud-no-docker)
 8. [Choosing a target device](#choosing-a-target-device)
 9. [Tests](#tests)
-10. [Project layout](#project-layout)
-11. [Troubleshooting](#troubleshooting)
+10. [Push notifications (Firebase / FCM)](#push-notifications-firebase--fcm)
+11. [Project layout](#project-layout)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -272,6 +273,78 @@ flutter test
 
 ---
 
+## Push notifications (Firebase / FCM)
+
+**Optional.** With none of this configured, the app builds, runs, and its chat/pairing RPCs all work exactly as before — push is simply inert. Everything in this section is for an operator who wants real push notifications; skip it for local development.
+
+### What it does
+
+When your partner sends you a chat message, or when your couple first becomes paired, your device gets a **content-free** push notification — e.g. "New message from your partner" or "You're connected". The server never puts message plaintext in a push: chat is end-to-end encrypted (Signal), so the backend can't read it anyway. The notification is just a wake-up nudge; tapping it (or the app already being open) triggers the existing inbox sync, which fetches and decrypts the real message locally. See `supabase/migrations/20260726000001_push_notifications.sql` and `supabase/functions/push-dispatch/README.md` for the server-side details, and [`docs/superpowers/plans/2026-07-26-push-notifications.md`](docs/superpowers/plans/2026-07-26-push-notifications.md) for the full design.
+
+### Cost
+
+- **FCM itself is free** on both platforms, no paid tier needed (Firebase Spark/free plan is enough).
+- **Android push is fully free** — no extra account needed beyond a Firebase project.
+- **iOS device push requires an Apple Developer account (US$99/yr)** to create an APNs auth key — this is an Apple/iOS requirement inherent to push on that platform, not something this project adds or could avoid.
+- The **iOS Simulator cannot receive real push notifications** — you need a physical iPhone to test iOS push.
+- The **Android emulator** can receive push, but only on an image that includes **Google Play services** (not a bare AOSP image).
+
+### Step-by-step setup
+
+**1. Create a Firebase project** at [console.firebase.google.com](https://console.firebase.google.com/) (the free Spark plan is sufficient).
+
+**2. Add an Android app** to the Firebase project (package name must match `android/app/build.gradle.kts`'s `applicationId`), then download the generated `google-services.json` and place it at:
+
+```
+android/app/google-services.json
+```
+
+This path is gitignored — it's never committed. `android/app/build.gradle.kts` only applies the `com.google.gms.google-services` Gradle plugin when this file exists, so the Android build succeeds with or without it.
+
+**3. Add an iOS app** to the same Firebase project (bundle ID must match `ios/Runner.xcodeproj`'s bundle identifier), then download `GoogleService-Info.plist` and place it at:
+
+```
+ios/Runner/GoogleService-Info.plist
+```
+
+Also gitignored. Optionally run `flutterfire configure` instead of doing steps 2–3 by hand — it downloads both files and can also generate `firebase_options.dart` for you.
+
+**4. iOS only — create and upload an APNs auth key.** In the [Apple Developer portal](https://developer.apple.com/account/resources/authkeys/list) (requires the paid membership above), create an APNs Auth Key, then upload it in the Firebase console under **Project settings → Cloud Messaging → Apple app configuration**. Without this, iOS push silently never arrives even with the app fully wired up.
+
+**5. Create a Firebase service-account key** for the edge function: Firebase console → **Project settings → Service accounts → Generate new private key**. This downloads a JSON file — keep it out of git (already covered by `.gitignore`'s `**/*serviceAccount*.json` / `**/*service-account*.json` patterns).
+
+**6. Set the Supabase secrets and deploy the edge function:**
+
+```bash
+supabase secrets set \
+  FCM_SERVICE_ACCOUNT="$(cat /path/to/firebase-service-account.json)" \
+  FCM_PROJECT_ID="your-firebase-project-id" \
+  PUSH_DISPATCH_SECRET="$(openssl rand -hex 32)"
+
+supabase functions deploy push-dispatch
+```
+
+**7. Seed `private.push_config`** with the deployed function's URL and the same dispatch secret, so `dispatch_push()` stops being a no-op. Run this SQL against the target environment's database (dashboard SQL editor, or `supabase db execute`):
+
+```sql
+insert into private.push_config (id, function_url, dispatch_secret)
+values (true, 'https://<project-ref>.supabase.co/functions/v1/push-dispatch',
+        '<same value as PUSH_DISPATCH_SECRET>')
+on conflict (id) do update
+  set function_url    = excluded.function_url,
+      dispatch_secret = excluded.dispatch_secret;
+```
+
+See [`supabase/functions/push-dispatch/README.md`](supabase/functions/push-dispatch/README.md) for the authoritative reference on required secrets, the function's request/response shape, and dead-token pruning — this section only summarizes it.
+
+### Local testing caveats
+
+- Push needs a real device (or, for Android, an emulator image with Google Play services) — the **iOS Simulator cannot receive real push**.
+- `dispatch_push()` calls out over `pg_net` from Postgres; reaching a deployed edge function from the **local Docker stack (path A)** can be finicky depending on your network. Push is primarily exercised as a **cloud feature (path B)** — set up path B (or point local dev at a cloud project's `push-dispatch` function) if you want to see real notifications end-to-end.
+- Until `private.push_config` is seeded, `dispatch_push()` is a silent no-op and chat/pairing behave exactly as they do without any of this setup.
+
+---
+
 ## Project layout
 
 ```
@@ -281,6 +354,7 @@ lib/
 │   ├── crypto/          Signal session layer: key gen, KeyVault, SecureStore,
 │   │   └── stores/      Drift-backed identity/session/prekey stores
 │   ├── errors/          AppFailure hierarchy
+│   ├── notifications/   PushService (FCM + local notifications, gracefully inert with no Firebase config)
 │   ├── router/          go_router + auth / onboarding / pairing guards
 │   ├── storage/         Drift database (Signal state + local chat history)
 │   ├── theme/ time/ motion/ widgets/   design system + prayer/Hijri engine
@@ -293,6 +367,7 @@ lib/
 └── shared/              models + app-scope providers
 
 supabase/migrations/     schema, RLS, RPCs (source of truth for both paths)
+supabase/functions/      Edge Functions (push-dispatch: FCM relay for push notifications)
 supabase/config.toml     local stack config (bundled Mailpit inbox for auth email)
 docs/superpowers/        design specs + implementation plans
 config/                  dart-define configs (gitignored; *.example.json tracked)
