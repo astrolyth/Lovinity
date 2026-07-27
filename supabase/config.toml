@@ -393,6 +393,12 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# push-dispatch: relays content-free notifications to FCM. It authenticates
+# callers via a shared dispatch secret (private.push_config.dispatch_secret),
+# not a Supabase user JWT, so JWT verification must stay off.
+[functions.push-dispatch]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
