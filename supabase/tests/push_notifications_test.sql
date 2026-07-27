@@ -306,6 +306,33 @@ exception when others then
   raise exception 'FAIL: pairing-active transition raised: %', sqlerrm;
 end $$;
 
+-- ------------------------------------------------------------------
+-- 9. Pairing trigger fires on INSERT too. Real pairing (accept_pairing_invite)
+--    INSERTs the couple row with status defaulting to 'active' -- it never
+--    UPDATEs into active -- so an UPDATE-only trigger would never fire for a
+--    genuine pairing. Insert a fresh active couple and assert it succeeds
+--    (dispatch_push no-op path keeps the INSERT from raising).
+-- ------------------------------------------------------------------
+insert into auth.users (id) values
+  ('99999999-0000-0000-0000-00000000000d'),
+  ('99999999-0000-0000-0000-00000000000e');
+
+do $$
+declare v_id uuid;
+begin
+  insert into public.couples (member_a, member_b) -- status defaults to 'active'
+  values ('99999999-0000-0000-0000-00000000000d',
+          '99999999-0000-0000-0000-00000000000e')
+  returning id into v_id;
+
+  if v_id is null then
+    raise exception 'FAIL: active-couple INSERT did not take effect';
+  end if;
+  raise notice 'PASS: couple INSERT with default status=active fires on_couple_active trigger without raising (real pairing path)';
+exception when others then
+  raise exception 'FAIL: active-couple INSERT raised: %', sqlerrm;
+end $$;
+
 -- NOTE (untestable at this level): that dispatch_push's net.http_post call
 -- actually reaches an edge function, and that the pairing trigger notifies
 -- BOTH member_a and member_b, would require a live pg_net worker plus a

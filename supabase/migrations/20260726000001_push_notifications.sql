@@ -238,10 +238,12 @@ $$;
 grant execute on function public.send_message(integer, jsonb, uuid, text) to authenticated;
 
 ------------------------------------------------------------------
--- Phase-2 pairing event: notify both members the moment a couple transitions
--- INTO status = 'active'. Demonstrates the generic dispatch_push path with a
--- second event type; no current INSERT/UPDATE path flips this yet, but this
--- trigger makes any future re-pairing/reactivation flow notify for free.
+-- Phase-2 pairing event: notify both members the moment a couple becomes
+-- active. accept_pairing_invite INSERTs the couple row with status defaulting
+-- to 'active' (see 20260715000001_roles.sql), so this MUST fire on INSERT, not
+-- only UPDATE -- an UPDATE-only trigger would never fire for real pairings.
+-- UPDATE is also covered so any future re-pairing/reactivation notifies too.
+-- Demonstrates the generic dispatch_push path with a second event type.
 ------------------------------------------------------------------
 create or replace function public.notify_pairing_active()
 returns trigger
@@ -249,7 +251,9 @@ language plpgsql security definer
 set search_path = public
 as $$
 begin
-  if new.status = 'active' and old.status is distinct from 'active' then
+  -- On INSERT there is no OLD row; treat that as "was not active before".
+  if new.status = 'active'
+     and (tg_op = 'INSERT' or old.status is distinct from 'active') then
     perform public.dispatch_push(new.member_a, 'pairing', 'You''re connected',
       'You and your partner are now paired 💛');
     perform public.dispatch_push(new.member_b, 'pairing', 'You''re connected',
@@ -261,5 +265,5 @@ $$;
 
 drop trigger if exists on_couple_active on public.couples;
 create trigger on_couple_active
-  after update on public.couples
+  after insert or update on public.couples
   for each row execute function public.notify_pairing_active();
