@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'sak_motion.dart';
+import 'lov_motion.dart';
 
 /// A single digit (0–9) that transitions with a vertical slide + fade
 /// rather than an instant swap. Odometer feel.
-class SakAnimatedDigit extends StatelessWidget {
-  const SakAnimatedDigit({
+class LovAnimatedDigit extends StatelessWidget {
+  const LovAnimatedDigit({
     super.key,
     required this.digit,
     this.style,
@@ -26,14 +26,14 @@ class SakAnimatedDigit extends StatelessWidget {
       textAlign: TextAlign.center,
     );
 
-    if (!SakMotion.motionEnabled(context)) {
+    if (!LovMotion.motionEnabled(context)) {
       return content;
     }
 
     return AnimatedSwitcher(
-      duration: SakMotion.standard,
-      switchInCurve: SakMotion.enter,
-      switchOutCurve: SakMotion.enter,
+      duration: LovMotion.standard,
+      switchInCurve: LovMotion.enter,
+      switchOutCurve: LovMotion.enter,
       transitionBuilder: (child, animation) {
         final inbound = child.key == ValueKey(digit);
         final slide = Tween<Offset>(
@@ -63,8 +63,8 @@ class SakAnimatedDigit extends StatelessWidget {
 
 /// Renders a fixed-width row of digits from a number, animating each digit
 /// independently. Handles negative signs and leading zeros via [minDigits].
-class SakDigitRow extends StatelessWidget {
-  const SakDigitRow({
+class LovDigitRow extends StatelessWidget {
+  const LovDigitRow({
     super.key,
     required this.value,
     this.style,
@@ -84,7 +84,7 @@ class SakDigitRow extends StatelessWidget {
         if (value < 0)
           Text('-', style: style),
         for (var i = 0; i < text.length; i++)
-          SakAnimatedDigit(
+          LovAnimatedDigit(
             digit: int.parse(text[i]),
             style: style,
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/crypto/crypto_providers.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
@@ -40,15 +41,15 @@ class _PairScreenState extends ConsumerState<PairScreen>
         ?.user
         .email;
 
-    return SakScaffold(
+    return LovScaffold(
       padded: false,
-      title: 'Sakīnah',
+      title: 'Lovinity',
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_horiz),
           onSelected: (v) {
             if (v == 'logout') {
-              ref.read(authRepositoryProvider).signOut();
+              ref.read(signOutProvider)();
             }
           },
           itemBuilder: (_) => [
@@ -65,24 +66,24 @@ class _PairScreenState extends ConsumerState<PairScreen>
               child: Row(
                 children: [
                   Icon(Icons.logout_outlined, size: 18),
-                  SizedBox(width: SakSpace.sm),
+                  SizedBox(width: LovSpace.sm),
                   Text('Sign out'),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(width: SakSpace.sm),
+        const SizedBox(width: LovSpace.sm),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              SakSpace.lg,
-              SakSpace.xl,
-              SakSpace.lg,
-              SakSpace.lg,
+              LovSpace.lg,
+              LovSpace.xl,
+              LovSpace.lg,
+              LovSpace.lg,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +92,7 @@ class _PairScreenState extends ConsumerState<PairScreen>
                   'A space of two',
                   style: theme.textTheme.displaySmall,
                 ),
-                const SizedBox(height: SakSpace.xs),
+                const SizedBox(height: LovSpace.xs),
                 Text(
                   'Share a code with your spouse, or enter theirs. Only the two of you will be here.',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -102,19 +103,19 @@ class _PairScreenState extends ConsumerState<PairScreen>
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: SakSpace.lg),
+            padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
             child: Container(
-              padding: const EdgeInsets.all(SakSpace.xs),
+              padding: const EdgeInsets.all(LovSpace.xs),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(SakRadius.pill),
+                borderRadius: BorderRadius.circular(LovRadius.pill),
               ),
               child: TabBar(
                 controller: _tabs,
                 indicator: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(SakRadius.pill),
-                  boxShadow: SakElevation.subtle,
+                  borderRadius: BorderRadius.circular(LovRadius.pill),
+                  boxShadow: LovElevation.subtle,
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,

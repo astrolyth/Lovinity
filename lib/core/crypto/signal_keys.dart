@@ -53,6 +53,7 @@ class PrivateBundle {
     required this.identitySerialized,
     required this.signedPrekeySerialized,
     required this.oneTimePrekeysSerialized,
+    required this.registrationId,
   });
 
   /// [sig.IdentityKeyPair.serialize] output — identity keypair.
@@ -63,6 +64,9 @@ class PrivateBundle {
 
   /// Map of prekey id → [sig.PreKeyRecord.serialize] output.
   final Map<int, Uint8List> oneTimePrekeysSerialized;
+
+  /// Registration ID from libsignal, persisted for IdentityKeyStore.getLocalRegistrationId().
+  final int registrationId;
 }
 
 class GeneratedKeyBundle {
@@ -71,30 +75,56 @@ class GeneratedKeyBundle {
   final PrivateBundle private;
 }
 
+/// Generate a block of one-time prekeys numbered from [firstPrekeyId].
+///
+/// Ids must come from a persisted counter — reusing an id with different key
+/// material makes messages silently undecryptable.
+({Map<int, Uint8List> privateSerialized, List<PublicPrekey> publics})
+    generatePrekeyBatch({
+  required int firstPrekeyId,
+  required int count,
+}) {
+  final prekeys = sig.generatePreKeys(firstPrekeyId, count);
+  return (
+    privateSerialized: {for (final p in prekeys) p.id: p.serialize()},
+    publics: prekeys
+        .map((p) => PublicPrekey(id: p.id, pub: p.getKeyPair().publicKey.serialize()))
+        .toList(growable: false),
+  );
+}
+
 /// Generate a fresh Signal identity + prekeys for a new device.
 ///
 /// [deviceId] uniquely identifies this device for the user (e.g. install UUID).
 /// [oneTimePrekeyCount] is how many one-time prekeys to generate up front.
+/// [firstPrekeyId] is the id to start numbering one-time prekeys from (default 1).
+/// [signedPrekeyId] is the id for the signed prekey (default 1).
+///
+/// [existingIdentity] and [existingRegistrationId] let a caller RESUME a
+/// partially-completed registration (identity persisted locally, but the
+/// server round-trip that returns device_num never finished) without
+/// regenerating the identity keypair. Regenerating an identity here would
+/// silently break every established session and every spouse's TOFU-pinned
+/// identity, even though the server-side upsert would make registration
+/// look successful. The signed prekey and one-time prekeys are always
+/// freshly generated — rotating those is normal, safe protocol behaviour.
+/// When both are omitted, behaviour is identical to a brand-new device.
 GeneratedKeyBundle generateBundle({
   required String deviceId,
   int oneTimePrekeyCount = 20,
+  sig.IdentityKeyPair? existingIdentity,
+  int? existingRegistrationId,
+  int firstPrekeyId = 1,
+  int signedPrekeyId = 1,
 }) {
-  final identity = sig.generateIdentityKeyPair();
-  final registrationId = sig.generateRegistrationId(false);
-  const signedPrekeyId = 1;
+  final identity = existingIdentity ?? sig.generateIdentityKeyPair();
+  final registrationId =
+      existingRegistrationId ?? sig.generateRegistrationId(false);
   final signedPrekey = sig.generateSignedPreKey(identity, signedPrekeyId);
-  final oneTimePrekeys = sig.generatePreKeys(1, oneTimePrekeyCount);
-
-  final publicOtps = oneTimePrekeys
-      .map((p) => PublicPrekey(
-            id: p.id,
-            pub: p.getKeyPair().publicKey.serialize(),
-          ))
-      .toList(growable: false);
-
-  final privateOtps = <int, Uint8List>{
-    for (final p in oneTimePrekeys) p.id: p.serialize(),
-  };
+  final prekeyBatch = generatePrekeyBatch(
+    firstPrekeyId: firstPrekeyId,
+    count: oneTimePrekeyCount,
+  );
 
   return GeneratedKeyBundle(
     public: PublicBundle(
@@ -104,12 +134,13 @@ GeneratedKeyBundle generateBundle({
       signedPrekeyId: signedPrekey.id,
       signedPrekeyPub: signedPrekey.getKeyPair().publicKey.serialize(),
       signedPrekeySig: signedPrekey.signature,
-      oneTimePrekeys: publicOtps,
+      oneTimePrekeys: prekeyBatch.publics,
     ),
     private: PrivateBundle(
       identitySerialized: identity.serialize(),
       signedPrekeySerialized: signedPrekey.serialize(),
-      oneTimePrekeysSerialized: privateOtps,
+      oneTimePrekeysSerialized: prekeyBatch.privateSerialized,
+      registrationId: registrationId,
     ),
   );
 }

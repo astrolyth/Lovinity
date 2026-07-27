@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakinah/core/time/prayer_engine.dart';
-import 'package:sakinah/core/time/timezone_bootstrap.dart';
+import 'package:lovinity/core/time/prayer_engine.dart';
+import 'package:lovinity/core/time/timezone_bootstrap.dart';
 
 void main() {
   setUpAll(() async {
@@ -46,6 +46,35 @@ void main() {
         reason: '${times[i].prayer} must be after ${times[i - 1].prayer}',
       );
     }
+  });
+
+  // Regression: the engine used to convert adhan's already-offset time as if
+  // it were a real UTC instant, applying the timezone offset twice. Every
+  // other test here is relative (ordering / DST offset), so a uniform shift
+  // slipped through. These assert real wall-clock values.
+
+  test('positive offset: Mecca Dhuhr sits at local solar noon, not shifted', () {
+    final dhuhr = prayerTimesForDay(date: DateTime(2026, 6, 15), loc: mecca)
+        .firstWhere((p) => p.prayer == Prayer.dhuhr);
+    // Mecca solar noon is ~12:22 local (Asia/Riyadh, UTC+3).
+    // Double-shifted it would read 15:22.
+    expect(dhuhr.at.hour, 12,
+        reason: 'Dhuhr must be near local solar noon, not offset-shifted');
+    expect(dhuhr.at.timeZoneOffset, const Duration(hours: 3));
+  });
+
+  test('negative offset: Regina Dhuhr sits near local noon, not 6h early', () {
+    const regina = PrayerLocation(
+      latitude: 50.4452,
+      longitude: -104.6189,
+      timezone: 'America/Regina', // UTC-6, no DST
+    );
+    final dhuhr = prayerTimesForDay(date: DateTime(2026, 7, 16), loc: regina)
+        .firstWhere((p) => p.prayer == Prayer.dhuhr);
+    // Solar noon in Regina is ~12:52 local. Double-shifted it would read ~06:52.
+    expect(dhuhr.at.hour, inInclusiveRange(12, 13),
+        reason: 'Dhuhr must be near local noon in a negative-offset zone');
+    expect(dhuhr.at.timeZoneOffset, const Duration(hours: -6));
   });
 
   test('Hanafi Asr is later than Shafi Asr', () {

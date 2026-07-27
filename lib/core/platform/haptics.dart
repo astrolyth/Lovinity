@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 /// Platform-aware haptic helpers.
 ///
 /// Mobile-only: no-op on web, macOS, Windows, and Linux.
-class SakHaptics {
-  const SakHaptics._();
+class LovHaptics {
+  const LovHaptics._();
 
   static bool get _isMobile =>
       !kIsWeb &&

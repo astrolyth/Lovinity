@@ -7,6 +7,7 @@ class UserProfile {
     required this.calcMethod,
     this.latitude,
     this.longitude,
+    this.gender,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class UserProfile {
   final String calcMethod;
   final double? latitude;
   final double? longitude;
+  final String? gender;
 
   factory UserProfile.fromRow(Map<String, dynamic> row) => UserProfile(
         id: row['id'] as String,
@@ -25,6 +27,7 @@ class UserProfile {
         calcMethod: (row['calc_method'] ?? 'muslim_world_league') as String,
         latitude: (row['latitude'] as num?)?.toDouble(),
         longitude: (row['longitude'] as num?)?.toDouble(),
+        gender: row['gender'] as String?,
       );
 
   UserProfile copyWith({
@@ -34,6 +37,7 @@ class UserProfile {
     String? calcMethod,
     double? latitude,
     double? longitude,
+    String? gender,
   }) =>
       UserProfile(
         id: id,
@@ -43,5 +47,6 @@ class UserProfile {
         calcMethod: calcMethod ?? this.calcMethod,
         latitude: latitude ?? this.latitude,
         longitude: longitude ?? this.longitude,
+        gender: gender ?? this.gender,
       );
 }

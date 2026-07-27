@@ -1,21 +1,21 @@
 import 'package:flutter/widgets.dart';
 
 import 'enter.dart';
-import 'sak_motion.dart';
+import 'lov_motion.dart';
 
 /// Wraps a list of children so each enters with an incremental delay.
 ///
-///     SakStagger(
+///     LovStagger(
 ///       stagger: Duration(milliseconds: 60),
 ///       children: [Text('A'), Text('B'), Text('C')],
 ///     )
-class SakStagger extends StatelessWidget {
-  const SakStagger({
+class LovStagger extends StatelessWidget {
+  const LovStagger({
     super.key,
     required this.children,
     this.stagger = const Duration(milliseconds: 60),
     this.initialDelay = Duration.zero,
-    this.duration = SakMotion.gentle,
+    this.duration = LovMotion.gentle,
     this.slideFrom = 12.0,
     this.axis = Axis.vertical,
     this.crossAxisAlignment = CrossAxisAlignment.stretch,
@@ -34,7 +34,7 @@ class SakStagger extends StatelessWidget {
     final wrapped = <Widget>[];
     for (var i = 0; i < children.length; i++) {
       wrapped.add(
-        SakEnter(
+        LovEnter(
           key: ValueKey('stagger_$i'),
           delay: initialDelay + stagger * i,
           duration: duration,

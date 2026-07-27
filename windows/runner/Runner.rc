@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.sakinah" "\0"
-            VALUE "FileDescription", "sakinah" "\0"
+            VALUE "CompanyName", "com.lovinity" "\0"
+            VALUE "FileDescription", "Lovinity" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "sakinah" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.sakinah. All rights reserved." "\0"
-            VALUE "OriginalFilename", "sakinah.exe" "\0"
-            VALUE "ProductName", "sakinah" "\0"
+            VALUE "InternalName", "lovinity" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.lovinity. All rights reserved." "\0"
+            VALUE "OriginalFilename", "lovinity.exe" "\0"
+            VALUE "ProductName", "Lovinity" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

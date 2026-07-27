@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'tokens.dart';
 import 'typography.dart';
 
-class SakTheme {
-  const SakTheme._();
+class LovTheme {
+  const LovTheme._();
 
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark() => _build(Brightness.dark);
@@ -14,44 +14,44 @@ class SakTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: isDark ? SakColors.accentDark : SakColors.accent,
-      onPrimary: isDark ? SakColors.backgroundDark : Colors.white,
-      secondary: isDark ? SakColors.accentSoftDark : SakColors.accentSoft,
-      onSecondary: isDark ? SakColors.accentInkDark : SakColors.accentInk,
-      surface: isDark ? SakColors.surfaceDark : SakColors.surface,
-      onSurface: isDark ? SakColors.textPrimaryDark : SakColors.textPrimary,
+      primary: isDark ? LovColors.accentDark : LovColors.accent,
+      onPrimary: isDark ? LovColors.backgroundDark : Colors.white,
+      secondary: isDark ? LovColors.accentSoftDark : LovColors.accentSoft,
+      onSecondary: isDark ? LovColors.accentInkDark : LovColors.accentInk,
+      surface: isDark ? LovColors.surfaceDark : LovColors.surface,
+      onSurface: isDark ? LovColors.textPrimaryDark : LovColors.textPrimary,
       surfaceContainerLow: isDark
-          ? SakColors.surfaceMutedDark
-          : SakColors.surfaceMuted,
+          ? LovColors.surfaceMutedDark
+          : LovColors.surfaceMuted,
       surfaceContainerHigh: isDark
-          ? SakColors.surfaceDark
-          : SakColors.surface,
-      outlineVariant: isDark ? SakColors.dividerDark : SakColors.divider,
-      error: SakColors.error,
+          ? LovColors.surfaceDark
+          : LovColors.surface,
+      outlineVariant: isDark ? LovColors.dividerDark : LovColors.divider,
+      error: LovColors.error,
       onError: Colors.white,
     );
 
-    final textTheme = SakTypography.build(brightness: brightness);
+    final textTheme = LovTypography.build(brightness: brightness);
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor:
-          isDark ? SakColors.backgroundDark : SakColors.background,
+          isDark ? LovColors.backgroundDark : LovColors.background,
       textTheme: textTheme,
-      fontFamily: SakTypography.body,
+      fontFamily: LovTypography.body,
       splashFactory: InkSparkle.splashFactory,
       dividerTheme: DividerThemeData(
-        color: isDark ? SakColors.dividerDark : SakColors.divider,
+        color: isDark ? LovColors.dividerDark : LovColors.divider,
         thickness: 1,
         space: 1,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor:
-            isDark ? SakColors.backgroundDark : SakColors.background,
+            isDark ? LovColors.backgroundDark : LovColors.background,
         foregroundColor:
-            isDark ? SakColors.textPrimaryDark : SakColors.textPrimary,
+            isDark ? LovColors.textPrimaryDark : LovColors.textPrimary,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -61,51 +61,51 @@ class SakTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor:
-            isDark ? SakColors.surfaceMutedDark : SakColors.surfaceMuted,
+            isDark ? LovColors.surfaceMutedDark : LovColors.surfaceMuted,
         hintStyle: textTheme.bodyMedium?.copyWith(
           color: isDark
-              ? SakColors.textTertiaryDark
-              : SakColors.textTertiary,
+              ? LovColors.textTertiaryDark
+              : LovColors.textTertiary,
         ),
         labelStyle: textTheme.bodyMedium?.copyWith(
           color: isDark
-              ? SakColors.textSecondaryDark
-              : SakColors.textSecondary,
+              ? LovColors.textSecondaryDark
+              : LovColors.textSecondary,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(SakRadius.md),
+          borderRadius: BorderRadius.circular(LovRadius.md),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(SakRadius.md),
+          borderRadius: BorderRadius.circular(LovRadius.md),
           borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: SakSpace.lg,
-          vertical: SakSpace.md + 2,
+          horizontal: LovSpace.lg,
+          vertical: LovSpace.md + 2,
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor:
-            isDark ? SakColors.surfaceMutedDark : SakColors.textPrimary,
+            isDark ? LovColors.surfaceMutedDark : LovColors.textPrimary,
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: isDark
-              ? SakColors.textPrimaryDark
+              ? LovColors.textPrimaryDark
               : Colors.white,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(SakRadius.md),
+          borderRadius: BorderRadius.circular(LovRadius.md),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: isDark ? SakColors.surfaceDark : SakColors.surface,
+        color: isDark ? LovColors.surfaceDark : LovColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(SakRadius.md),
+          borderRadius: BorderRadius.circular(LovRadius.md),
           side: BorderSide(
-            color: isDark ? SakColors.dividerDark : SakColors.divider,
+            color: isDark ? LovColors.dividerDark : LovColors.divider,
           ),
         ),
         textStyle: textTheme.bodyMedium,

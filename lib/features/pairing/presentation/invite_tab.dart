@@ -44,7 +44,7 @@ class _InviteTabState extends ConsumerState<InviteTab> {
       final invite =
           await ref.read(pairingRepositoryProvider).createInvite();
       _startTicker(invite.expiresAt);
-      unawaited(SakHaptics.selection());
+      unawaited(LovHaptics.selection());
       if (mounted) setState(() => _invite = invite);
     } on AppFailure catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -85,7 +85,7 @@ class _InviteTabState extends ConsumerState<InviteTab> {
   Future<void> _copy(BuildContext context) async {
     if (_invite == null) return;
     await Clipboard.setData(ClipboardData(text: _invite!.code));
-    await SakHaptics.selection();
+    await LovHaptics.selection();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -101,12 +101,12 @@ class _InviteTabState extends ConsumerState<InviteTab> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
-        horizontal: SakSpace.lg,
-        vertical: SakSpace.xl,
+        horizontal: LovSpace.lg,
+        vertical: LovSpace.xl,
       ),
       child: AnimatedSwitcher(
-        duration: SakMotion.gentle,
-        switchInCurve: SakMotion.enter,
+        duration: LovMotion.gentle,
+        switchInCurve: LovMotion.enter,
         transitionBuilder: (child, anim) => FadeTransition(
           opacity: anim,
           child: SlideTransition(
@@ -160,8 +160,8 @@ class _EmptyInvite extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        const SizedBox(height: SakSpace.xl),
-        SakBreathing(
+        const SizedBox(height: LovSpace.xl),
+        LovBreathing(
           child: Container(
             width: 72,
             height: 72,
@@ -176,8 +176,8 @@ class _EmptyInvite extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: SakSpace.lg),
-        SakEnter(
+        const SizedBox(height: LovSpace.lg),
+        LovEnter(
           delay: const Duration(milliseconds: 60),
           child: Text(
             'Generate a code',
@@ -185,8 +185,8 @@ class _EmptyInvite extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: SakSpace.xs),
-        SakEnter(
+        const SizedBox(height: LovSpace.xs),
+        LovEnter(
           delay: const Duration(milliseconds: 120),
           child: Text(
             'One-time. Expires in ten minutes.',
@@ -196,10 +196,10 @@ class _EmptyInvite extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: SakSpace.xxxl),
-        SakEnter(
+        const SizedBox(height: LovSpace.xxxl),
+        LovEnter(
           delay: const Duration(milliseconds: 180),
-          child: SakButton(
+          child: LovButton(
             label: 'Generate code',
             icon: Icons.add_rounded,
             onPressed: loading ? null : onGenerate,
@@ -208,8 +208,8 @@ class _EmptyInvite extends StatelessWidget {
           ),
         ),
         if (error != null) ...[
-          const SizedBox(height: SakSpace.lg),
-          SakInlineError(message: error!),
+          const SizedBox(height: LovSpace.lg),
+          LovInlineError(message: error!),
         ],
       ],
     );
@@ -240,7 +240,7 @@ class _ActiveInvite extends StatelessWidget {
 
     return Column(
       children: [
-        SakEnter(
+        LovEnter(
           child: Text(
             'Share this code',
             style: theme.textTheme.labelMedium?.copyWith(
@@ -249,7 +249,7 @@ class _ActiveInvite extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: SakSpace.md),
+        const SizedBox(height: LovSpace.md),
 
         // Code with countdown ring around it
         GestureDetector(
@@ -259,36 +259,39 @@ class _ActiveInvite extends StatelessWidget {
             total: _inviteTtl,
             size: 220,
             strokeWidth: 2,
-            child: SakBreathing(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < chars.length; i++)
-                    SakEnter(
-                      delay: Duration(milliseconds: 60 + i * 40),
-                      duration: SakMotion.standard,
-                      slideFrom: 8,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1.5),
-                        child: Text(
-                          chars[i],
-                          style: theme.textTheme.displayLarge?.copyWith(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                            fontFeatures: const [FontFeature.tabularFigures()],
+            child: LovBreathing(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < chars.length; i++)
+                      LovEnter(
+                        delay: Duration(milliseconds: 60 + i * 40),
+                        duration: LovMotion.standard,
+                        slideFrom: 8,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                          child: Text(
+                            chars[i],
+                            style: theme.textTheme.displayLarge?.copyWith(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
 
-        const SizedBox(height: SakSpace.md),
-        SakEnter(
+        const SizedBox(height: LovSpace.md),
+        LovEnter(
           delay: const Duration(milliseconds: 320),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -300,7 +303,7 @@ class _ActiveInvite extends StatelessWidget {
                     ? theme.colorScheme.error
                     : theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
-              const SizedBox(width: SakSpace.xs),
+              const SizedBox(width: LovSpace.xs),
               Text(
                 'Expires in $remainingLabel',
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -314,24 +317,24 @@ class _ActiveInvite extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: SakSpace.xxl),
-        SakEnter(
+        const SizedBox(height: LovSpace.xxl),
+        LovEnter(
           delay: const Duration(milliseconds: 400),
-          child: SakCard(
-            variant: SakCardVariant.outlined,
-            padding: const EdgeInsets.all(SakSpace.xl),
+          child: LovCard(
+            variant: LovCardVariant.outlined,
+            padding: const EdgeInsets.all(LovSpace.xl),
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(SakSpace.md),
+                  padding: const EdgeInsets.all(LovSpace.md),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(SakRadius.md),
+                    borderRadius: BorderRadius.circular(LovRadius.md),
                   ),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0, end: 1),
                     duration: const Duration(milliseconds: 800),
-                    curve: SakMotion.enter,
+                    curve: LovMotion.enter,
                     builder: (context, t, child) => Opacity(
                       opacity: t,
                       child: Transform.scale(
@@ -340,7 +343,7 @@ class _ActiveInvite extends StatelessWidget {
                       ),
                     ),
                     child: QrImageView(
-                      data: 'sakinah://pair?code=${invite.code}',
+                      data: 'lovinity://pair?code=${invite.code}',
                       size: 180,
                       eyeStyle: const QrEyeStyle(
                         eyeShape: QrEyeShape.circle,
@@ -354,7 +357,7 @@ class _ActiveInvite extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: SakSpace.md),
+                const SizedBox(height: LovSpace.md),
                 Text(
                   'Scan from their device',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -365,25 +368,25 @@ class _ActiveInvite extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: SakSpace.lg),
-        SakEnter(
+        const SizedBox(height: LovSpace.lg),
+        LovEnter(
           delay: const Duration(milliseconds: 480),
           child: Row(
             children: [
               Expanded(
-                child: SakButton(
+                child: LovButton(
                   label: 'Copy code',
                   icon: Icons.copy_rounded,
-                  variant: SakButtonVariant.outlined,
+                  variant: LovButtonVariant.outlined,
                   onPressed: onCopy,
                   expand: true,
                 ),
               ),
-              const SizedBox(width: SakSpace.md),
+              const SizedBox(width: LovSpace.md),
               Expanded(
-                child: SakButton(
+                child: LovButton(
                   label: 'Cancel',
-                  variant: SakButtonVariant.text,
+                  variant: LovButtonVariant.text,
                   onPressed: onCancel,
                   expand: true,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../core/time/prayer_engine.dart';
 import '../../../shared/models/user_profile.dart';
@@ -18,6 +19,14 @@ final ownProfileProvider = FutureProvider<UserProfile?>((ref) async {
       .maybeSingle();
   if (row == null) return null;
   return UserProfile.fromRow(Map<String, dynamic>.from(row));
+});
+
+/// True when signed in but the profile has no gender yet (onboarding pending).
+final needsOnboardingProvider = Provider<bool>((ref) {
+  final session = ref.watch(authSessionProvider).asData?.value;
+  if (session == null) return false;
+  final profile = ref.watch(ownProfileProvider).asData?.value;
+  return profile != null && profile.gender == null;
 });
 
 /// Spouse profile (the other member of the couple).
@@ -94,6 +103,9 @@ String nextPrayerLabel(ScheduledPrayer? sp) {
   if (h == 0) return '${sp.prayer.displayName} in ${m}m';
   return '${sp.prayer.displayName} in ${h}h ${m}m';
 }
+
+/// Bump to force score recompute after a prayer is logged/unlogged.
+final prayerLogRefreshTickProvider = StateProvider<int>((ref) => 0);
 
 /// A friendly greeting adapted to time of day.
 String greetingForHour(int hour) {

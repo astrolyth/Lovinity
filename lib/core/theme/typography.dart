@@ -4,8 +4,8 @@ import 'tokens.dart';
 
 /// Space Grotesk (display) · Inter (body) · Amiri (Arabic).
 /// Bundled locally under [assets/fonts/].
-class SakTypography {
-  const SakTypography._();
+class LovTypography {
+  const LovTypography._();
 
   static const String display = 'SpaceGrotesk';
   static const String body = 'Inter';
@@ -13,11 +13,11 @@ class SakTypography {
 
   static TextTheme build({required Brightness brightness}) {
     final baseColor = brightness == Brightness.dark
-        ? SakColors.textPrimaryDark
-        : SakColors.textPrimary;
+        ? LovColors.textPrimaryDark
+        : LovColors.textPrimary;
     final subColor = brightness == Brightness.dark
-        ? SakColors.textSecondaryDark
-        : SakColors.textSecondary;
+        ? LovColors.textSecondaryDark
+        : LovColors.textSecondary;
 
     return TextTheme(
       // Display — Space Grotesk, tight-leading, negative tracking

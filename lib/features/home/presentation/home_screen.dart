@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/motion/motion.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/time/prayer_engine.dart';
 import '../../../core/widgets/widgets.dart';
-import '../../auth/domain/auth_controller.dart';
+import '../../chat/domain/chat_providers.dart';
+import '../../daily/presentation/question_card.dart';
+import '../../daily/presentation/verse_card.dart';
+import '../../duas/presentation/dua_card.dart';
+import '../../gratitude/presentation/gratitude_card.dart';
+import '../../location/data/location_service.dart';
+import '../../location/domain/location_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
+import '../../prayer_log/presentation/prayer_log_card.dart';
+import '../../scoring/presentation/scoreboard_card.dart';
 import '../domain/home_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -15,11 +24,36 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Mounted here (the always-present authed screen) rather than only in
+    // ChatScreen so a push that wakes the app syncs + decrypts new messages
+    // and updates the unread badge even while chat isn't open. Both are
+    // plain (non-autoDispose) `Provider<void>`s, so watching them from
+    // multiple widgets (here and chat_screen.dart) resolves to the same
+    // single underlying subscription -- no double pump.
+    ref.watch(inboxPumpProvider);
+    ref.watch(receiptPumpProvider);
+
     final theme = Theme.of(context);
     final own = ref.watch(ownProfileProvider);
     final spouse = ref.watch(spouseProfileProvider);
     final couple = ref.watch(currentCoupleProvider);
     final nextPrayer = ref.watch(nextPrayerProvider);
+    // Derive from the profile already watched above rather than watching the
+    // separate isWifeProvider — watching both the async profile and a sync
+    // provider derived from it in one build re-enters and throws
+    // "setState during build".
+    final isWife = own.asData?.value?.gender == 'female';
+    final locationState = ref.watch(locationControllerProvider);
+
+    // Surface a location-capture failure as a snackbar.
+    ref.listen(locationControllerProvider, (prev, next) {
+      final err = next.error;
+      if (next.hasError && err is LocationFailure) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(err.userMessage)));
+      }
+    });
 
     final now = DateTime.now();
     final greeting = greetingForHour(now.hour);
@@ -27,22 +61,22 @@ class HomeScreen extends ConsumerWidget {
     final spouseName = spouse.asData?.value?.displayName;
     final profileReady = own.hasValue;
 
-    return SakScaffold(
+    return LovScaffold(
       padded: false,
       showAppBar: false,
+      floatingActionButton: const _ChatFab(),
       child: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // Header: date + crescent + overflow menu
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                SakSpace.lg,
-                SakSpace.md,
-                SakSpace.lg,
-                SakSpace.md,
+                LovSpace.lg,
+                LovSpace.md,
+                LovSpace.lg,
+                LovSpace.md,
               ),
               sliver: SliverToBoxAdapter(
-                child: SakEnter(
+                child: LovEnter(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -51,29 +85,12 @@ class HomeScreen extends ConsumerWidget {
                         color: theme.colorScheme.onSurface
                             .withValues(alpha: 0.75),
                       ),
-                      const SizedBox(width: SakSpace.sm),
-                      Expanded(
-                        child: HijriDate(date: now),
-                      ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_horiz),
-                        onSelected: (v) {
-                          if (v == 'logout') {
-                            ref.read(authRepositoryProvider).signOut();
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          const PopupMenuItem<String>(
-                            value: 'logout',
-                            child: Row(
-                              children: [
-                                Icon(Icons.logout_outlined, size: 18),
-                                SizedBox(width: SakSpace.sm),
-                                Text('Sign out'),
-                              ],
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: LovSpace.sm),
+                      Expanded(child: HijriDate(date: now)),
+                      IconButton(
+                        icon: const Icon(Icons.settings_outlined),
+                        tooltip: 'Settings',
+                        onPressed: () => context.go('/home/settings'),
                       ),
                     ],
                   ),
@@ -81,12 +98,11 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            // Greeting
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: SakSpace.lg),
+              padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
               sliver: SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: SakSpace.sm),
+                  padding: const EdgeInsets.only(top: LovSpace.sm),
                   child: profileReady
                       ? _Greeting(
                           greeting: greeting,
@@ -98,80 +114,67 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            const SliverPadding(
-              padding: EdgeInsets.only(top: SakSpace.xxl),
-              sliver: SliverToBoxAdapter(child: SizedBox.shrink()),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: LovSpace.xxl),
             ),
 
             // Next prayer card
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: SakSpace.lg),
+              padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
               sliver: SliverToBoxAdapter(
-                child: SakEnter(
+                child: LovEnter(
                   delay: const Duration(milliseconds: 380),
                   child: profileReady
                       ? _NextPrayerCard(
                           next: nextPrayer,
-                          hasLocation: own.asData?.value?.latitude != null &&
-                              own.asData?.value?.longitude != null,
+                          hasLocation:
+                              own.asData?.value?.latitude != null &&
+                                  own.asData?.value?.longitude != null,
+                          busy: locationState.isLoading,
+                          onSetLocation: () => ref
+                              .read(locationControllerProvider.notifier)
+                              .captureAndSave(),
                         )
                       : const _NextPrayerSkeleton(),
                 ),
               ),
             ),
 
-            // Coming-next section
+            // Feature cards
             SliverPadding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: SakSpace.lg),
-              sliver: SliverToBoxAdapter(
-                child: SakEnter(
-                  delay: const Duration(milliseconds: 460),
-                  child: SakSectionHeader(
-                    title: 'Today, together',
-                    subtitle:
-                        'Coming next: shared prayer log, dua list, and a daily prompt.',
-                  ),
-                ),
+              padding: const EdgeInsets.fromLTRB(
+                LovSpace.lg,
+                LovSpace.xl,
+                LovSpace.lg,
+                LovSpace.xl,
               ),
-            ),
-
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: SakSpace.lg),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  SakStagger(
-                    initialDelay: const Duration(milliseconds: 540),
-                    stagger: const Duration(milliseconds: 70),
-                    children: const [
-                      _ComingSoonTile(
-                        icon: Icons.check_circle_outline_rounded,
-                        title: 'Shared prayer log',
-                        hint:
-                            "Check in for each ṣalāh. See your spouse's too.",
-                      ),
-                      SizedBox(height: SakSpace.md),
-                      _ComingSoonTile(
-                        icon: Icons.menu_book_outlined,
-                        title: 'Verse of the day',
-                        hint: 'A curated verse for spouses, every morning.',
-                      ),
-                      SizedBox(height: SakSpace.md),
-                      _ComingSoonTile(
-                        icon: Icons.forum_outlined,
-                        title: 'Private chat',
-                        hint:
-                            'End-to-end encrypted messages and voice notes.',
-                      ),
-                      SizedBox(height: SakSpace.md),
-                      _ComingSoonTile(
-                        icon: Icons.favorite_outline_rounded,
-                        title: 'Gratitude for your spouse',
-                        hint: 'One thing you appreciated today.',
-                      ),
+                  LovStagger(
+                    initialDelay: const Duration(milliseconds: 460),
+                    stagger: const Duration(milliseconds: 90),
+                    slideFrom: 16,
+                    children: [
+                      const PrayerLogCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const ScoreboardCard(),
+                      const SizedBox(height: LovSpace.md),
+                      if (isWife) ...[
+                        const _CycleTile(),
+                        const SizedBox(height: LovSpace.md),
+                      ],
+                      _CareTile(isWife: isWife),
+                      const SizedBox(height: LovSpace.md),
+                      const VerseCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const QuestionCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const GratitudeCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const DuaCard(),
                     ],
                   ),
-                  const SizedBox(height: SakSpace.xxxl),
+                  const SizedBox(height: LovSpace.xxxl),
                 ]),
               ),
             ),
@@ -179,13 +182,13 @@ class HomeScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: SakSpace.xxl),
-                  child: SakEnter(
+                  padding: const EdgeInsets.only(bottom: LovSpace.xxl),
+                  child: LovEnter(
                     delay: const Duration(milliseconds: 900),
                     child: Text(
                       couple.asData?.value == null
                           ? 'Getting things ready…'
-                          : 'You are paired.',
+                          : 'Together, today.',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
@@ -199,7 +202,6 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// Greeting reveal: first line "$greeting," then the name after a delay.
 class _Greeting extends StatelessWidget {
   const _Greeting({
     required this.greeting,
@@ -217,7 +219,7 @@ class _Greeting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SakEnter(
+        LovEnter(
           delay: const Duration(milliseconds: 120),
           child: Text(
             '$greeting,',
@@ -226,7 +228,7 @@ class _Greeting extends StatelessWidget {
             ),
           ),
         ),
-        SakEnter(
+        LovEnter(
           delay: const Duration(milliseconds: 260),
           slideFrom: 16,
           child: Text(
@@ -237,8 +239,8 @@ class _Greeting extends StatelessWidget {
           ),
         ),
         if (spouseName != null && spouseName!.isNotEmpty) ...[
-          const SizedBox(height: SakSpace.sm),
-          SakEnter(
+          const SizedBox(height: LovSpace.sm),
+          LovEnter(
             delay: const Duration(milliseconds: 380),
             child: Text(
               'You and $spouseName, together.',
@@ -261,21 +263,28 @@ class _GreetingSkeleton extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SakShimmerBox(width: 180, height: 42, radius: SakRadius.sm),
-        SizedBox(height: SakSpace.sm),
-        SakShimmerBox(width: 240, height: 42, radius: SakRadius.sm),
-        SizedBox(height: SakSpace.md),
-        SakShimmerBox(width: 200, height: 16, radius: SakRadius.xs),
+        LovShimmerBox(width: 180, height: 42, radius: LovRadius.sm),
+        SizedBox(height: LovSpace.sm),
+        LovShimmerBox(width: 240, height: 42, radius: LovRadius.sm),
+        SizedBox(height: LovSpace.md),
+        LovShimmerBox(width: 200, height: 16, radius: LovRadius.xs),
       ],
     );
   }
 }
 
 class _NextPrayerCard extends StatelessWidget {
-  const _NextPrayerCard({required this.next, required this.hasLocation});
+  const _NextPrayerCard({
+    required this.next,
+    required this.hasLocation,
+    this.busy = false,
+    this.onSetLocation,
+  });
 
   final ScheduledPrayer? next;
   final bool hasLocation;
+  final bool busy;
+  final VoidCallback? onSetLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -283,8 +292,9 @@ class _NextPrayerCard extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     if (!hasLocation) {
-      return SakCard(
-        variant: SakCardVariant.tonal,
+      return LovCard(
+        variant: LovCardVariant.tonal,
+        onTap: busy ? null : onSetLocation,
         child: Row(
           children: [
             Container(
@@ -293,7 +303,7 @@ class _NextPrayerCard extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: scheme.surface,
-                borderRadius: BorderRadius.circular(SakRadius.md),
+                borderRadius: BorderRadius.circular(LovRadius.md),
               ),
               child: Icon(
                 Icons.place_outlined,
@@ -301,7 +311,7 @@ class _NextPrayerCard extends StatelessWidget {
                 color: scheme.primary,
               ),
             ),
-            const SizedBox(width: SakSpace.md),
+            const SizedBox(width: LovSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,16 +320,25 @@ class _NextPrayerCard extends StatelessWidget {
                       style: theme.textTheme.titleMedium),
                   const SizedBox(height: 2),
                   Text(
-                    'So we can show your next prayer time.',
+                    busy
+                        ? 'Getting your location…'
+                        : 'So we can show your next prayer time.',
                     style: theme.textTheme.bodySmall,
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: scheme.onSurface.withValues(alpha: 0.4),
-            ),
+            if (busy)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              Icon(
+                Icons.chevron_right,
+                color: scheme.onSurface.withValues(alpha: 0.4),
+              ),
           ],
         ),
       );
@@ -328,12 +347,12 @@ class _NextPrayerCard extends StatelessWidget {
     final label = nextPrayerLabel(next);
     final name = next?.prayer.displayName ?? '';
 
-    return SakBreathing(
+    return LovBreathing(
       child: Container(
-        padding: const EdgeInsets.all(SakSpace.xl),
+        padding: const EdgeInsets.all(LovSpace.xl),
         decoration: BoxDecoration(
           color: scheme.primary,
-          borderRadius: BorderRadius.circular(SakRadius.lg),
+          borderRadius: BorderRadius.circular(LovRadius.lg),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,14 +364,14 @@ class _NextPrayerCard extends StatelessWidget {
                 letterSpacing: 1.4,
               ),
             ),
-            const SizedBox(height: SakSpace.md),
+            const SizedBox(height: LovSpace.md),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 AnimatedSwitcher(
-                  duration: SakMotion.gentle,
-                  switchInCurve: SakMotion.enter,
+                  duration: LovMotion.gentle,
+                  switchInCurve: LovMotion.enter,
                   transitionBuilder: (child, anim) => FadeTransition(
                     opacity: anim,
                     child: SlideTransition(
@@ -372,7 +391,7 @@ class _NextPrayerCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: SakSpace.md),
+                const SizedBox(width: LovSpace.md),
                 Expanded(
                   child: Text(
                     label.replaceFirst('$name ', ''),
@@ -385,13 +404,13 @@ class _NextPrayerCard extends StatelessWidget {
               ],
             ),
             if (next != null) ...[
-              const SizedBox(height: SakSpace.lg),
+              const SizedBox(height: LovSpace.lg),
               AnimatedSwitcher(
-                duration: SakMotion.slow,
+                duration: LovMotion.slow,
                 child: Text(
                   _arabicNameFor(name),
                   key: ValueKey('ar_$name'),
-                  style: SakTypography.arabicText(
+                  style: LovTypography.arabicText(
                     fontSize: 22,
                     color: scheme.onPrimary.withValues(alpha: 0.85),
                   ),
@@ -414,91 +433,150 @@ class _NextPrayerCard extends StatelessWidget {
       };
 }
 
-class _NextPrayerSkeleton extends StatelessWidget {
-  const _NextPrayerSkeleton();
+/// Messenger-style floating chat button with a live unread-message badge.
+class _ChatFab extends ConsumerWidget {
+  const _ChatFab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(unreadChatCountProvider).asData?.value ?? 0;
+    final fab = FloatingActionButton(
+      heroTag: 'chat-fab',
+      tooltip: 'Chat',
+      onPressed: () => context.go('/home/chat'),
+      child: const Icon(Icons.chat_bubble_rounded),
+    );
+    if (count <= 0) return fab;
+    return Badge(
+      label: Text(count > 99 ? '99+' : '$count'),
+      offset: const Offset(-6, 6),
+      child: fab,
+    );
+  }
+}
+
+class _CycleTile extends StatelessWidget {
+  const _CycleTile();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(SakSpace.xl),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(SakRadius.lg),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return LovCard(
+      variant: LovCardVariant.tonal,
+      onTap: () => context.go('/home/cycle'),
+      child: Row(
         children: [
-          SakShimmerBox(width: 100, height: 12, radius: SakRadius.xs),
-          SizedBox(height: SakSpace.lg),
-          SakShimmerBox(width: 200, height: 28, radius: SakRadius.sm),
-          SizedBox(height: SakSpace.lg),
-          SakShimmerBox(width: 80, height: 22, radius: SakRadius.xs),
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(LovRadius.md),
+            ),
+            child: Icon(
+              Icons.favorite_border,
+              size: 20,
+              color: scheme.primary,
+            ),
+          ),
+          const SizedBox(width: LovSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Cycle', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 2),
+                Text(
+                  'Track your cycle and see predictions.',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: scheme.onSurface.withValues(alpha: 0.4),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ComingSoonTile extends StatelessWidget {
-  const _ComingSoonTile({
-    required this.icon,
-    required this.title,
-    required this.hint,
-  });
+class _CareTile extends StatelessWidget {
+  const _CareTile({required this.isWife});
 
-  final IconData icon;
-  final String title;
-  final String hint;
+  final bool isWife;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SakCard(
-      variant: SakCardVariant.tonal,
-      padding: const EdgeInsets.all(SakSpace.lg),
+    final scheme = theme.colorScheme;
+    final label = isWife ? 'Caring for you' : 'Caring for her';
+    return LovCard(
+      variant: LovCardVariant.tonal,
+      onTap: () => context.go('/home/care'),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(SakRadius.md),
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(LovRadius.md),
             ),
-            child: Icon(icon, size: 18, color: theme.colorScheme.primary),
+            child: Icon(
+              Icons.spa_outlined,
+              size: 20,
+              color: scheme.primary,
+            ),
           ),
-          const SizedBox(width: SakSpace.md),
+          const SizedBox(width: LovSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: theme.textTheme.titleMedium),
+                Text(label, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 2),
                 Text(
-                  hint,
+                  'Guidance and gentle tips.',
                   style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: SakSpace.sm,
-              vertical: 2,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(SakRadius.sm),
-            ),
-            child: Text(
-              'Soon',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                letterSpacing: 0.6,
-              ),
-            ),
+          Icon(
+            Icons.chevron_right,
+            color: scheme.onSurface.withValues(alpha: 0.4),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NextPrayerSkeleton extends StatelessWidget {
+  const _NextPrayerSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(LovSpace.xl),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(LovRadius.lg),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LovShimmerBox(width: 100, height: 12, radius: LovRadius.xs),
+          SizedBox(height: LovSpace.lg),
+          LovShimmerBox(width: 200, height: 28, radius: LovRadius.sm),
+          SizedBox(height: LovSpace.lg),
+          LovShimmerBox(width: 80, height: 22, radius: LovRadius.xs),
         ],
       ),
     );

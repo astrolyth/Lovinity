@@ -2,7 +2,7 @@ import 'package:adhan/adhan.dart' as adhan;
 import 'package:hijri/hijri_calendar.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-/// The five daily prayers Sakīnah tracks.
+/// The five daily prayers Lovinity tracks.
 ///
 /// The upstream [adhan.Prayer] enum also includes `sunrise` and `none`;
 /// this app deliberately only surfaces the five obligatory salāt.
@@ -36,7 +36,7 @@ enum Madhab { shafi, hanafi }
 
 /// Which set of Fajr/Isha angles to use.
 ///
-/// Wraps [adhan.CalculationMethod]. Sakīnah exposes the common presets;
+/// Wraps [adhan.CalculationMethod]. Lovinity exposes the common presets;
 /// users can extend later.
 enum CalcMethod {
   muslimWorldLeague,
@@ -154,7 +154,19 @@ adhan.CalculationMethod _mapMethod(CalcMethod m) => switch (m) {
       CalcMethod.tehran => adhan.CalculationMethod.tehran,
     };
 
+/// adhan, given a `utcOffset`, returns the time already shifted into that
+/// offset — i.e. the location's wall clock — but still flagged `isUtc: true`.
+/// Converting it as an instant would apply the offset a second time (Mecca
+/// Dhuhr 12:22 would become 15:22). Rebuild it from its calendar fields so the
+/// wall clock is preserved and `location` resolves the real offset/DST.
 tz.TZDateTime _toTz(DateTime dt, tz.Location location) {
-  final utc = dt.toUtc();
-  return tz.TZDateTime.from(utc, location);
+  return tz.TZDateTime(
+    location,
+    dt.year,
+    dt.month,
+    dt.day,
+    dt.hour,
+    dt.minute,
+    dt.second,
+  );
 }
