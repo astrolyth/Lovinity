@@ -24,6 +24,15 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Mounted here (the always-present authed screen) rather than only in
+    // ChatScreen so a push that wakes the app syncs + decrypts new messages
+    // and updates the unread badge even while chat isn't open. Both are
+    // plain (non-autoDispose) `Provider<void>`s, so watching them from
+    // multiple widgets (here and chat_screen.dart) resolves to the same
+    // single underlying subscription -- no double pump.
+    ref.watch(inboxPumpProvider);
+    ref.watch(receiptPumpProvider);
+
     final theme = Theme.of(context);
     final own = ref.watch(ownProfileProvider);
     final spouse = ref.watch(spouseProfileProvider);

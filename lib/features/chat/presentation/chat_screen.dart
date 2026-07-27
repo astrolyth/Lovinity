@@ -31,11 +31,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Keeps the inbox receive loop alive for as long as this screen is on
-    // screen; no-op until chatServiceProvider resolves to a real service.
+    // Also mounted app-wide in home_screen.dart so syncing/decrypting keeps
+    // working while chat isn't open (e.g. a push wakes the app). Watching
+    // these plain (non-autoDispose) providers here too is redundant, not
+    // duplicative: Riverpod resolves both watches to the same single
+    // instance/subscription, so this is just belt-and-suspenders for the
+    // case chat is reached without home ever having built.
     ref.watch(inboxPumpProvider);
-    // Keeps the sender-side receipt pump alive so delivered/read ticks
-    // update on this device; no-op until chatServiceProvider resolves.
     ref.watch(receiptPumpProvider);
 
     // Mark incoming messages read whenever the conversation changes while this

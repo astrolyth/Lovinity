@@ -1,9 +1,12 @@
 // lib/core/crypto/crypto_providers.dart
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/domain/auth_controller.dart'
     show authSessionProvider, authRepositoryProvider, keyVaultProvider;
 import '../../shared/providers/supabase_provider.dart';
+import '../notifications/notification_providers.dart';
 import '../storage/signal_db.dart';
 import 'prekey_bundle_source.dart';
 import 'signal_registration.dart';
@@ -78,7 +81,27 @@ final signalSessionServiceProvider =
 /// user signing in is detected and wiped by [ensureRegisteredProvider]'s
 /// account-switch guard, so this only needs to clear the auth session.
 final signOutProvider = Provider<Future<void> Function()>((ref) {
-  return () => ref.read(authRepositoryProvider).signOut();
+  return () async {
+    // Unregister the push token BEFORE clearing the session: it needs the
+    // still-live session to call `unregister_push_token`. Best-effort --
+    // PushService already no-ops/swallows when push is unavailable, but this
+    // guard is kept too so a misbehaving fake/future PushService can never
+    // block sign-out.
+    try {
+      await ref
+          .read(pushServiceProvider)
+          .unregisterToken(ref.read(supabaseClientProvider));
+    } catch (e, st) {
+      developer.log(
+        'push token unregistration failed (sign-out proceeds anyway)',
+        name: 'signOutProvider',
+        error: e,
+        stackTrace: st,
+      );
+    }
+
+    await ref.read(authRepositoryProvider).signOut();
+  };
 });
 
 /// Registers this device (idempotent) + tops up prekeys. Call after auth.
@@ -99,10 +122,30 @@ final ensureRegisteredProvider = Provider<Future<int> Function()>((ref) {
       await guardAccountSwitch(db: db, vault: vault, selfUserId: selfUserId);
     }
 
-    return ensureRegistered(
+    final deviceNum = await ensureRegistered(
       db: db,
       vault: vault,
       registrar: ref.read(deviceRegistrarProvider),
     );
+
+    // Best-effort push token registration, after device registration has
+    // already succeeded. PushService already no-ops/swallows internally when
+    // push is unavailable, but this guard is kept too so a misbehaving
+    // fake/future PushService can never turn a successful device
+    // registration into a failed one.
+    try {
+      await ref
+          .read(pushServiceProvider)
+          .registerToken(ref.read(supabaseClientProvider));
+    } catch (e, st) {
+      developer.log(
+        'push token registration failed (device registration still succeeded)',
+        name: 'ensureRegisteredProvider',
+        error: e,
+        stackTrace: st,
+      );
+    }
+
+    return deviceNum;
   };
 });

@@ -12,8 +12,12 @@ import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
 import 'package:lovinity/core/crypto/signal_registration.dart';
 import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/notifications/notification_providers.dart';
+import 'package:lovinity/core/notifications/push_service.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
+import 'package:lovinity/features/auth/data/auth_repository.dart';
 import 'package:lovinity/features/auth/domain/auth_controller.dart';
+import 'package:lovinity/shared/providers/supabase_provider.dart';
 
 /// No-op stand-in for the real Supabase-backed bundle source. Real
 /// [SupabasePreKeyBundleSource] needs a live [SupabaseClient], which
@@ -34,6 +38,12 @@ class _MockSession extends Mock implements Session {}
 
 class _MockUser extends Mock implements User {}
 
+class _MockAuthRepo extends Mock implements AuthRepository {}
+
+class _MockPushService extends Mock implements PushService {}
+
+class _MockSupabaseClient extends Mock implements SupabaseClient {}
+
 /// Wraps a mocktail [Session]/[User] pair so tests can drive
 /// [authSessionProvider] to a signed-in state — same pattern as
 /// test/features/location/location_controller_test.dart.
@@ -52,6 +62,15 @@ SignalDb _memoryDb(Ref ref) {
 }
 
 void main() {
+  setUpAll(() {
+    // Only needed for the push-token-wiring tests below, which use
+    // `any()`/`when(...unregisterToken/registerToken(any()))` on a
+    // SupabaseClient parameter -- mocktail needs a fallback instance
+    // registered up front to satisfy that in sound null-safe mode, even
+    // though this fake is never actually interacted with.
+    registerFallbackValue(_MockSupabaseClient());
+  });
+
   test('signalDbProvider is a singleton within a container', () {
     // Overridden with an in-memory SignalDb, not the bare (default)
     // ProviderContainer the brief sketched: the real signalDbProvider opens
@@ -146,6 +165,114 @@ void main() {
         reason: 'self-heal must register the device');
     expect(await vault.readDeviceNum(), isNotNull,
         reason: 'the device number is persisted by the self-heal registration');
+  });
+
+  group('ensureRegisteredProvider push token wiring', () {
+    test(
+        'registers the push token via PushService after device registration succeeds',
+        () async {
+      final vault = KeyVault(InMemorySecureStore());
+      final registrar = _FakeRegistrar();
+      final pushService = _MockPushService();
+      final client = _MockSupabaseClient();
+      final authRepo = _MockAuthRepo();
+      final user = _MockUser();
+      when(() => user.id).thenReturn('test-user');
+      when(() => authRepo.currentUser).thenReturn(user);
+      when(() => pushService.registerToken(any())).thenAnswer((_) async {});
+
+      final c = ProviderContainer(overrides: [
+        signalDbProvider.overrideWith(_memoryDb),
+        deviceRegistrarProvider.overrideWithValue(registrar),
+        keyVaultProvider.overrideWithValue(vault),
+        authRepositoryProvider.overrideWithValue(authRepo),
+        supabaseClientProvider.overrideWithValue(client),
+        pushServiceProvider.overrideWithValue(pushService),
+      ]);
+      addTearDown(c.dispose);
+
+      final deviceNum = await c.read(ensureRegisteredProvider)();
+
+      expect(deviceNum, 1, reason: 'the real device-num return is unchanged');
+      verify(() => pushService.registerToken(client)).called(1);
+    });
+
+    test(
+        'device registration still succeeds when PushService.registerToken throws',
+        () async {
+      final vault = KeyVault(InMemorySecureStore());
+      final registrar = _FakeRegistrar();
+      final pushService = _MockPushService();
+      final client = _MockSupabaseClient();
+      final authRepo = _MockAuthRepo();
+      when(() => authRepo.currentUser).thenReturn(null);
+      when(() => pushService.registerToken(any()))
+          .thenThrow(Exception('boom'));
+
+      final c = ProviderContainer(overrides: [
+        signalDbProvider.overrideWith(_memoryDb),
+        deviceRegistrarProvider.overrideWithValue(registrar),
+        keyVaultProvider.overrideWithValue(vault),
+        authRepositoryProvider.overrideWithValue(authRepo),
+        supabaseClientProvider.overrideWithValue(client),
+        pushServiceProvider.overrideWithValue(pushService),
+      ]);
+      addTearDown(c.dispose);
+
+      final deviceNum = await c.read(ensureRegisteredProvider)();
+
+      expect(deviceNum, 1,
+          reason: 'a push-token failure must never fail device registration');
+    });
+  });
+
+  group('signOutProvider push token wiring', () {
+    test('unregisters the push token before signing out', () async {
+      final pushService = _MockPushService();
+      final client = _MockSupabaseClient();
+      final authRepo = _MockAuthRepo();
+      final calls = <String>[];
+      when(() => pushService.unregisterToken(any())).thenAnswer((_) async {
+        calls.add('unregister');
+      });
+      when(() => authRepo.signOut()).thenAnswer((_) async {
+        calls.add('signOut');
+      });
+
+      final c = ProviderContainer(overrides: [
+        authRepositoryProvider.overrideWithValue(authRepo),
+        supabaseClientProvider.overrideWithValue(client),
+        pushServiceProvider.overrideWithValue(pushService),
+      ]);
+      addTearDown(c.dispose);
+
+      await c.read(signOutProvider)();
+
+      verify(() => pushService.unregisterToken(client)).called(1);
+      verify(() => authRepo.signOut()).called(1);
+      expect(calls, ['unregister', 'signOut'],
+          reason: 'unregister needs the still-live session, before signOut');
+    });
+
+    test('still signs out when PushService.unregisterToken throws', () async {
+      final pushService = _MockPushService();
+      final client = _MockSupabaseClient();
+      final authRepo = _MockAuthRepo();
+      when(() => pushService.unregisterToken(any()))
+          .thenThrow(Exception('boom'));
+      when(() => authRepo.signOut()).thenAnswer((_) async {});
+
+      final c = ProviderContainer(overrides: [
+        authRepositoryProvider.overrideWithValue(authRepo),
+        supabaseClientProvider.overrideWithValue(client),
+        pushServiceProvider.overrideWithValue(pushService),
+      ]);
+      addTearDown(c.dispose);
+
+      await c.read(signOutProvider)();
+
+      verify(() => authRepo.signOut()).called(1);
+    });
   });
 }
 
