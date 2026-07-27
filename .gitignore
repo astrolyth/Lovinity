@@ -50,3 +50,12 @@ supabase/.temp/
 # Cloud Supabase dart-define config (real values)
 config/supabase.cloud.json
 config/supabase.local.json
+
+# Firebase native config -- per-project secrets the operator adds locally,
+# never committed (push notifications degrade gracefully without them; see
+# lib/core/notifications/push_service.dart and android/app/build.gradle.kts).
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+**/*serviceAccount*.json
+**/*service-account*.json

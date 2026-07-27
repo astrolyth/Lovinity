@@ -1,10 +1,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Runtime-requested on Android 13+ (API 33) before push notifications
+         can be shown; PushService.init() calls requestPermission(). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="Lovinity"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Default FCM notification channel/icon, read by the platform for
+             background/data-only messages shown outside PushService's own
+             flutter_local_notifications channel (id "chat", created at
+             runtime in PushService._initLocalNotifications). Keeping a
+             default here avoids Android falling back to an ugly system icon
+             for any notification shown before that channel exists. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="chat" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
