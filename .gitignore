@@ -59,3 +59,6 @@ ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
 **/*serviceAccount*.json
 **/*service-account*.json
+
+# Claude Code local settings (personal/machine-specific)
+.claude/settings.local.json
