@@ -68,6 +68,12 @@
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Lovinity uses your location once to calculate accurate prayer times for where you are.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Lovinity needs access to your photo library to share photos and videos with your spouse.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Lovinity needs access to your camera to take photos and videos to share with your spouse.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Lovinity needs access to your microphone to record videos to share with your spouse.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 		<key>UIBackgroundModes</key>
