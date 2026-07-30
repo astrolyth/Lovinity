@@ -16,6 +16,11 @@ abstract class MediaCache {
   /// Writes [bytes] to local storage keyed by [key] (the chat message id)
   /// and returns the absolute file path.
   Future<String> write(String key, Uint8List bytes);
+
+  /// Deletes all cached decrypted attachment files. Called on account switch
+  /// so a different user signing in on this device never has access to the
+  /// previous user's decrypted photos/videos.
+  Future<void> clear();
 }
 
 class FileMediaCache implements MediaCache {
@@ -26,5 +31,14 @@ class FileMediaCache implements MediaCache {
     await file.parent.create(recursive: true);
     await file.writeAsBytes(bytes);
     return file.path;
+  }
+
+  @override
+  Future<void> clear() async {
+    final dir = await getApplicationSupportDirectory();
+    final mediaDir = Directory('${dir.path}/chat_media');
+    if (await mediaDir.exists()) {
+      await mediaDir.delete(recursive: true);
+    }
   }
 }

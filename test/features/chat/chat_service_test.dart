@@ -223,11 +223,18 @@ class _FakeChatRepo extends ChatRepository {
 
 class _FakeMediaCache implements MediaCache {
   final Map<String, Uint8List> written = {};
+  bool cleared = false;
 
   @override
   Future<String> write(String key, Uint8List bytes) async {
     written[key] = bytes;
     return 'fake-cache/$key';
+  }
+
+  @override
+  Future<void> clear() async {
+    cleared = true;
+    written.clear();
   }
 }
 

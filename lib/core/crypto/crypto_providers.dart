@@ -7,6 +7,7 @@ import '../../features/auth/domain/auth_controller.dart'
     show authSessionProvider, authRepositoryProvider, keyVaultProvider;
 import '../../shared/providers/supabase_provider.dart';
 import '../notifications/notification_providers.dart';
+import '../storage/media_cache.dart';
 import '../storage/signal_db.dart';
 import 'prekey_bundle_source.dart';
 import 'signal_registration.dart';
@@ -52,7 +53,8 @@ final signalSessionServiceProvider =
   // Account-switch guard: also runs at sign-in via ensureRegisteredProvider
   // (before navigation), but enforced here too so a restored/rebuilt session
   // can never build a service over another user's local data.
-  await guardAccountSwitch(db: db, vault: vault, selfUserId: selfUserId);
+  await guardAccountSwitch(
+      db: db, vault: vault, cache: FileMediaCache(), selfUserId: selfUserId);
 
   // If this device isn't registered yet, register it now. That happens for a
   // session restored on launch or if the first registration failed.
@@ -119,7 +121,8 @@ final ensureRegisteredProvider = Provider<Future<int> Function()>((ref) {
     final selfUserId = ref.read(authRepositoryProvider).currentUser?.id;
 
     if (selfUserId != null) {
-      await guardAccountSwitch(db: db, vault: vault, selfUserId: selfUserId);
+      await guardAccountSwitch(
+          db: db, vault: vault, cache: FileMediaCache(), selfUserId: selfUserId);
     }
 
     final deviceNum = await ensureRegistered(
