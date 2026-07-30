@@ -116,6 +116,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               : message.body;
                         });
                       },
+                      onDownloadAttachment: (id) => ref
+                          .read(chatServiceProvider)
+                          .value
+                          ?.downloadAttachment(id),
                     );
                   },
                 );
