@@ -8,6 +8,7 @@ import '../../pairing/domain/pairing_providers.dart';
 import '../data/chat_repository.dart';
 import '../data/chat_store.dart';
 import '../data/typing_channel.dart';
+import '../presentation/media_picker.dart';
 import 'chat_service.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -17,6 +18,8 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 final chatStoreProvider = Provider<ChatStore>((ref) {
   return ChatStore(ref.watch(signalDbProvider));
 });
+
+final mediaPickerProvider = Provider<MediaPicker>((ref) => DevicePicker());
 
 /// Null until signed in + paired + this device is registered.
 ///
