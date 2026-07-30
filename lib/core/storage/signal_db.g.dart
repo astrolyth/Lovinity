@@ -1598,6 +1598,131 @@ class $ChatMessagesTable extends ChatMessages
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _attachmentKindMeta = const VerificationMeta(
+    'attachmentKind',
+  );
+  @override
+  late final GeneratedColumn<String> attachmentKind = GeneratedColumn<String>(
+    'attachment_kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _widthMeta = const VerificationMeta('width');
+  @override
+  late final GeneratedColumn<int> width = GeneratedColumn<int>(
+    'width',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _heightMeta = const VerificationMeta('height');
+  @override
+  late final GeneratedColumn<int> height = GeneratedColumn<int>(
+    'height',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationMsMeta = const VerificationMeta(
+    'durationMs',
+  );
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+    'duration_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _storageKeyMeta = const VerificationMeta(
+    'storageKey',
+  );
+  @override
+  late final GeneratedColumn<String> storageKey = GeneratedColumn<String>(
+    'storage_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _encKeyMeta = const VerificationMeta('encKey');
+  @override
+  late final GeneratedColumn<Uint8List> encKey = GeneratedColumn<Uint8List>(
+    'enc_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nonceMeta = const VerificationMeta('nonce');
+  @override
+  late final GeneratedColumn<Uint8List> nonce = GeneratedColumn<Uint8List>(
+    'nonce',
+    aliasedName,
+    true,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _thumbnailBytesMeta = const VerificationMeta(
+    'thumbnailBytes',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> thumbnailBytes =
+      GeneratedColumn<Uint8List>(
+        'thumbnail_bytes',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _localMediaPathMeta = const VerificationMeta(
+    'localMediaPath',
+  );
+  @override
+  late final GeneratedColumn<String> localMediaPath = GeneratedColumn<String>(
+    'local_media_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _downloadStatusMeta = const VerificationMeta(
+    'downloadStatus',
+  );
+  @override
+  late final GeneratedColumn<String> downloadStatus = GeneratedColumn<String>(
+    'download_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1608,6 +1733,18 @@ class $ChatMessagesTable extends ChatMessages
     deliveredAt,
     readAt,
     status,
+    attachmentKind,
+    mimeType,
+    sizeBytes,
+    width,
+    height,
+    durationMs,
+    storageKey,
+    encKey,
+    nonce,
+    thumbnailBytes,
+    localMediaPath,
+    downloadStatus,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1680,6 +1817,90 @@ class $ChatMessagesTable extends ChatMessages
     } else if (isInserting) {
       context.missing(_statusMeta);
     }
+    if (data.containsKey('attachment_kind')) {
+      context.handle(
+        _attachmentKindMeta,
+        attachmentKind.isAcceptableOrUnknown(
+          data['attachment_kind']!,
+          _attachmentKindMeta,
+        ),
+      );
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    }
+    if (data.containsKey('width')) {
+      context.handle(
+        _widthMeta,
+        width.isAcceptableOrUnknown(data['width']!, _widthMeta),
+      );
+    }
+    if (data.containsKey('height')) {
+      context.handle(
+        _heightMeta,
+        height.isAcceptableOrUnknown(data['height']!, _heightMeta),
+      );
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+        _durationMsMeta,
+        durationMs.isAcceptableOrUnknown(data['duration_ms']!, _durationMsMeta),
+      );
+    }
+    if (data.containsKey('storage_key')) {
+      context.handle(
+        _storageKeyMeta,
+        storageKey.isAcceptableOrUnknown(data['storage_key']!, _storageKeyMeta),
+      );
+    }
+    if (data.containsKey('enc_key')) {
+      context.handle(
+        _encKeyMeta,
+        encKey.isAcceptableOrUnknown(data['enc_key']!, _encKeyMeta),
+      );
+    }
+    if (data.containsKey('nonce')) {
+      context.handle(
+        _nonceMeta,
+        nonce.isAcceptableOrUnknown(data['nonce']!, _nonceMeta),
+      );
+    }
+    if (data.containsKey('thumbnail_bytes')) {
+      context.handle(
+        _thumbnailBytesMeta,
+        thumbnailBytes.isAcceptableOrUnknown(
+          data['thumbnail_bytes']!,
+          _thumbnailBytesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('local_media_path')) {
+      context.handle(
+        _localMediaPathMeta,
+        localMediaPath.isAcceptableOrUnknown(
+          data['local_media_path']!,
+          _localMediaPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('download_status')) {
+      context.handle(
+        _downloadStatusMeta,
+        downloadStatus.isAcceptableOrUnknown(
+          data['download_status']!,
+          _downloadStatusMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1721,6 +1942,54 @@ class $ChatMessagesTable extends ChatMessages
         DriftSqlType.string,
         data['${effectivePrefix}status'],
       )!,
+      attachmentKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}attachment_kind'],
+      ),
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      ),
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      ),
+      width: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}width'],
+      ),
+      height: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}height'],
+      ),
+      durationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_ms'],
+      ),
+      storageKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}storage_key'],
+      ),
+      encKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}enc_key'],
+      ),
+      nonce: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}nonce'],
+      ),
+      thumbnailBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}thumbnail_bytes'],
+      ),
+      localMediaPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_media_path'],
+      ),
+      downloadStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}download_status'],
+      ),
     );
   }
 
@@ -1739,6 +2008,18 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
   final DateTime? deliveredAt;
   final DateTime? readAt;
   final String status;
+  final String? attachmentKind;
+  final String? mimeType;
+  final int? sizeBytes;
+  final int? width;
+  final int? height;
+  final int? durationMs;
+  final String? storageKey;
+  final Uint8List? encKey;
+  final Uint8List? nonce;
+  final Uint8List? thumbnailBytes;
+  final String? localMediaPath;
+  final String? downloadStatus;
   const ChatMessage({
     required this.id,
     required this.senderId,
@@ -1748,6 +2029,18 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
     this.deliveredAt,
     this.readAt,
     required this.status,
+    this.attachmentKind,
+    this.mimeType,
+    this.sizeBytes,
+    this.width,
+    this.height,
+    this.durationMs,
+    this.storageKey,
+    this.encKey,
+    this.nonce,
+    this.thumbnailBytes,
+    this.localMediaPath,
+    this.downloadStatus,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1768,6 +2061,42 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
       map['read_at'] = Variable<DateTime>(readAt);
     }
     map['status'] = Variable<String>(status);
+    if (!nullToAbsent || attachmentKind != null) {
+      map['attachment_kind'] = Variable<String>(attachmentKind);
+    }
+    if (!nullToAbsent || mimeType != null) {
+      map['mime_type'] = Variable<String>(mimeType);
+    }
+    if (!nullToAbsent || sizeBytes != null) {
+      map['size_bytes'] = Variable<int>(sizeBytes);
+    }
+    if (!nullToAbsent || width != null) {
+      map['width'] = Variable<int>(width);
+    }
+    if (!nullToAbsent || height != null) {
+      map['height'] = Variable<int>(height);
+    }
+    if (!nullToAbsent || durationMs != null) {
+      map['duration_ms'] = Variable<int>(durationMs);
+    }
+    if (!nullToAbsent || storageKey != null) {
+      map['storage_key'] = Variable<String>(storageKey);
+    }
+    if (!nullToAbsent || encKey != null) {
+      map['enc_key'] = Variable<Uint8List>(encKey);
+    }
+    if (!nullToAbsent || nonce != null) {
+      map['nonce'] = Variable<Uint8List>(nonce);
+    }
+    if (!nullToAbsent || thumbnailBytes != null) {
+      map['thumbnail_bytes'] = Variable<Uint8List>(thumbnailBytes);
+    }
+    if (!nullToAbsent || localMediaPath != null) {
+      map['local_media_path'] = Variable<String>(localMediaPath);
+    }
+    if (!nullToAbsent || downloadStatus != null) {
+      map['download_status'] = Variable<String>(downloadStatus);
+    }
     return map;
   }
 
@@ -1787,6 +2116,42 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
           ? const Value.absent()
           : Value(readAt),
       status: Value(status),
+      attachmentKind: attachmentKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(attachmentKind),
+      mimeType: mimeType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mimeType),
+      sizeBytes: sizeBytes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sizeBytes),
+      width: width == null && nullToAbsent
+          ? const Value.absent()
+          : Value(width),
+      height: height == null && nullToAbsent
+          ? const Value.absent()
+          : Value(height),
+      durationMs: durationMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationMs),
+      storageKey: storageKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(storageKey),
+      encKey: encKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(encKey),
+      nonce: nonce == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nonce),
+      thumbnailBytes: thumbnailBytes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thumbnailBytes),
+      localMediaPath: localMediaPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localMediaPath),
+      downloadStatus: downloadStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(downloadStatus),
     );
   }
 
@@ -1804,6 +2169,18 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
       deliveredAt: serializer.fromJson<DateTime?>(json['deliveredAt']),
       readAt: serializer.fromJson<DateTime?>(json['readAt']),
       status: serializer.fromJson<String>(json['status']),
+      attachmentKind: serializer.fromJson<String?>(json['attachmentKind']),
+      mimeType: serializer.fromJson<String?>(json['mimeType']),
+      sizeBytes: serializer.fromJson<int?>(json['sizeBytes']),
+      width: serializer.fromJson<int?>(json['width']),
+      height: serializer.fromJson<int?>(json['height']),
+      durationMs: serializer.fromJson<int?>(json['durationMs']),
+      storageKey: serializer.fromJson<String?>(json['storageKey']),
+      encKey: serializer.fromJson<Uint8List?>(json['encKey']),
+      nonce: serializer.fromJson<Uint8List?>(json['nonce']),
+      thumbnailBytes: serializer.fromJson<Uint8List?>(json['thumbnailBytes']),
+      localMediaPath: serializer.fromJson<String?>(json['localMediaPath']),
+      downloadStatus: serializer.fromJson<String?>(json['downloadStatus']),
     );
   }
   @override
@@ -1818,6 +2195,18 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
       'deliveredAt': serializer.toJson<DateTime?>(deliveredAt),
       'readAt': serializer.toJson<DateTime?>(readAt),
       'status': serializer.toJson<String>(status),
+      'attachmentKind': serializer.toJson<String?>(attachmentKind),
+      'mimeType': serializer.toJson<String?>(mimeType),
+      'sizeBytes': serializer.toJson<int?>(sizeBytes),
+      'width': serializer.toJson<int?>(width),
+      'height': serializer.toJson<int?>(height),
+      'durationMs': serializer.toJson<int?>(durationMs),
+      'storageKey': serializer.toJson<String?>(storageKey),
+      'encKey': serializer.toJson<Uint8List?>(encKey),
+      'nonce': serializer.toJson<Uint8List?>(nonce),
+      'thumbnailBytes': serializer.toJson<Uint8List?>(thumbnailBytes),
+      'localMediaPath': serializer.toJson<String?>(localMediaPath),
+      'downloadStatus': serializer.toJson<String?>(downloadStatus),
     };
   }
 
@@ -1830,6 +2219,18 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
     Value<DateTime?> deliveredAt = const Value.absent(),
     Value<DateTime?> readAt = const Value.absent(),
     String? status,
+    Value<String?> attachmentKind = const Value.absent(),
+    Value<String?> mimeType = const Value.absent(),
+    Value<int?> sizeBytes = const Value.absent(),
+    Value<int?> width = const Value.absent(),
+    Value<int?> height = const Value.absent(),
+    Value<int?> durationMs = const Value.absent(),
+    Value<String?> storageKey = const Value.absent(),
+    Value<Uint8List?> encKey = const Value.absent(),
+    Value<Uint8List?> nonce = const Value.absent(),
+    Value<Uint8List?> thumbnailBytes = const Value.absent(),
+    Value<String?> localMediaPath = const Value.absent(),
+    Value<String?> downloadStatus = const Value.absent(),
   }) => ChatMessage(
     id: id ?? this.id,
     senderId: senderId ?? this.senderId,
@@ -1841,6 +2242,26 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
     deliveredAt: deliveredAt.present ? deliveredAt.value : this.deliveredAt,
     readAt: readAt.present ? readAt.value : this.readAt,
     status: status ?? this.status,
+    attachmentKind: attachmentKind.present
+        ? attachmentKind.value
+        : this.attachmentKind,
+    mimeType: mimeType.present ? mimeType.value : this.mimeType,
+    sizeBytes: sizeBytes.present ? sizeBytes.value : this.sizeBytes,
+    width: width.present ? width.value : this.width,
+    height: height.present ? height.value : this.height,
+    durationMs: durationMs.present ? durationMs.value : this.durationMs,
+    storageKey: storageKey.present ? storageKey.value : this.storageKey,
+    encKey: encKey.present ? encKey.value : this.encKey,
+    nonce: nonce.present ? nonce.value : this.nonce,
+    thumbnailBytes: thumbnailBytes.present
+        ? thumbnailBytes.value
+        : this.thumbnailBytes,
+    localMediaPath: localMediaPath.present
+        ? localMediaPath.value
+        : this.localMediaPath,
+    downloadStatus: downloadStatus.present
+        ? downloadStatus.value
+        : this.downloadStatus,
   );
   ChatMessage copyWithCompanion(ChatMessagesCompanion data) {
     return ChatMessage(
@@ -1856,6 +2277,30 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
           : this.deliveredAt,
       readAt: data.readAt.present ? data.readAt.value : this.readAt,
       status: data.status.present ? data.status.value : this.status,
+      attachmentKind: data.attachmentKind.present
+          ? data.attachmentKind.value
+          : this.attachmentKind,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      width: data.width.present ? data.width.value : this.width,
+      height: data.height.present ? data.height.value : this.height,
+      durationMs: data.durationMs.present
+          ? data.durationMs.value
+          : this.durationMs,
+      storageKey: data.storageKey.present
+          ? data.storageKey.value
+          : this.storageKey,
+      encKey: data.encKey.present ? data.encKey.value : this.encKey,
+      nonce: data.nonce.present ? data.nonce.value : this.nonce,
+      thumbnailBytes: data.thumbnailBytes.present
+          ? data.thumbnailBytes.value
+          : this.thumbnailBytes,
+      localMediaPath: data.localMediaPath.present
+          ? data.localMediaPath.value
+          : this.localMediaPath,
+      downloadStatus: data.downloadStatus.present
+          ? data.downloadStatus.value
+          : this.downloadStatus,
     );
   }
 
@@ -1869,7 +2314,19 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
           ..write('createdAt: $createdAt, ')
           ..write('deliveredAt: $deliveredAt, ')
           ..write('readAt: $readAt, ')
-          ..write('status: $status')
+          ..write('status: $status, ')
+          ..write('attachmentKind: $attachmentKind, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('width: $width, ')
+          ..write('height: $height, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('storageKey: $storageKey, ')
+          ..write('encKey: $encKey, ')
+          ..write('nonce: $nonce, ')
+          ..write('thumbnailBytes: $thumbnailBytes, ')
+          ..write('localMediaPath: $localMediaPath, ')
+          ..write('downloadStatus: $downloadStatus')
           ..write(')'))
         .toString();
   }
@@ -1884,6 +2341,18 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
     deliveredAt,
     readAt,
     status,
+    attachmentKind,
+    mimeType,
+    sizeBytes,
+    width,
+    height,
+    durationMs,
+    storageKey,
+    $driftBlobEquality.hash(encKey),
+    $driftBlobEquality.hash(nonce),
+    $driftBlobEquality.hash(thumbnailBytes),
+    localMediaPath,
+    downloadStatus,
   );
   @override
   bool operator ==(Object other) =>
@@ -1896,7 +2365,22 @@ class ChatMessage extends DataClass implements Insertable<ChatMessage> {
           other.createdAt == this.createdAt &&
           other.deliveredAt == this.deliveredAt &&
           other.readAt == this.readAt &&
-          other.status == this.status);
+          other.status == this.status &&
+          other.attachmentKind == this.attachmentKind &&
+          other.mimeType == this.mimeType &&
+          other.sizeBytes == this.sizeBytes &&
+          other.width == this.width &&
+          other.height == this.height &&
+          other.durationMs == this.durationMs &&
+          other.storageKey == this.storageKey &&
+          $driftBlobEquality.equals(other.encKey, this.encKey) &&
+          $driftBlobEquality.equals(other.nonce, this.nonce) &&
+          $driftBlobEquality.equals(
+            other.thumbnailBytes,
+            this.thumbnailBytes,
+          ) &&
+          other.localMediaPath == this.localMediaPath &&
+          other.downloadStatus == this.downloadStatus);
 }
 
 class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
@@ -1908,6 +2392,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
   final Value<DateTime?> deliveredAt;
   final Value<DateTime?> readAt;
   final Value<String> status;
+  final Value<String?> attachmentKind;
+  final Value<String?> mimeType;
+  final Value<int?> sizeBytes;
+  final Value<int?> width;
+  final Value<int?> height;
+  final Value<int?> durationMs;
+  final Value<String?> storageKey;
+  final Value<Uint8List?> encKey;
+  final Value<Uint8List?> nonce;
+  final Value<Uint8List?> thumbnailBytes;
+  final Value<String?> localMediaPath;
+  final Value<String?> downloadStatus;
   final Value<int> rowid;
   const ChatMessagesCompanion({
     this.id = const Value.absent(),
@@ -1918,6 +2414,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
     this.deliveredAt = const Value.absent(),
     this.readAt = const Value.absent(),
     this.status = const Value.absent(),
+    this.attachmentKind = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.width = const Value.absent(),
+    this.height = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.storageKey = const Value.absent(),
+    this.encKey = const Value.absent(),
+    this.nonce = const Value.absent(),
+    this.thumbnailBytes = const Value.absent(),
+    this.localMediaPath = const Value.absent(),
+    this.downloadStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChatMessagesCompanion.insert({
@@ -1929,6 +2437,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
     this.deliveredAt = const Value.absent(),
     this.readAt = const Value.absent(),
     required String status,
+    this.attachmentKind = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.width = const Value.absent(),
+    this.height = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.storageKey = const Value.absent(),
+    this.encKey = const Value.absent(),
+    this.nonce = const Value.absent(),
+    this.thumbnailBytes = const Value.absent(),
+    this.localMediaPath = const Value.absent(),
+    this.downloadStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        senderId = Value(senderId),
@@ -1943,6 +2463,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
     Expression<DateTime>? deliveredAt,
     Expression<DateTime>? readAt,
     Expression<String>? status,
+    Expression<String>? attachmentKind,
+    Expression<String>? mimeType,
+    Expression<int>? sizeBytes,
+    Expression<int>? width,
+    Expression<int>? height,
+    Expression<int>? durationMs,
+    Expression<String>? storageKey,
+    Expression<Uint8List>? encKey,
+    Expression<Uint8List>? nonce,
+    Expression<Uint8List>? thumbnailBytes,
+    Expression<String>? localMediaPath,
+    Expression<String>? downloadStatus,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1954,6 +2486,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
       if (deliveredAt != null) 'delivered_at': deliveredAt,
       if (readAt != null) 'read_at': readAt,
       if (status != null) 'status': status,
+      if (attachmentKind != null) 'attachment_kind': attachmentKind,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (width != null) 'width': width,
+      if (height != null) 'height': height,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (storageKey != null) 'storage_key': storageKey,
+      if (encKey != null) 'enc_key': encKey,
+      if (nonce != null) 'nonce': nonce,
+      if (thumbnailBytes != null) 'thumbnail_bytes': thumbnailBytes,
+      if (localMediaPath != null) 'local_media_path': localMediaPath,
+      if (downloadStatus != null) 'download_status': downloadStatus,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1967,6 +2511,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
     Value<DateTime?>? deliveredAt,
     Value<DateTime?>? readAt,
     Value<String>? status,
+    Value<String?>? attachmentKind,
+    Value<String?>? mimeType,
+    Value<int?>? sizeBytes,
+    Value<int?>? width,
+    Value<int?>? height,
+    Value<int?>? durationMs,
+    Value<String?>? storageKey,
+    Value<Uint8List?>? encKey,
+    Value<Uint8List?>? nonce,
+    Value<Uint8List?>? thumbnailBytes,
+    Value<String?>? localMediaPath,
+    Value<String?>? downloadStatus,
     Value<int>? rowid,
   }) {
     return ChatMessagesCompanion(
@@ -1978,6 +2534,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
       deliveredAt: deliveredAt ?? this.deliveredAt,
       readAt: readAt ?? this.readAt,
       status: status ?? this.status,
+      attachmentKind: attachmentKind ?? this.attachmentKind,
+      mimeType: mimeType ?? this.mimeType,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      durationMs: durationMs ?? this.durationMs,
+      storageKey: storageKey ?? this.storageKey,
+      encKey: encKey ?? this.encKey,
+      nonce: nonce ?? this.nonce,
+      thumbnailBytes: thumbnailBytes ?? this.thumbnailBytes,
+      localMediaPath: localMediaPath ?? this.localMediaPath,
+      downloadStatus: downloadStatus ?? this.downloadStatus,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2009,6 +2577,42 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
+    if (attachmentKind.present) {
+      map['attachment_kind'] = Variable<String>(attachmentKind.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (width.present) {
+      map['width'] = Variable<int>(width.value);
+    }
+    if (height.present) {
+      map['height'] = Variable<int>(height.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (storageKey.present) {
+      map['storage_key'] = Variable<String>(storageKey.value);
+    }
+    if (encKey.present) {
+      map['enc_key'] = Variable<Uint8List>(encKey.value);
+    }
+    if (nonce.present) {
+      map['nonce'] = Variable<Uint8List>(nonce.value);
+    }
+    if (thumbnailBytes.present) {
+      map['thumbnail_bytes'] = Variable<Uint8List>(thumbnailBytes.value);
+    }
+    if (localMediaPath.present) {
+      map['local_media_path'] = Variable<String>(localMediaPath.value);
+    }
+    if (downloadStatus.present) {
+      map['download_status'] = Variable<String>(downloadStatus.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2026,6 +2630,18 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessage> {
           ..write('deliveredAt: $deliveredAt, ')
           ..write('readAt: $readAt, ')
           ..write('status: $status, ')
+          ..write('attachmentKind: $attachmentKind, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('width: $width, ')
+          ..write('height: $height, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('storageKey: $storageKey, ')
+          ..write('encKey: $encKey, ')
+          ..write('nonce: $nonce, ')
+          ..write('thumbnailBytes: $thumbnailBytes, ')
+          ..write('localMediaPath: $localMediaPath, ')
+          ..write('downloadStatus: $downloadStatus, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3360,6 +3976,18 @@ typedef $$ChatMessagesTableCreateCompanionBuilder =
       Value<DateTime?> deliveredAt,
       Value<DateTime?> readAt,
       required String status,
+      Value<String?> attachmentKind,
+      Value<String?> mimeType,
+      Value<int?> sizeBytes,
+      Value<int?> width,
+      Value<int?> height,
+      Value<int?> durationMs,
+      Value<String?> storageKey,
+      Value<Uint8List?> encKey,
+      Value<Uint8List?> nonce,
+      Value<Uint8List?> thumbnailBytes,
+      Value<String?> localMediaPath,
+      Value<String?> downloadStatus,
       Value<int> rowid,
     });
 typedef $$ChatMessagesTableUpdateCompanionBuilder =
@@ -3372,6 +4000,18 @@ typedef $$ChatMessagesTableUpdateCompanionBuilder =
       Value<DateTime?> deliveredAt,
       Value<DateTime?> readAt,
       Value<String> status,
+      Value<String?> attachmentKind,
+      Value<String?> mimeType,
+      Value<int?> sizeBytes,
+      Value<int?> width,
+      Value<int?> height,
+      Value<int?> durationMs,
+      Value<String?> storageKey,
+      Value<Uint8List?> encKey,
+      Value<Uint8List?> nonce,
+      Value<Uint8List?> thumbnailBytes,
+      Value<String?> localMediaPath,
+      Value<String?> downloadStatus,
       Value<int> rowid,
     });
 
@@ -3421,6 +4061,66 @@ class $$ChatMessagesTableFilterComposer
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get attachmentKind => $composableBuilder(
+    column: $table.attachmentKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get width => $composableBuilder(
+    column: $table.width,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get height => $composableBuilder(
+    column: $table.height,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get storageKey => $composableBuilder(
+    column: $table.storageKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get encKey => $composableBuilder(
+    column: $table.encKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get nonce => $composableBuilder(
+    column: $table.nonce,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get thumbnailBytes => $composableBuilder(
+    column: $table.thumbnailBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localMediaPath => $composableBuilder(
+    column: $table.localMediaPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get downloadStatus => $composableBuilder(
+    column: $table.downloadStatus,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3473,6 +4173,66 @@ class $$ChatMessagesTableOrderingComposer
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get attachmentKind => $composableBuilder(
+    column: $table.attachmentKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get width => $composableBuilder(
+    column: $table.width,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get height => $composableBuilder(
+    column: $table.height,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get storageKey => $composableBuilder(
+    column: $table.storageKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get encKey => $composableBuilder(
+    column: $table.encKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get nonce => $composableBuilder(
+    column: $table.nonce,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get thumbnailBytes => $composableBuilder(
+    column: $table.thumbnailBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localMediaPath => $composableBuilder(
+    column: $table.localMediaPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get downloadStatus => $composableBuilder(
+    column: $table.downloadStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ChatMessagesTableAnnotationComposer
@@ -3511,6 +4271,54 @@ class $$ChatMessagesTableAnnotationComposer
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get attachmentKind => $composableBuilder(
+    column: $table.attachmentKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<int> get width =>
+      $composableBuilder(column: $table.width, builder: (column) => column);
+
+  GeneratedColumn<int> get height =>
+      $composableBuilder(column: $table.height, builder: (column) => column);
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get storageKey => $composableBuilder(
+    column: $table.storageKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get encKey =>
+      $composableBuilder(column: $table.encKey, builder: (column) => column);
+
+  GeneratedColumn<Uint8List> get nonce =>
+      $composableBuilder(column: $table.nonce, builder: (column) => column);
+
+  GeneratedColumn<Uint8List> get thumbnailBytes => $composableBuilder(
+    column: $table.thumbnailBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get localMediaPath => $composableBuilder(
+    column: $table.localMediaPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get downloadStatus => $composableBuilder(
+    column: $table.downloadStatus,
+    builder: (column) => column,
+  );
 }
 
 class $$ChatMessagesTableTableManager
@@ -3552,6 +4360,18 @@ class $$ChatMessagesTableTableManager
                 Value<DateTime?> deliveredAt = const Value.absent(),
                 Value<DateTime?> readAt = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> attachmentKind = const Value.absent(),
+                Value<String?> mimeType = const Value.absent(),
+                Value<int?> sizeBytes = const Value.absent(),
+                Value<int?> width = const Value.absent(),
+                Value<int?> height = const Value.absent(),
+                Value<int?> durationMs = const Value.absent(),
+                Value<String?> storageKey = const Value.absent(),
+                Value<Uint8List?> encKey = const Value.absent(),
+                Value<Uint8List?> nonce = const Value.absent(),
+                Value<Uint8List?> thumbnailBytes = const Value.absent(),
+                Value<String?> localMediaPath = const Value.absent(),
+                Value<String?> downloadStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatMessagesCompanion(
                 id: id,
@@ -3562,6 +4382,18 @@ class $$ChatMessagesTableTableManager
                 deliveredAt: deliveredAt,
                 readAt: readAt,
                 status: status,
+                attachmentKind: attachmentKind,
+                mimeType: mimeType,
+                sizeBytes: sizeBytes,
+                width: width,
+                height: height,
+                durationMs: durationMs,
+                storageKey: storageKey,
+                encKey: encKey,
+                nonce: nonce,
+                thumbnailBytes: thumbnailBytes,
+                localMediaPath: localMediaPath,
+                downloadStatus: downloadStatus,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3574,6 +4406,18 @@ class $$ChatMessagesTableTableManager
                 Value<DateTime?> deliveredAt = const Value.absent(),
                 Value<DateTime?> readAt = const Value.absent(),
                 required String status,
+                Value<String?> attachmentKind = const Value.absent(),
+                Value<String?> mimeType = const Value.absent(),
+                Value<int?> sizeBytes = const Value.absent(),
+                Value<int?> width = const Value.absent(),
+                Value<int?> height = const Value.absent(),
+                Value<int?> durationMs = const Value.absent(),
+                Value<String?> storageKey = const Value.absent(),
+                Value<Uint8List?> encKey = const Value.absent(),
+                Value<Uint8List?> nonce = const Value.absent(),
+                Value<Uint8List?> thumbnailBytes = const Value.absent(),
+                Value<String?> localMediaPath = const Value.absent(),
+                Value<String?> downloadStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatMessagesCompanion.insert(
                 id: id,
@@ -3584,6 +4428,18 @@ class $$ChatMessagesTableTableManager
                 deliveredAt: deliveredAt,
                 readAt: readAt,
                 status: status,
+                attachmentKind: attachmentKind,
+                mimeType: mimeType,
+                sizeBytes: sizeBytes,
+                width: width,
+                height: height,
+                durationMs: durationMs,
+                storageKey: storageKey,
+                encKey: encKey,
+                nonce: nonce,
+                thumbnailBytes: thumbnailBytes,
+                localMediaPath: localMediaPath,
+                downloadStatus: downloadStatus,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

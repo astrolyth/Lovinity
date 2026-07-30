@@ -76,6 +76,20 @@ class ChatMessages extends Table {
   DateTimeColumn get deliveredAt => dateTime().nullable()();
   DateTimeColumn get readAt => dateTime().nullable()();
   TextColumn get status => text()(); // sending|sent|delivered|read|failed
+  // Attachment fields -- all null for a plain text message. attachmentKind
+  // is 'photo' | 'video' | null.
+  TextColumn get attachmentKind => text().nullable()();
+  TextColumn get mimeType => text().nullable()();
+  IntColumn get sizeBytes => integer().nullable()();
+  IntColumn get width => integer().nullable()();
+  IntColumn get height => integer().nullable()();
+  IntColumn get durationMs => integer().nullable()();
+  TextColumn get storageKey => text().nullable()();
+  BlobColumn get encKey => blob().nullable()();
+  BlobColumn get nonce => blob().nullable()();
+  BlobColumn get thumbnailBytes => blob().nullable()();
+  TextColumn get localMediaPath => text().nullable()();
+  TextColumn get downloadStatus => text().nullable()(); // none|downloading|downloaded|failed
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -106,7 +120,7 @@ class SignalDb extends _$SignalDb {
   SignalDb.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -116,6 +130,20 @@ class SignalDb extends _$SignalDb {
           if (from < 3) {
             await m.createTable(chatMessages);
             await m.createTable(chatReactions);
+          }
+          if (from < 4) {
+            await m.addColumn(chatMessages, chatMessages.attachmentKind);
+            await m.addColumn(chatMessages, chatMessages.mimeType);
+            await m.addColumn(chatMessages, chatMessages.sizeBytes);
+            await m.addColumn(chatMessages, chatMessages.width);
+            await m.addColumn(chatMessages, chatMessages.height);
+            await m.addColumn(chatMessages, chatMessages.durationMs);
+            await m.addColumn(chatMessages, chatMessages.storageKey);
+            await m.addColumn(chatMessages, chatMessages.encKey);
+            await m.addColumn(chatMessages, chatMessages.nonce);
+            await m.addColumn(chatMessages, chatMessages.thumbnailBytes);
+            await m.addColumn(chatMessages, chatMessages.localMediaPath);
+            await m.addColumn(chatMessages, chatMessages.downloadStatus);
           }
         },
       );
