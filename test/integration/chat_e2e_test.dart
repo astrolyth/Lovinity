@@ -11,6 +11,8 @@
 @Tags(['integration'])
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,6 +21,7 @@ import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
 import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/crypto/signal_registration.dart';
 import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/storage/media_cache.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
 import 'package:lovinity/features/chat/data/chat_repository.dart';
 import 'package:lovinity/features/chat/data/chat_store.dart';
@@ -62,6 +65,16 @@ class _Party {
   late ChatService chat;
 }
 
+class _InMemoryMediaCache implements MediaCache {
+  final Map<String, Uint8List> written = {};
+
+  @override
+  Future<String> write(String key, Uint8List bytes) async {
+    written[key] = bytes;
+    return 'memory://$key';
+  }
+}
+
 Future<_Party> _makeParty(
   SupabaseClient client,
   String userId,
@@ -85,6 +98,7 @@ Future<_Party> _makeParty(
   );
   p.repo = ChatRepository(client);
   p.store = ChatStore(p.db);
+  final coupleId = await client.rpc('current_couple') as String;
   p.chat = ChatService(
     session: p.session,
     repo: p.repo,
@@ -92,6 +106,8 @@ Future<_Party> _makeParty(
     selfUserId: userId,
     spouseUserId: spouseId,
     selfDeviceNum: p.deviceNum,
+    coupleId: coupleId,
+    cache: _InMemoryMediaCache(),
   );
   return p;
 }

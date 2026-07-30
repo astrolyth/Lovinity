@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/crypto/crypto_providers.dart';
 import '../../../shared/providers/supabase_provider.dart';
+import '../../../core/storage/media_cache.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/chat_repository.dart';
@@ -42,6 +43,8 @@ final chatServiceProvider = FutureProvider<ChatService?>((ref) async {
     selfUserId: selfId,
     spouseUserId: couple.spouseOf(selfId),
     selfDeviceNum: deviceNum,
+    coupleId: couple.id,
+    cache: FileMediaCache(),
   );
 });
 

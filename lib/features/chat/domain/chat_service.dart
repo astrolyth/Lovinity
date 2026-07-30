@@ -1,7 +1,9 @@
 // lib/features/chat/domain/chat_service.dart
 import 'dart:typed_data';
 import 'package:uuid/uuid.dart';
+import '../../../core/crypto/attachment_crypto.dart';
 import '../../../core/crypto/signal_session_service.dart';
+import '../../../core/storage/media_cache.dart';
 import '../data/chat_repository.dart';
 import '../data/chat_store.dart';
 import 'chat_payload.dart';
@@ -14,6 +16,8 @@ class ChatService {
     required this.selfUserId,
     required this.spouseUserId,
     required this.selfDeviceNum,
+    required this.coupleId,
+    required this.cache,
   });
 
   final SignalSessionService session;
@@ -22,6 +26,8 @@ class ChatService {
   final String selfUserId;
   final String spouseUserId;
   final int selfDeviceNum;
+  final String coupleId;
+  final MediaCache cache;
 
   /// Bounded retry for envelopes that fail to decrypt (e.g. corrupt
   /// ciphertext, or a session we can never rebuild). Counted in-memory only:
@@ -70,6 +76,148 @@ class ChatService {
         // The optimistic write itself may have failed, so there's no row to
         // mark 'failed' against. Nothing more we can do here.
       }
+    }
+  }
+
+  Future<void> sendPhoto({
+    required Uint8List bytes,
+    required String mimeType,
+    required int width,
+    required int height,
+    required Uint8List thumbnailBytes,
+    String? caption,
+    String? replyToMessageId,
+  }) {
+    return _sendAttachment(
+      kind: AttachmentKind.photo,
+      bytes: bytes,
+      mimeType: mimeType,
+      width: width,
+      height: height,
+      durationMs: null,
+      thumbnailBytes: thumbnailBytes,
+      caption: caption,
+      replyToMessageId: replyToMessageId,
+    );
+  }
+
+  Future<void> sendVideo({
+    required Uint8List bytes,
+    required String mimeType,
+    required int durationMs,
+    required Uint8List thumbnailBytes,
+    String? caption,
+    String? replyToMessageId,
+  }) {
+    return _sendAttachment(
+      kind: AttachmentKind.video,
+      bytes: bytes,
+      mimeType: mimeType,
+      width: null,
+      height: null,
+      durationMs: durationMs,
+      thumbnailBytes: thumbnailBytes,
+      caption: caption,
+      replyToMessageId: replyToMessageId,
+    );
+  }
+
+  Future<void> _sendAttachment({
+    required AttachmentKind kind,
+    required Uint8List bytes,
+    required String mimeType,
+    required int? width,
+    required int? height,
+    required int? durationMs,
+    required Uint8List thumbnailBytes,
+    required String? caption,
+    required String? replyToMessageId,
+  }) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+    try {
+      final enc = await encryptAttachment(bytes);
+      final storageKey = '$coupleId/$id';
+
+      // The sender already holds the plaintext -- cache it locally right
+      // away so opening your own just-sent photo/video never re-downloads
+      // it from Storage.
+      final localPath = await cache.write(id, bytes);
+
+      await store.upsertAttachmentMessage(
+        id: id,
+        senderId: selfUserId,
+        attachmentKind: kind.name,
+        mimeType: mimeType,
+        sizeBytes: bytes.length,
+        width: width,
+        height: height,
+        durationMs: durationMs,
+        storageKey: storageKey,
+        encKey: enc.key,
+        nonce: enc.nonce,
+        thumbnailBytes: thumbnailBytes,
+        caption: caption,
+        replyToMessageId: replyToMessageId,
+        createdAt: now,
+        status: 'sending',
+        localMediaPath: localPath,
+        downloadStatus: 'downloaded',
+      );
+
+      await repo.uploadAttachment(storageKey, enc.ciphertext);
+
+      final payload = AttachmentPayload(
+        kind: kind,
+        mimeType: mimeType,
+        sizeBytes: bytes.length,
+        width: width,
+        height: height,
+        durationMs: durationMs,
+        storageKey: storageKey,
+        encKey: enc.key,
+        nonce: enc.nonce,
+        thumbnailBytes: thumbnailBytes,
+        caption: caption,
+        replyToMessageId: replyToMessageId,
+      );
+      final copies = await session.encryptFor(
+        recipientUserId: spouseUserId,
+        plaintext: encodePayload(payload),
+      );
+      await repo.sendEnvelopes(
+          senderDeviceNum: selfDeviceNum, copies: copies, messageId: id);
+      await store.setStatus(id, 'sent');
+    } catch (_) {
+      try {
+        await store.setStatus(id, 'failed');
+      } catch (_) {
+        // The optimistic write itself may have failed; nothing more to do.
+      }
+    }
+  }
+
+  /// Downloads and decrypts the attachment for [messageId] (a local row
+  /// previously stored by `_handleInboxRow`'s AttachmentPayload case), caches
+  /// the plaintext locally, and updates the row's download state. No-op if
+  /// [messageId] isn't a known attachment row.
+  Future<void> downloadAttachment(String messageId) async {
+    final row = await store.messageById(messageId);
+    final storageKey = row?.storageKey;
+    final encKey = row?.encKey;
+    final nonce = row?.nonce;
+    if (storageKey == null || encKey == null || nonce == null) return;
+
+    await store.updateDownloadStatus(id: messageId, status: 'downloading');
+    try {
+      final ciphertext = await repo.downloadAttachment(storageKey);
+      final plaintext =
+          await decryptAttachment(ciphertext: ciphertext, key: encKey, nonce: nonce);
+      final path = await cache.write(messageId, plaintext);
+      await store.updateDownloadStatus(
+          id: messageId, status: 'downloaded', localMediaPath: path);
+    } catch (_) {
+      await store.updateDownloadStatus(id: messageId, status: 'failed');
     }
   }
 
@@ -191,6 +339,26 @@ class ChatService {
           replyToMessageId: payload.replyToMessageId,
           createdAt: DateTime.parse(env['created_at'] as String),
           // Own-device sync copies are already-sent; spouse copies are delivered.
+          status: senderId == selfUserId ? 'sent' : 'delivered',
+        );
+        if (senderId != selfUserId) await repo.markDelivered(messageId);
+      case AttachmentPayload():
+        await store.upsertAttachmentMessage(
+          id: messageId,
+          senderId: senderId,
+          attachmentKind: payload.kind.name,
+          mimeType: payload.mimeType,
+          sizeBytes: payload.sizeBytes,
+          width: payload.width,
+          height: payload.height,
+          durationMs: payload.durationMs,
+          storageKey: payload.storageKey,
+          encKey: payload.encKey,
+          nonce: payload.nonce,
+          thumbnailBytes: payload.thumbnailBytes,
+          caption: payload.caption,
+          replyToMessageId: payload.replyToMessageId,
+          createdAt: DateTime.parse(env['created_at'] as String),
           status: senderId == selfUserId ? 'sent' : 'delivered',
         );
         if (senderId != selfUserId) await repo.markDelivered(messageId);
