@@ -224,8 +224,11 @@ class _AttachmentContent extends StatelessWidget {
                   // Decrypted/synced thumbnail bytes could in principle be
                   // corrupt; fail soft with a placeholder rather than
                   // surfacing a framework error overlay.
-                  errorBuilder: (context, error, stackTrace) =>
-                      Container(color: Colors.black12),
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint(
+                        'MessageBubble: failed to decode thumbnail: $error');
+                    return Container(color: Colors.black12);
+                  },
                 )
               else
                 Container(color: Colors.black12),
