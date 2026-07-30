@@ -62,3 +62,6 @@ macos/Runner/GoogleService-Info.plist
 
 # Claude Code local settings (personal/machine-specific)
 .claude/settings.local.json
+
+# Subagent-driven-development scratch workspace (ledgers, briefs, reports)
+.superpowers/
