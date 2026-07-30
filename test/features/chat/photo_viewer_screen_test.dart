@@ -22,7 +22,8 @@ void main() {
     addTearDown(() => file.delete());
 
     await tester.pumpWidget(MaterialApp(home: PhotoViewerScreen(filePath: file.path)));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(Image), findsOneWidget);
     expect(find.byType(AppBar), findsOneWidget);
