@@ -145,4 +145,48 @@ void main() {
         .eq('message_id', result.messageId);
     expect(rowsAfterDelete, isEmpty);
   });
+
+  test('uploadAttachment/downloadAttachment round-trips ciphertext via the couple path',
+      () async {
+    final clientA = _anonClient();
+    final clientB = _anonClient();
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    await _pairCouple(clientA, clientB, stamp);
+    final coupleId = await clientA.rpc('current_couple') as String;
+
+    final senderRepo = ChatRepository(clientA);
+    final recipientRepo = ChatRepository(clientB);
+    final storageKey = '$coupleId/attachment-$stamp';
+    final ciphertext = Uint8List.fromList(List.generate(64, (i) => i));
+
+    await senderRepo.uploadAttachment(storageKey, ciphertext);
+    final downloaded = await recipientRepo.downloadAttachment(storageKey);
+
+    expect(downloaded, ciphertext);
+  });
+
+  test('an unrelated user cannot download another couple\'s attachment', () async {
+    final clientA = _anonClient();
+    final clientB = _anonClient();
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    await _pairCouple(clientA, clientB, stamp);
+    final coupleId = await clientA.rpc('current_couple') as String;
+
+    final senderRepo = ChatRepository(clientA);
+    final storageKey = '$coupleId/attachment-outsider-$stamp';
+    await senderRepo.uploadAttachment(storageKey, Uint8List.fromList([1, 2, 3]));
+
+    final outsiderClient = _anonClient();
+    final outsiderSignUp = await outsiderClient.auth.signUp(
+      email: 'chat-outsider-$stamp@test.local',
+      password: 'password123',
+    );
+    addTearDown(() => adminClient.auth.admin.deleteUser(outsiderSignUp.user!.id));
+    final outsiderRepo = ChatRepository(outsiderClient);
+
+    await expectLater(
+      outsiderRepo.downloadAttachment(storageKey),
+      throwsA(anything),
+    );
+  });
 }

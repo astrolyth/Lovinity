@@ -1,4 +1,6 @@
 // lib/features/chat/data/chat_repository.dart
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/crypto/signal_session_service.dart';
 
@@ -72,4 +74,12 @@ class ChatRepository {
 
   Future<void> markRead(String messageId) =>
       _client.rpc('mark_read', params: {'p_message_id': messageId});
+
+  static const _attachmentBucket = 'chat-media';
+
+  Future<void> uploadAttachment(String storageKey, Uint8List ciphertext) =>
+      _client.storage.from(_attachmentBucket).uploadBinary(storageKey, ciphertext);
+
+  Future<Uint8List> downloadAttachment(String storageKey) =>
+      _client.storage.from(_attachmentBucket).download(storageKey);
 }
