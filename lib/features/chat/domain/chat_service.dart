@@ -136,13 +136,15 @@ class ChatService {
     final id = const Uuid().v4();
     final now = DateTime.now();
     try {
-      final enc = await encryptAttachment(bytes);
       final storageKey = '$coupleId/$id';
 
-      // The sender already holds the plaintext -- cache it locally right
-      // away so opening your own just-sent photo/video never re-downloads
-      // it from Storage.
-      final localPath = await cache.write(id, bytes);
+      // Mint the per-attachment key/nonce BEFORE encrypting. Generating key
+      // material never touches the attachment bytes, so it's instant even for
+      // a 200MB video -- only `encryptAttachment` itself is expensive. Having
+      // it up front lets the optimistic row (with its thumbnail) land in the
+      // conversation immediately, the same way sendText's row does, instead of
+      // the UI looking frozen until encryption finishes.
+      final keyMaterial = await generateAttachmentKey();
 
       await store.upsertAttachmentMessage(
         id: id,
@@ -154,18 +156,33 @@ class ChatService {
         height: height,
         durationMs: durationMs,
         storageKey: storageKey,
-        encKey: enc.key,
-        nonce: enc.nonce,
+        encKey: keyMaterial.key,
+        nonce: keyMaterial.nonce,
         thumbnailBytes: thumbnailBytes,
         caption: caption,
         replyToMessageId: replyToMessageId,
         createdAt: now,
         status: 'sending',
-        localMediaPath: localPath,
-        downloadStatus: 'downloaded',
+        // Not 'downloaded' yet: there is no localMediaPath to point at until
+        // the cache write below succeeds, so don't claim a local copy exists.
+        downloadStatus: 'none',
       );
 
+      // The expensive part. Same key/nonce as the row just written and as the
+      // payload built below -- they must all agree or the spouse's download
+      // can never decrypt.
+      final enc = await encryptAttachment(bytes, keyMaterial: keyMaterial);
+
+      // The sender already holds the plaintext -- cache it locally so opening
+      // your own just-sent photo/video never re-downloads it from Storage.
+      final localPath = await cache.write(id, bytes);
+
       await repo.uploadAttachment(storageKey, enc.ciphertext);
+
+      // Ciphertext is uploaded and the plaintext is cached: the sender's own
+      // copy is ready, no download round-trip needed.
+      await store.updateDownloadStatus(
+          id: id, status: 'downloaded', localMediaPath: localPath);
 
       final payload = AttachmentPayload(
         kind: kind,

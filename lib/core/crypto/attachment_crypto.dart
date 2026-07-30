@@ -32,16 +32,52 @@ class EncryptedAttachment {
   final Uint8List ciphertext;
 }
 
-/// Encrypts [plaintext] under a freshly generated random key and nonce.
-Future<EncryptedAttachment> encryptAttachment(Uint8List plaintext) async {
+/// A per-attachment AES-256 key (32 bytes) + GCM nonce (12 bytes).
+typedef AttachmentKeyMaterial = ({Uint8List key, Uint8List nonce});
+
+/// Generates the random key/nonce for ONE attachment.
+///
+/// Deliberately separate from [encryptAttachment]: generating key material is
+/// cheap and never touches the attachment bytes, so a caller can mint it up
+/// front (e.g. to write an optimistic local row immediately) and only pay the
+/// expensive `encrypt` cost afterwards. [encryptAttachment] calls this when no
+/// material is supplied, so this stays the single source of key/nonce
+/// generation.
+Future<AttachmentKeyMaterial> generateAttachmentKey() async {
   final secretKey = await _algorithm.newSecretKey();
-  final nonce = _algorithm.newNonce();
-  final box = await _algorithm.encrypt(plaintext, secretKey: secretKey, nonce: nonce);
-  final keyBytes = Uint8List.fromList(await secretKey.extractBytes());
+  return (
+    key: Uint8List.fromList(await secretKey.extractBytes()),
+    nonce: Uint8List.fromList(_algorithm.newNonce()),
+  );
+}
+
+/// Encrypts [plaintext] under [keyMaterial], or under a freshly generated
+/// random key and nonce when [keyMaterial] is omitted.
+Future<EncryptedAttachment> encryptAttachment(
+  Uint8List plaintext, {
+  AttachmentKeyMaterial? keyMaterial,
+}) async {
+  final material = keyMaterial ?? await generateAttachmentKey();
+  final box = await _algorithm.encrypt(
+    plaintext,
+    secretKey: SecretKey(material.key),
+    nonce: material.nonce,
+  );
+  // Concatenate ciphertext||mac into a Uint8List WITHOUT an intermediate
+  // growable List<int>. A `[...a, ...b]` spread boxes every element (~8 bytes
+  // each on a 64-bit VM) before Uint8List.fromList copies it back down, which
+  // for an N-byte attachment transiently costs ~8N extra bytes. Videos are
+  // never re-encoded/compressed in this app, so N can be 50-200MB and that
+  // intermediate alone is enough to get the app OOM-killed.
+  final cipherBytes = box.cipherText;
+  final macBytes = box.mac.bytes;
+  final combined = Uint8List(cipherBytes.length + macBytes.length)
+    ..setRange(0, cipherBytes.length, cipherBytes)
+    ..setRange(cipherBytes.length, cipherBytes.length + macBytes.length, macBytes);
   return EncryptedAttachment(
-    key: keyBytes,
-    nonce: Uint8List.fromList(nonce),
-    ciphertext: Uint8List.fromList([...box.cipherText, ...box.mac.bytes]),
+    key: material.key,
+    nonce: material.nonce,
+    ciphertext: combined,
   );
 }
 
