@@ -387,17 +387,12 @@ class _Composer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Not gated by `enabled`/ready: picking a photo/video or toggling
-          // the emoji panel doesn't require the chat service to be set up
-          // yet (only sending does) -- _attachPhoto/_attachVideo already
-          // no-op via their own `service == null` guard if it isn't ready
-          // by the time the picker returns.
           IconButton(
-            onPressed: onAttach,
+            onPressed: enabled ? onAttach : null,
             icon: const Icon(Icons.attach_file),
           ),
           IconButton(
-            onPressed: onToggleEmoji,
+            onPressed: enabled ? onToggleEmoji : null,
             icon: const Icon(Icons.emoji_emotions_outlined),
           ),
           Expanded(

@@ -1,9 +1,19 @@
+import 'dart:typed_data';
+
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lovinity/core/crypto/key_vault.dart';
+import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
+import 'package:lovinity/core/crypto/secure_store.dart';
+import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/storage/media_cache.dart';
+import 'package:lovinity/features/chat/data/chat_repository.dart';
 import 'package:lovinity/features/chat/data/chat_store.dart';
 import 'package:lovinity/features/chat/domain/chat_providers.dart';
+import 'package:lovinity/features/chat/domain/chat_service.dart';
 import 'package:lovinity/features/chat/presentation/chat_screen.dart';
 import 'package:lovinity/features/chat/presentation/media_picker.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
@@ -16,6 +26,49 @@ class _FakeMediaPicker implements MediaPicker {
 
   @override
   Future<PickedVideo?> pickVideo(MediaSource source) async => null;
+}
+
+class _NoopBundles implements PreKeyBundleSource {
+  @override
+  Future<List<int>> deviceNumsFor(String userId) async => [];
+  @override
+  Future<DeviceBundle?> bundleFor(String userId, int deviceNum) async => null;
+}
+
+class _NoopMediaCache implements MediaCache {
+  @override
+  Future<String> write(String key, Uint8List bytes) async => 'noop/$key';
+}
+
+/// A ChatService whose crypto/network dependencies are never actually
+/// exercised by these tests -- it exists only so chatServiceProvider
+/// resolves non-null, making the composer's `ready` flag true.
+ChatService _readyChatService(SignalDb db) {
+  final session = SignalSessionService(
+    db: db,
+    vault: KeyVault(InMemorySecureStore()),
+    bundles: _NoopBundles(),
+    selfUserId: 'me',
+    selfDeviceNum: 1,
+  );
+  return ChatService(
+    session: session,
+    repo: ChatRepository(SupabaseClient(
+      'http://localhost:0',
+      'fake-anon-key',
+      // Widget tests fail if any timer is still pending when the tree is
+      // disposed -- the real GoTrueClient's periodic auto-refresh timer
+      // would trip that check, so it's disabled here (this SupabaseClient
+      // is never used to actually talk to auth/network in these tests).
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    )),
+    store: ChatStore(db),
+    selfUserId: 'me',
+    spouseUserId: 'spouse',
+    selfDeviceNum: 1,
+    coupleId: 'couple-1',
+    cache: _NoopMediaCache(),
+  );
 }
 
 void main() {
@@ -52,6 +105,7 @@ void main() {
       overrides: [
         conversationMessagesProvider.overrideWith((ref) => store.watchConversation()),
         mediaPickerProvider.overrideWithValue(_FakeMediaPicker()),
+        chatServiceProvider.overrideWith((ref) async => _readyChatService(db)),
       ],
       child: const MaterialApp(home: ChatScreen()),
     ));
@@ -77,6 +131,7 @@ void main() {
       overrides: [
         conversationMessagesProvider.overrideWith((ref) => store.watchConversation()),
         mediaPickerProvider.overrideWithValue(_FakeMediaPicker()),
+        chatServiceProvider.overrideWith((ref) async => _readyChatService(db)),
       ],
       child: const MaterialApp(home: ChatScreen()),
     ));
