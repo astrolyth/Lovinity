@@ -157,7 +157,10 @@ void main() {
     final senderRepo = ChatRepository(clientA);
     final recipientRepo = ChatRepository(clientB);
     final storageKey = '$coupleId/attachment-$stamp';
-    final ciphertext = Uint8List.fromList(List.generate(64, (i) => i));
+    // Every possible byte value 0-255, not just the ASCII-safe low range:
+    // real ciphertext is uniformly random, and a naive text-based encoding
+    // anywhere in the upload/download path would only corrupt the high bytes.
+    final ciphertext = Uint8List.fromList(List.generate(256, (i) => i));
 
     await senderRepo.uploadAttachment(storageKey, ciphertext);
     final downloaded = await recipientRepo.downloadAttachment(storageKey);

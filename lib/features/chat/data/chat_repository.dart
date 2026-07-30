@@ -77,8 +77,16 @@ class ChatRepository {
 
   static const _attachmentBucket = 'chat-media';
 
+  /// Uploads opaque AES-GCM ciphertext. The explicit content-type matters:
+  /// without it Supabase Storage defaults the object to
+  /// `text/plain;charset=UTF-8`, which is wrong for random binary and invites
+  /// transcoding/sniffing on the way back down.
   Future<void> uploadAttachment(String storageKey, Uint8List ciphertext) =>
-      _client.storage.from(_attachmentBucket).uploadBinary(storageKey, ciphertext);
+      _client.storage.from(_attachmentBucket).uploadBinary(
+            storageKey,
+            ciphertext,
+            fileOptions: const FileOptions(contentType: 'application/octet-stream'),
+          );
 
   Future<Uint8List> downloadAttachment(String storageKey) =>
       _client.storage.from(_attachmentBucket).download(storageKey);
