@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../domain/chat_providers.dart';
 import '../domain/chat_service.dart';
+import 'media_picker.dart';
 import 'message_bubble.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -22,6 +24,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   String? _replyToMessageId;
   String? _replyPreview;
+  bool _showEmojiPicker = false;
 
   @override
   void dispose() {
@@ -181,11 +184,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
               ),
             ),
+          if (_showEmojiPicker)
+            SizedBox(
+              height: 250,
+              child: EmojiPicker(
+                onEmojiSelected: (category, emoji) => _insertEmoji(emoji.emoji),
+              ),
+            ),
           _Composer(
             controller: _controller,
             enabled: ready,
             onChanged: (_) => typingChannel?.onKeystroke(),
             onSend: () => _send(chatService),
+            onAttach: _showAttachSheet,
+            onToggleEmoji: _toggleEmojiPicker,
           ),
         ],
       ),
@@ -204,6 +216,84 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _replyToMessageId = null;
       _replyPreview = null;
     });
+  }
+
+  Future<void> _attachPhoto(MediaSource source) async {
+    final photo = await ref.read(mediaPickerProvider).pickPhoto(source);
+    if (photo == null) return;
+    final service = ref.read(chatServiceProvider).value;
+    if (service == null) return;
+    unawaited(service.sendPhoto(
+      bytes: photo.bytes,
+      mimeType: photo.mimeType,
+      width: photo.width,
+      height: photo.height,
+      thumbnailBytes: photo.thumbnailBytes,
+    ));
+  }
+
+  Future<void> _attachVideo(MediaSource source) async {
+    final video = await ref.read(mediaPickerProvider).pickVideo(source);
+    if (video == null) return;
+    final service = ref.read(chatServiceProvider).value;
+    if (service == null) return;
+    unawaited(service.sendVideo(
+      bytes: video.bytes,
+      mimeType: video.mimeType,
+      durationMs: video.durationMs,
+      thumbnailBytes: video.thumbnailBytes,
+    ));
+  }
+
+  void _showAttachSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _attachPhoto(MediaSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Photo Library'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _attachPhoto(MediaSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam_outlined),
+              title: const Text('Video'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _attachVideo(MediaSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _toggleEmojiPicker() {
+    setState(() => _showEmojiPicker = !_showEmojiPicker);
+  }
+
+  void _insertEmoji(String emoji) {
+    final text = _controller.text;
+    final selection = _controller.selection;
+    final start = selection.start < 0 ? text.length : selection.start;
+    final end = selection.end < 0 ? text.length : selection.end;
+    final newText = text.replaceRange(start, end, emoji);
+    _controller.text = newText;
+    _controller.selection = TextSelection.collapsed(offset: start + emoji.length);
   }
 }
 
@@ -272,12 +362,16 @@ class _Composer extends StatelessWidget {
     required this.controller,
     required this.enabled,
     required this.onSend,
+    required this.onAttach,
+    required this.onToggleEmoji,
     this.onChanged,
   });
 
   final TextEditingController controller;
   final bool enabled;
   final VoidCallback onSend;
+  final VoidCallback onAttach;
+  final VoidCallback onToggleEmoji;
   final ValueChanged<String>? onChanged;
 
   @override
@@ -293,6 +387,19 @@ class _Composer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          // Not gated by `enabled`/ready: picking a photo/video or toggling
+          // the emoji panel doesn't require the chat service to be set up
+          // yet (only sending does) -- _attachPhoto/_attachVideo already
+          // no-op via their own `service == null` guard if it isn't ready
+          // by the time the picker returns.
+          IconButton(
+            onPressed: onAttach,
+            icon: const Icon(Icons.attach_file),
+          ),
+          IconButton(
+            onPressed: onToggleEmoji,
+            icon: const Icon(Icons.emoji_emotions_outlined),
+          ),
           Expanded(
             child: TextField(
               controller: controller,
