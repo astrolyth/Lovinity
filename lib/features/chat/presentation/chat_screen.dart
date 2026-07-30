@@ -218,18 +218,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
   }
 
+  /// Whatever is typed in the composer becomes the attachment's caption, and a
+  /// pending reply is carried through — same contract as [_send]. Both are
+  /// cleared afterwards so the banner/text can't linger and get reattached to
+  /// the next message.
   Future<void> _attachPhoto(MediaSource source) async {
     final photo = await ref.read(mediaPickerProvider).pickPhoto(source);
     if (photo == null) return;
     final service = ref.read(chatServiceProvider).value;
     if (service == null) return;
+    final caption = _controller.text.trim();
+    final replyToMessageId = _replyToMessageId;
     unawaited(service.sendPhoto(
       bytes: photo.bytes,
       mimeType: photo.mimeType,
       width: photo.width,
       height: photo.height,
       thumbnailBytes: photo.thumbnailBytes,
+      caption: caption.isEmpty ? null : caption,
+      replyToMessageId: replyToMessageId,
     ));
+    _controller.clear();
+    setState(() {
+      _replyToMessageId = null;
+      _replyPreview = null;
+    });
   }
 
   Future<void> _attachVideo(MediaSource source) async {
@@ -237,12 +250,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (video == null) return;
     final service = ref.read(chatServiceProvider).value;
     if (service == null) return;
+    final caption = _controller.text.trim();
+    final replyToMessageId = _replyToMessageId;
     unawaited(service.sendVideo(
       bytes: video.bytes,
       mimeType: video.mimeType,
       durationMs: video.durationMs,
       thumbnailBytes: video.thumbnailBytes,
+      caption: caption.isEmpty ? null : caption,
+      replyToMessageId: replyToMessageId,
     ));
+    _controller.clear();
+    setState(() {
+      _replyToMessageId = null;
+      _replyPreview = null;
+    });
   }
 
   void _showAttachSheet() {
