@@ -25,6 +25,8 @@ class PairingFailure extends AppFailure {
         'cannot_pair_with_self' => const PairingFailure('You can\'t pair with your own code.'),
         'already_paired' => const PairingFailure('You\'re already paired.'),
         'inviter_already_paired' => const PairingFailure('Your spouse is already paired with someone.'),
+        'gender_required' => const PairingFailure('Please finish setting up your profile before pairing.'),
+        'same_gender_pairing' => const PairingFailure('Lovinity pairs one man and one woman together.'),
         _ => PairingFailure('Something went wrong: $code'),
       };
 }
