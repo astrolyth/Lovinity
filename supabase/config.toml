@@ -256,6 +256,18 @@ sender_name = "Lovinity"
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# The app's sign-in/reset UX (see AuthRepository.verifyEmailOtp /
+# verifyRecoveryOtp) is code-entry only -- there is no deep link or web
+# callback for the default magic-link/recovery templates' confirmation URL
+# to redirect to, so these overrides show only the {{ .Token }} code.
+[auth.email.template.magic_link]
+subject = "Your Lovinity sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "Your Lovinity password reset code"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
