@@ -148,21 +148,27 @@ void main() {
       await adminClient.auth.admin.deleteUser(pairing.userB);
     });
 
-    await clientA.from('cycle_records').insert({
-      'user_id': pairing.userA,
+    // Uses the WIFE (userB, gender 'female') deliberately: cycle_records
+    // inserts are restricted to female-gendered users (see
+    // supabase/migrations/20260802000002_cycle_female_only.sql), so writing
+    // this row as the husband would be rejected by RLS. Reading is done with
+    // her client too, since the row is 'private' and therefore invisible to
+    // the spouse by design.
+    await clientB.from('cycle_records').insert({
+      'user_id': pairing.userB,
       'couple_id': pairing.coupleId,
       'started_on': '2026-07-05',
       'visibility': 'private',
     });
 
-    final repo = ScoreboardRepository(clientA);
+    final repo = ScoreboardRepository(clientB);
     final cycles = await repo.fetchCycles(
-      userId: pairing.userA,
+      userId: pairing.userB,
       from: DateTime(2026, 7, 1),
       toInclusive: DateTime(2026, 7, 10),
     );
 
-    expect(cycles.single.userId, pairing.userA);
+    expect(cycles.single.userId, pairing.userB);
     expect(cycles.single.startedOn, DateTime(2026, 7, 5));
     expect(cycles.single.visibility, 'private');
   });

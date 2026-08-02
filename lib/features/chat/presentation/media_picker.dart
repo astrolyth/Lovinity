@@ -12,9 +12,17 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+// A maintained fork of the (abandoned) `video_thumbnail` package, with the
+// same API. The original still declares `jcenter()` in its android/build.gradle
+// -- that repository shut down in 2021 and Gradle 9 removed the method
+// outright, so the original fails to even evaluate on a current Android
+// toolchain. The fork uses google()/mavenCentral() and declares the AGP 8+
+// `namespace`. Unlike the original, its `thumbnailData` returns a
+// NON-nullable Uint8List and signals failure by throwing.
+import 'package:get_thumbnail_video/index.dart' show ImageFormat;
+import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart' as video_thumb;
 
 enum MediaSource { camera, gallery }
 
@@ -103,13 +111,21 @@ class DevicePicker implements MediaPicker {
 
     final bytes = await xfile.readAsBytes();
 
-    final thumbBytes = await video_thumb.VideoThumbnail.thumbnailData(
-      video: xfile.path,
-      imageFormat: video_thumb.ImageFormat.JPEG,
-      maxWidth: 200,
-      quality: 60,
-    );
-    if (thumbBytes == null) return null;
+    // Returns non-nullable bytes and throws on failure (unlike the abandoned
+    // `video_thumbnail`, which returned null). Treat a failure the same way
+    // the rest of this method treats "couldn't produce a video": return null
+    // so the composer silently declines rather than crashing the picker.
+    final Uint8List thumbBytes;
+    try {
+      thumbBytes = await VideoThumbnail.thumbnailData(
+        video: xfile.path,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 200,
+        quality: 60,
+      );
+    } catch (_) {
+      return null;
+    }
 
     final controller = VideoPlayerController.file(File(xfile.path));
     await controller.initialize();
