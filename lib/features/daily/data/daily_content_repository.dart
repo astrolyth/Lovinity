@@ -10,15 +10,32 @@ class DailyContentRepository {
   /// Fetches (creating if needed) today's verse / hadith / question for the
   /// caller's couple. Returns null values when the corresponding library is
   /// empty on the server.
+  ///
+  /// The question of the day is a *joint* activity: both partners must be
+  /// shown the exact same question. `get_daily_content(p_date)` picks content
+  /// deterministically per `(couple_id, date)`, so if each device sent its
+  /// own `DateTime.now()` as `p_date`, two partners in different timezones
+  /// (or just past midnight for one of them) could disagree on the calendar
+  /// day and be handed different content entirely. To avoid that, when no
+  /// explicit [date] is requested we omit `p_date` from the RPC params
+  /// altogether so the server falls back to its own `coalesce(p_date,
+  /// current_date)` -- one clock, shared by both partners, instead of each
+  /// device's local clock. (Confirmed against local PostgREST: an omitted
+  /// key, an explicit `null`, and an explicit date string all round-trip
+  /// correctly for this defaulted `date` argument -- see
+  /// partner-sync-fix-report.md for the verification transcript. We still
+  /// omit rather than send `null` explicitly, since that's the form the task
+  /// calls out as the safe one across PostgREST versions.)
+  ///
+  /// Callers that want a specific day (not "today") may still pass [date]
+  /// explicitly -- that path is untouched.
   Future<DailyContent> forDate([DateTime? date]) async {
-    final d = date ?? DateTime.now();
-    final rows = await _client.rpc(
-      'get_daily_content',
-      params: {
-        'p_date':
-            '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
-      },
-    );
+    final params = <String, dynamic>{};
+    if (date != null) {
+      params['p_date'] =
+          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+    final rows = await _client.rpc('get_daily_content', params: params);
     final row = (rows is List) ? rows.first : rows;
     final map = Map<String, dynamic>.from(row as Map);
 
