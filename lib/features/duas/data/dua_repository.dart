@@ -30,7 +30,12 @@ class Dua {
         authorId: row['author_id'] as String,
         title: row['title'] as String,
         body: row['body'] as String?,
-        visibility: (row['visibility'] as String?) ?? 'shared',
+        // Privacy field: fail closed. The column is `not null` with a
+        // 'shared' default at the DB level, so a real row always carries an
+        // explicit value -- this only kicks in for an anomalous payload
+        // (missing/null field), and a missing value must never be treated
+        // as permission to show the row to a partner.
+        visibility: (row['visibility'] as String?) ?? 'private',
         isAnswered: row['is_answered'] as bool? ?? false,
         createdAt: DateTime.parse(row['created_at'] as String),
         answeredAt: row['answered_at'] == null
