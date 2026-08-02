@@ -3,18 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/motion/motion.dart';
+import '../../../core/notifications/notification_providers.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/time/prayer_engine.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../chat/domain/chat_providers.dart';
+import '../../cycle/domain/cycle_providers.dart';
+import '../../daily/domain/question_providers.dart';
 import '../../daily/presentation/question_card.dart';
 import '../../daily/presentation/verse_card.dart';
+import '../../duas/domain/dua_providers.dart';
 import '../../duas/presentation/dua_card.dart';
+import '../../gratitude/domain/gratitude_providers.dart';
 import '../../gratitude/presentation/gratitude_card.dart';
 import '../../location/data/location_service.dart';
 import '../../location/domain/location_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
+import '../../prayer_log/domain/prayer_log_providers.dart';
 import '../../prayer_log/presentation/prayer_log_card.dart';
 import '../../scoring/presentation/scoreboard_card.dart';
 import '../domain/home_providers.dart';
@@ -32,6 +38,12 @@ class HomeScreen extends ConsumerWidget {
     // single underlying subscription -- no double pump.
     ref.watch(inboxPumpProvider);
     ref.watch(receiptPumpProvider);
+    ref.watch(pairingNotificationPumpProvider);
+    ref.watch(prayerNotificationPumpProvider);
+    ref.watch(cycleNotificationPumpProvider);
+    ref.watch(questionNotificationPumpProvider);
+    ref.watch(duaNotificationPumpProvider);
+    ref.watch(gratitudeNotificationPumpProvider);
 
     final theme = Theme.of(context);
     final own = ref.watch(ownProfileProvider);
@@ -87,6 +99,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(width: LovSpace.sm),
                       Expanded(child: HijriDate(date: now)),
+                      _NotificationBell(),
                       IconButton(
                         icon: const Icon(Icons.settings_outlined),
                         tooltip: 'Settings',
@@ -431,6 +444,26 @@ class _NextPrayerCard extends StatelessWidget {
         'isha' => 'ٱلْعِشَاء',
         _ => '',
       };
+}
+
+class _NotificationBell extends ConsumerWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(unreadNotificationCountProvider).asData?.value ?? 0;
+    final button = IconButton(
+      icon: const Icon(Icons.notifications_outlined),
+      tooltip: 'Notifications',
+      onPressed: () => context.go('/home/notifications'),
+    );
+    if (count <= 0) return button;
+    return Badge(
+      label: Text(count > 99 ? '99+' : '$count'),
+      offset: const Offset(-6, 6),
+      child: button,
+    );
+  }
 }
 
 /// Messenger-style floating chat button with a live unread-message badge.
