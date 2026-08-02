@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/notifications/activity_detectors.dart';
+import '../../../core/notifications/notification_providers.dart';
 import '../../../shared/models/couple.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../auth/domain/auth_controller.dart';
@@ -20,4 +24,33 @@ final currentCoupleProvider = StreamProvider<Couple?>((ref) {
   return ref
       .read(pairingRepositoryProvider)
       .watchCurrentCouple(session.user.id);
+});
+
+/// Writes a "You're connected" notification the moment pairing becomes
+/// active. Mirrors the `inboxPumpProvider`/`receiptPumpProvider` shape in
+/// chat_providers.dart: a `Provider<void>` that owns a raw stream
+/// subscription rather than composing StreamProviders, so it can track the
+/// previous emission itself. Watched once from HomeScreen.
+final pairingNotificationPumpProvider = Provider<void>((ref) {
+  final authSession = ref.watch(authSessionProvider).asData?.value;
+  if (authSession == null) return;
+  final selfId = authSession.user.id;
+  final store = ref.read(notificationStoreProvider);
+
+  String? previousStatus;
+  final sub = ref
+      .read(pairingRepositoryProvider)
+      .watchCurrentCouple(selfId)
+      .listen((couple) {
+    if (pairingJustActivated(previousStatus, couple?.status)) {
+      unawaited(store.insert(
+        kind: 'pairing',
+        title: "You're connected",
+        body: 'You and your partner are now paired 💛',
+        route: '/home',
+      ));
+    }
+    previousStatus = couple?.status;
+  });
+  ref.onDispose(sub.cancel);
 });
