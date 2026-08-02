@@ -8,6 +8,7 @@ import '../../../core/time/prayer_engine.dart';
 import '../../../shared/models/prayer_log.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../auth/domain/auth_controller.dart';
+import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/prayer_log_repository.dart';
 
@@ -125,10 +126,20 @@ final prayerDaySummaryProvider =
 /// existing history a fresh subscription loads, and never the user's own
 /// check-ins. Watched once from HomeScreen.
 final prayerNotificationPumpProvider = Provider<void>((ref) {
-  final authSession = ref.watch(authSessionProvider).asData?.value;
-  final couple = ref.watch(currentCoupleProvider).asData?.value;
-  if (authSession == null || couple == null) return;
-  final selfId = authSession.user.id;
+  // Narrowed to scalar ids so a token refresh (~hourly) or a couple-object
+  // rebuild (Couple has no operator==, and SupabaseStreamBuilder refetches
+  // on every realtime reconnect) doesn't re-baseline the detector below and
+  // swallow partner activity that happened while backgrounded.
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  final coupleId =
+      ref.watch(currentCoupleProvider.select((c) => c.asData?.value?.id));
+  // Re-subscribe once the calendar day rolls over. `watchDay` captures
+  // `DateTime.now()` into a client-side date-key filter at subscribe time;
+  // without watching a day-granularity key here, this non-autoDispose pump
+  // would keep filtering for yesterday's key forever once midnight passes.
+  ref.watch(todayKeyProvider);
+  if (selfId == null || coupleId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   final detector = newRowDetector<PrayerLogEntry>(
@@ -136,7 +147,7 @@ final prayerNotificationPumpProvider = Provider<void>((ref) {
     onNew: (entry) {
       if (entry.userId == selfId) return;
       if (entry.status != PrayerStatus.prayed) return;
-      unawaited(store.insert(
+      unawaited(store.insertBestEffort(
         kind: 'prayer',
         title: 'Your partner logged ${entry.prayer.displayName}',
         route: '/home/prayer',
@@ -146,7 +157,7 @@ final prayerNotificationPumpProvider = Provider<void>((ref) {
 
   final sub = ref
       .read(prayerLogRepositoryProvider)
-      .watchDay(coupleId: couple.id, date: DateTime.now())
+      .watchDay(coupleId: coupleId, date: DateTime.now())
       .listen(detector);
   ref.onDispose(sub.cancel);
 });

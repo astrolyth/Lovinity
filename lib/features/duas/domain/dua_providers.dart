@@ -46,10 +46,15 @@ final answeredDuasProvider = Provider<List<Dua>>((ref) {
 /// division of responsibility the cycle pump already uses for its own
 /// visibility filter. Watched once from HomeScreen.
 final duaNotificationPumpProvider = Provider<void>((ref) {
-  final authSession = ref.watch(authSessionProvider).asData?.value;
-  final couple = ref.watch(currentCoupleProvider).asData?.value;
-  if (authSession == null || couple == null) return;
-  final selfId = authSession.user.id;
+  // Narrowed to scalar ids so a token refresh (~hourly) or a couple-object
+  // rebuild (Couple has no operator==, and SupabaseStreamBuilder refetches
+  // on every realtime reconnect) doesn't re-baseline the detector below and
+  // swallow partner activity that happened while backgrounded.
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  final coupleId =
+      ref.watch(currentCoupleProvider.select((c) => c.asData?.value?.id));
+  if (selfId == null || coupleId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   final detector = newRowDetector<Dua>(
@@ -57,7 +62,7 @@ final duaNotificationPumpProvider = Provider<void>((ref) {
     onNew: (dua) {
       if (dua.authorId == selfId) return;
       if (!dua.isShared) return;
-      unawaited(store.insert(
+      unawaited(store.insertBestEffort(
         kind: 'dua',
         title: 'Your partner added a dua',
         body: dua.title,
@@ -66,6 +71,7 @@ final duaNotificationPumpProvider = Provider<void>((ref) {
     },
   );
 
-  final sub = ref.read(duaRepositoryProvider).watch(couple.id).listen(detector);
+  final sub =
+      ref.read(duaRepositoryProvider).watch(coupleId).listen(detector);
   ref.onDispose(sub.cancel);
 });

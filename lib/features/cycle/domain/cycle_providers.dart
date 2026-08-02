@@ -47,10 +47,15 @@ final cyclePredictionProvider = Provider<CyclePrediction>((ref) {
 /// stream at all. Deliberately non-clinical wording. Watched once from
 /// HomeScreen.
 final cycleNotificationPumpProvider = Provider<void>((ref) {
-  final authSession = ref.watch(authSessionProvider).asData?.value;
-  final couple = ref.watch(currentCoupleProvider).asData?.value;
-  if (authSession == null || couple == null) return;
-  final selfId = authSession.user.id;
+  // Narrowed to scalar ids so a token refresh (~hourly) or a couple-object
+  // rebuild (Couple has no operator==, and SupabaseStreamBuilder refetches
+  // on every realtime reconnect) doesn't re-baseline the detector below and
+  // swallow partner activity that happened while backgrounded.
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  final coupleId =
+      ref.watch(currentCoupleProvider.select((c) => c.asData?.value?.id));
+  if (selfId == null || coupleId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   final detector = newRowDetector<CycleRecord>(
@@ -58,7 +63,7 @@ final cycleNotificationPumpProvider = Provider<void>((ref) {
     onNew: (record) {
       if (record.userId == selfId) return;
       if (record.visibility != 'shared') return;
-      unawaited(store.insert(
+      unawaited(store.insertBestEffort(
         kind: 'cycle',
         title: 'Your partner shared a cycle update',
         route: '/home/cycle',
@@ -68,7 +73,7 @@ final cycleNotificationPumpProvider = Provider<void>((ref) {
 
   final sub = ref
       .read(cycleRepositoryProvider)
-      .watchCoupleShared(coupleId: couple.id)
+      .watchCoupleShared(coupleId: coupleId)
       .listen(detector);
   ref.onDispose(sub.cancel);
 });

@@ -55,6 +55,22 @@ final _nowTickerProvider = StreamProvider<DateTime>((ref) {
   ).asBroadcastStream();
 });
 
+/// The current local calendar day as a `YYYY-MM-DD` key. Derived from the
+/// same 30s ticker as [nextPrayerProvider], but a `Provider`'s default
+/// `==`-based notification means watchers only rebuild when this *string*
+/// actually changes -- i.e. once at midnight -- not every 30 seconds, even
+/// though this provider itself recomputes that often. Lets long-lived
+/// listeners (e.g. the prayer notification pump) re-subscribe once a day
+/// changes instead of either never rebuilding (stuck on yesterday) or
+/// rebuilding on every tick (dropping in-flight state every 30s).
+final todayKeyProvider = Provider<String>((ref) {
+  final now = ref.watch(_nowTickerProvider).asData?.value ?? DateTime.now();
+  final y = now.year.toString().padLeft(4, '0');
+  final m = now.month.toString().padLeft(2, '0');
+  final d = now.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+});
+
 /// Pure computed provider — recomputes when profile or ticker changes.
 final nextPrayerProvider = Provider<ScheduledPrayer?>((ref) {
   final profile = ref.watch(ownProfileProvider).asData?.value;

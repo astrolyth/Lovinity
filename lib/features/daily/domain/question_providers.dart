@@ -35,18 +35,26 @@ final questionAnswersProvider =
 /// genuinely new partner answer -- never the user's own, never on the
 /// first emission (existing history). Watched once from HomeScreen.
 final questionNotificationPumpProvider = Provider<void>((ref) {
-  final authSession = ref.watch(authSessionProvider).asData?.value;
-  final couple = ref.watch(currentCoupleProvider).asData?.value;
-  final content = ref.watch(dailyContentProvider).asData?.value;
-  if (authSession == null || couple == null || content?.question == null) return;
-  final selfId = authSession.user.id;
+  // Narrowed to scalar ids/values so a token refresh (~hourly), a
+  // couple-object rebuild (Couple has no operator==, and
+  // SupabaseStreamBuilder refetches on every realtime reconnect), or a
+  // DailyContent rebuild carrying the same question don't re-baseline the
+  // detector below and swallow partner activity that happened while
+  // backgrounded.
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  final coupleId =
+      ref.watch(currentCoupleProvider.select((c) => c.asData?.value?.id));
+  final questionId = ref
+      .watch(dailyContentProvider.select((c) => c.asData?.value?.question?.id));
+  if (selfId == null || coupleId == null || questionId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   final detector = newRowDetector<QuestionAnswer>(
     keyOf: (a) => a.authorId,
     onNew: (answer) {
       if (answer.authorId == selfId) return;
-      unawaited(store.insert(
+      unawaited(store.insertBestEffort(
         kind: 'question',
         title: "Your partner answered today's question",
         route: '/home/question',
@@ -57,8 +65,8 @@ final questionNotificationPumpProvider = Provider<void>((ref) {
   final sub = ref
       .read(questionRepositoryProvider)
       .watchAnswers(
-        coupleId: couple.id,
-        questionId: content!.question!.id,
+        coupleId: coupleId,
+        questionId: questionId,
       )
       .listen(detector);
   ref.onDispose(sub.cancel);

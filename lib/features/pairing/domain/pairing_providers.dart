@@ -32,9 +32,13 @@ final currentCoupleProvider = StreamProvider<Couple?>((ref) {
 /// subscription rather than composing StreamProviders, so it can track the
 /// previous emission itself. Watched once from HomeScreen.
 final pairingNotificationPumpProvider = Provider<void>((ref) {
-  final authSession = ref.watch(authSessionProvider).asData?.value;
-  if (authSession == null) return;
-  final selfId = authSession.user.id;
+  // Narrowed to the scalar id, not the whole Session -- watching the
+  // Session object directly would rebuild (and re-baseline `previousStatus`
+  // below to null) on every token refresh (~hourly), silently swallowing a
+  // pairing-activation that lands in that same refreshed snapshot.
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  if (selfId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   String? previousStatus;
@@ -43,7 +47,7 @@ final pairingNotificationPumpProvider = Provider<void>((ref) {
       .watchCurrentCouple(selfId)
       .listen((couple) {
     if (pairingJustActivated(previousStatus, couple?.status)) {
-      unawaited(store.insert(
+      unawaited(store.insertBestEffort(
         kind: 'pairing',
         title: "You're connected",
         body: 'You and your partner are now paired 💛',

@@ -20,8 +20,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    // Opening the screen marks everything currently unread as read.
-    ref.read(notificationStoreProvider).markAllRead();
+    // Opening the screen marks everything currently unread as read. Caught
+    // so a failed write (e.g. the local db closing mid-flight during an
+    // account switch) can't surface as an unhandled async error.
+    ref.read(notificationStoreProvider).markAllRead().catchError((Object e) {
+      debugPrint('NotificationsScreen: failed to mark all read: $e');
+    });
   }
 
   @override

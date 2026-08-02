@@ -1,5 +1,6 @@
 // lib/core/notifications/notification_store.dart
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../storage/signal_db.dart';
@@ -40,6 +41,27 @@ class NotificationStore {
             ),
           );
     });
+  }
+
+  /// Best-effort wrapper around [insert] for the activity pumps: a failed
+  /// notification write (e.g. the underlying Drift transaction throwing
+  /// because `wipeAll()`/`db.close()` ran mid-flight during an account
+  /// switch) must never surface as an unhandled async error and break the
+  /// feature it's only observing. `unawaited(insert(...))` alone does NOT
+  /// do this -- `unawaited` is purely a static-analysis marker with no
+  /// runtime effect, so an uncaught throw inside still becomes an unhandled
+  /// async error. This actually catches it.
+  Future<void> insertBestEffort({
+    required String kind,
+    required String title,
+    String? body,
+    required String route,
+  }) async {
+    try {
+      await insert(kind: kind, title: title, body: body, route: route);
+    } catch (e) {
+      debugPrint('NotificationStore: failed to insert notification: $e');
+    }
   }
 
   Stream<List<NotificationRow>> watchAll() {

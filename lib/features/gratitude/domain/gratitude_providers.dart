@@ -46,17 +46,22 @@ final wroteGratitudeTodayProvider = Provider<bool>((ref) {
 /// "revealed," with no separate reveal-transition tracking needed. Watched
 /// once from HomeScreen.
 final gratitudeNotificationPumpProvider = Provider<void>((ref) {
-  final authSession = ref.watch(authSessionProvider).asData?.value;
-  final couple = ref.watch(currentCoupleProvider).asData?.value;
-  if (authSession == null || couple == null) return;
-  final selfId = authSession.user.id;
+  // Narrowed to scalar ids so a token refresh (~hourly) or a couple-object
+  // rebuild (Couple has no operator==, and SupabaseStreamBuilder refetches
+  // on every realtime reconnect) doesn't re-baseline the detector below and
+  // swallow partner activity that happened while backgrounded.
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  final coupleId =
+      ref.watch(currentCoupleProvider.select((c) => c.asData?.value?.id));
+  if (selfId == null || coupleId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   final detector = newRowDetector<GratitudeNote>(
     keyOf: (n) => n.id,
     onNew: (note) {
       if (note.authorId == selfId) return;
-      unawaited(store.insert(
+      unawaited(store.insertBestEffort(
         kind: 'gratitude',
         title: 'Your partner shared something they\'re grateful for',
         route: '/home/gratitude',
@@ -66,7 +71,7 @@ final gratitudeNotificationPumpProvider = Provider<void>((ref) {
 
   final sub = ref
       .read(gratitudeRepositoryProvider)
-      .watchAll(coupleId: couple.id, selfUserId: selfId)
+      .watchAll(coupleId: coupleId, selfUserId: selfId)
       .listen(detector);
   ref.onDispose(sub.cancel);
 });
