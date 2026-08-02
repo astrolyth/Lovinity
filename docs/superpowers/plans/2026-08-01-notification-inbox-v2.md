@@ -29,7 +29,9 @@
 - Modify: `test/core/storage/signal_db_test.dart` (currently one test, `'stores and reads a session row'`; add the new test into its `main()` block, don't replace the existing one)
 
 **Interfaces:**
-- Produces: `AppNotifications` Drift table (fields: `id` text pk, `kind` text, `title` text, `body` text nullable, `route` text, `createdAt` datetime, `readAt` datetime nullable) and its generated `AppNotification` row class / `AppNotificationsCompanion`. `SignalDb.wipeAll()` now also clears it. `SignalDb.schemaVersion` is `5`.
+- Produces: `AppNotifications` Drift table (fields: `id` text pk, `kind` text, `title` text, `body` text nullable, `route` text, `createdAt` datetime, `readAt` datetime nullable, `seq` int) and its generated `AppNotification` row class / `AppNotificationsCompanion`. `SignalDb.wipeAll()` now also clears it. `SignalDb.schemaVersion` is `5`.
+
+**Note on `seq`:** a prior implementation attempt of this same feature (on an abandoned branch) shipped this table without `seq`, then needed two follow-up fixes: Drift's `DateTimeColumn` maps to SQL with only *second* precision, so two notifications inserted within the same second sorted non-deterministically under a plain `ORDER BY createdAt DESC`; the first fix added a monotonic `seq` column computed as `max(seq) + 1` per insert, but that read-then-insert was itself racy under concurrent callers (two inserts could read the same max and collide). Build the table with `seq` from the start (below) and give `NotificationStore.insert` (Task 2) the transaction-wrapped atomic version directly — do not ship the naive version and rediscover these two bugs.
 
 - [ ] **Step 1: Add the table to `lib/core/storage/signal_db.dart`**
 
@@ -45,6 +47,11 @@ Add this class after `ChatReactions`:
 /// called `Notification`, colliding with `package:flutter/widgets.dart`'s own
 /// `Notification` class wherever this table and Flutter widgets are imported
 /// together.
+///
+/// Uses `seq` as a monotonic insertion sequence number to provide stable
+/// ordering among notifications created in the same second (Drift's
+/// DateTimeColumn maps to second-precision SQL, not millisecond precision) --
+/// see `NotificationStore.insert`/`watchAll` (Task 2) for how it's used.
 class AppNotifications extends Table {
   TextColumn get id => text()();
   TextColumn get kind => text()(); // 'pairing'|'prayer'|'cycle'|'question'|'dua'|'gratitude'
@@ -53,6 +60,7 @@ class AppNotifications extends Table {
   TextColumn get route => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get readAt => dateTime().nullable()();
+  IntColumn get seq => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -217,15 +225,39 @@ void main() {
   });
   tearDown(() => db.close());
 
-  test('insert then watchAll returns newest first', () async {
+  test('insert then watchAll returns newest first, deterministically even within the same second',
+      () async {
+    // No artificial delay between inserts: two notifications created in the
+    // same wall-clock second must still order deterministically via `seq`,
+    // not by relying on createdAt happening to differ (Drift's
+    // DateTimeColumn is second-precision, not millisecond).
     await store.insert(
         kind: 'pairing', title: 'first', body: 'a', route: '/home');
-    await Future<void>.delayed(const Duration(milliseconds: 2));
     await store.insert(
         kind: 'prayer', title: 'second', body: 'b', route: '/home/prayer');
 
     final rows = await store.watchAll().first;
     expect(rows.map((r) => r.title).toList(), ['second', 'first']);
+  });
+
+  test('concurrent inserts never collide on seq (no duplicate ordering position)',
+      () async {
+    // Regression test for a real race: reading max(seq) then inserting is
+    // only safe if serialized. Firing several inserts concurrently (not
+    // awaited one at a time) must still produce N distinct, correctly
+    // ordered rows -- if the transaction wrapping were missing, two of these
+    // could read the same max(seq) and collide.
+    await Future.wait([
+      store.insert(kind: 'prayer', title: 'a', route: '/home/prayer'),
+      store.insert(kind: 'prayer', title: 'b', route: '/home/prayer'),
+      store.insert(kind: 'prayer', title: 'c', route: '/home/prayer'),
+      store.insert(kind: 'prayer', title: 'd', route: '/home/prayer'),
+      store.insert(kind: 'prayer', title: 'e', route: '/home/prayer'),
+    ]);
+
+    final rows = await store.watchAll().first;
+    expect(rows, hasLength(5));
+    expect(rows.map((r) => r.title).toSet(), {'a', 'b', 'c', 'd', 'e'});
   });
 
   test('watchUnreadCount counts unread; markRead clears one; markAllRead clears all',
@@ -283,27 +315,44 @@ class NotificationStore {
   NotificationStore(this._db);
   final SignalDb _db;
 
+  /// Wrapped in a transaction so the "read max(seq), then insert" pair is
+  /// atomic -- without this, two concurrent inserts could both read the same
+  /// max and write the same `seq`, reintroducing the same-second ordering
+  /// tie this column exists to prevent.
   Future<void> insert({
     required String kind,
     required String title,
     String? body,
     required String route,
-  }) {
-    return _db.into(_db.appNotifications).insert(
-          AppNotificationsCompanion.insert(
-            id: const Uuid().v4(),
-            kind: kind,
-            title: title,
-            body: Value(body),
-            route: route,
-            createdAt: DateTime.now(),
-          ),
-        );
+  }) async {
+    await _db.transaction(() async {
+      final maxSeqExpr = _db.appNotifications.seq.max();
+      final result = await (_db.selectOnly(_db.appNotifications)
+            ..addColumns([maxSeqExpr]))
+          .getSingleOrNull();
+      final maxSeq = result?.read(maxSeqExpr) ?? 0;
+      final nextSeq = maxSeq + 1;
+
+      await _db.into(_db.appNotifications).insert(
+            AppNotificationsCompanion.insert(
+              id: const Uuid().v4(),
+              kind: kind,
+              title: title,
+              body: Value(body),
+              route: route,
+              createdAt: DateTime.now(),
+              seq: Value(nextSeq),
+            ),
+          );
+    });
   }
 
   Stream<List<NotificationRow>> watchAll() {
     return (_db.select(_db.appNotifications)
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.createdAt),
+            (t) => OrderingTerm.desc(t.seq),
+          ]))
         .watch();
   }
 
@@ -331,13 +380,13 @@ class NotificationStore {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `flutter test test/core/notifications/notification_store_test.dart`
-Expected: PASS (3 tests)
+Expected: PASS (4 tests)
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add lib/core/notifications/notification_store.dart test/core/notifications/notification_store_test.dart
-git commit -m "feat(notifications): add NotificationStore over AppNotifications"
+git commit -m "feat(notifications): add NotificationStore over AppNotifications, with atomic seq ordering"
 ```
 
 ---
