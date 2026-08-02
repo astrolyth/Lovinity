@@ -33,7 +33,15 @@ class GratitudeRepository {
   GratitudeRepository(this._client);
   final SupabaseClient _client;
 
-  Stream<List<GratitudeNote>> watchAll(String coupleId) {
+  /// Own notes plus the spouse's `reveal_to_spouse: true` notes only -- a
+  /// still-private spouse note must never reach this device at all (fixes
+  /// a real leak: the previous unfiltered query relied on the UI alone to
+  /// hide `note.body`, but the raw text was already delivered to the
+  /// client). Supabase's `.or(...)` filter expresses this server-side.
+  Stream<List<GratitudeNote>> watchAll({
+    required String coupleId,
+    required String selfUserId,
+  }) {
     return _client
         .from('gratitude_notes')
         .stream(primaryKey: ['id'])
@@ -42,6 +50,10 @@ class GratitudeRepository {
         .map((rows) => [
               for (final r in rows.reversed)
                 GratitudeNote.fromRow(Map<String, dynamic>.from(r)),
+            ])
+        .map((notes) => [
+              for (final n in notes)
+                if (n.authorId == selfUserId || n.revealToSpouse) n,
             ]);
   }
 
