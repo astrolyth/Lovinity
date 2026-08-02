@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/notifications/activity_detectors.dart';
+import '../../../core/notifications/notification_providers.dart';
 import '../../../core/time/prayer_engine.dart';
 import '../../../shared/models/prayer_log.dart';
 import '../../../shared/providers/supabase_provider.dart';
@@ -113,4 +117,36 @@ final prayerDaySummaryProvider =
     spouse: spouse,
     togetherWindowSeconds: closest,
   );
+});
+
+/// Writes a notification when the spouse logs a prayer today. Diffs
+/// `watchDay`'s snapshots (keyed by user+prayer -- the stream is already
+/// scoped to one date) so only genuinely new check-ins fire, never the
+/// existing history a fresh subscription loads, and never the user's own
+/// check-ins. Watched once from HomeScreen.
+final prayerNotificationPumpProvider = Provider<void>((ref) {
+  final authSession = ref.watch(authSessionProvider).asData?.value;
+  final couple = ref.watch(currentCoupleProvider).asData?.value;
+  if (authSession == null || couple == null) return;
+  final selfId = authSession.user.id;
+  final store = ref.read(notificationStoreProvider);
+
+  final detector = newRowDetector<PrayerLogEntry>(
+    keyOf: (e) => '${e.userId}:${e.prayer.dbName}',
+    onNew: (entry) {
+      if (entry.userId == selfId) return;
+      if (entry.status != PrayerStatus.prayed) return;
+      unawaited(store.insert(
+        kind: 'prayer',
+        title: 'Your partner logged ${entry.prayer.displayName}',
+        route: '/home/prayer',
+      ));
+    },
+  );
+
+  final sub = ref
+      .read(prayerLogRepositoryProvider)
+      .watchDay(coupleId: couple.id, date: DateTime.now())
+      .listen(detector);
+  ref.onDispose(sub.cancel);
 });
