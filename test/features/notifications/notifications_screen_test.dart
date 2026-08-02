@@ -33,8 +33,7 @@ void main() {
     // Opening the screen marks it read. Verified via a one-shot get(), not
     // a second .watch() stream -- two concurrent reactive Drift streams
     // against the same in-memory db (this one, plus the widget's own
-    // notificationsListProvider) hang on disposal in this environment. See
-    // task-11-report.md for the full diagnosis.
+    // notificationsListProvider) hang on disposal in this environment.
     await tester.pump();
     final rows = await db.select(db.appNotifications).get();
     expect(rows.single.readAt, isNotNull);
