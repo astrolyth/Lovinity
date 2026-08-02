@@ -2966,6 +2966,496 @@ class ChatReactionsCompanion extends UpdateCompanion<ChatReaction> {
   }
 }
 
+class $AppNotificationsTable extends AppNotifications
+    with TableInfo<$AppNotificationsTable, AppNotification> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppNotificationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _routeMeta = const VerificationMeta('route');
+  @override
+  late final GeneratedColumn<String> route = GeneratedColumn<String>(
+    'route',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _readAtMeta = const VerificationMeta('readAt');
+  @override
+  late final GeneratedColumn<DateTime> readAt = GeneratedColumn<DateTime>(
+    'read_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    kind,
+    title,
+    body,
+    route,
+    createdAt,
+    readAt,
+    seq,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_notifications';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppNotification> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    }
+    if (data.containsKey('route')) {
+      context.handle(
+        _routeMeta,
+        route.isAcceptableOrUnknown(data['route']!, _routeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_routeMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('read_at')) {
+      context.handle(
+        _readAtMeta,
+        readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta),
+      );
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppNotification map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppNotification(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      ),
+      route: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}route'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      readAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}read_at'],
+      ),
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+    );
+  }
+
+  @override
+  $AppNotificationsTable createAlias(String alias) {
+    return $AppNotificationsTable(attachedDatabase, alias);
+  }
+}
+
+class AppNotification extends DataClass implements Insertable<AppNotification> {
+  final String id;
+  final String kind;
+  final String title;
+  final String? body;
+  final String route;
+  final DateTime createdAt;
+  final DateTime? readAt;
+  final int seq;
+  const AppNotification({
+    required this.id,
+    required this.kind,
+    required this.title,
+    this.body,
+    required this.route,
+    required this.createdAt,
+    this.readAt,
+    required this.seq,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || body != null) {
+      map['body'] = Variable<String>(body);
+    }
+    map['route'] = Variable<String>(route);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || readAt != null) {
+      map['read_at'] = Variable<DateTime>(readAt);
+    }
+    map['seq'] = Variable<int>(seq);
+    return map;
+  }
+
+  AppNotificationsCompanion toCompanion(bool nullToAbsent) {
+    return AppNotificationsCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      title: Value(title),
+      body: body == null && nullToAbsent ? const Value.absent() : Value(body),
+      route: Value(route),
+      createdAt: Value(createdAt),
+      readAt: readAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(readAt),
+      seq: Value(seq),
+    );
+  }
+
+  factory AppNotification.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppNotification(
+      id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      title: serializer.fromJson<String>(json['title']),
+      body: serializer.fromJson<String?>(json['body']),
+      route: serializer.fromJson<String>(json['route']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      readAt: serializer.fromJson<DateTime?>(json['readAt']),
+      seq: serializer.fromJson<int>(json['seq']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'title': serializer.toJson<String>(title),
+      'body': serializer.toJson<String?>(body),
+      'route': serializer.toJson<String>(route),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'readAt': serializer.toJson<DateTime?>(readAt),
+      'seq': serializer.toJson<int>(seq),
+    };
+  }
+
+  AppNotification copyWith({
+    String? id,
+    String? kind,
+    String? title,
+    Value<String?> body = const Value.absent(),
+    String? route,
+    DateTime? createdAt,
+    Value<DateTime?> readAt = const Value.absent(),
+    int? seq,
+  }) => AppNotification(
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    title: title ?? this.title,
+    body: body.present ? body.value : this.body,
+    route: route ?? this.route,
+    createdAt: createdAt ?? this.createdAt,
+    readAt: readAt.present ? readAt.value : this.readAt,
+    seq: seq ?? this.seq,
+  );
+  AppNotification copyWithCompanion(AppNotificationsCompanion data) {
+    return AppNotification(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      title: data.title.present ? data.title.value : this.title,
+      body: data.body.present ? data.body.value : this.body,
+      route: data.route.present ? data.route.value : this.route,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      seq: data.seq.present ? data.seq.value : this.seq,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppNotification(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('title: $title, ')
+          ..write('body: $body, ')
+          ..write('route: $route, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('seq: $seq')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, kind, title, body, route, createdAt, readAt, seq);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppNotification &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.title == this.title &&
+          other.body == this.body &&
+          other.route == this.route &&
+          other.createdAt == this.createdAt &&
+          other.readAt == this.readAt &&
+          other.seq == this.seq);
+}
+
+class AppNotificationsCompanion extends UpdateCompanion<AppNotification> {
+  final Value<String> id;
+  final Value<String> kind;
+  final Value<String> title;
+  final Value<String?> body;
+  final Value<String> route;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> readAt;
+  final Value<int> seq;
+  final Value<int> rowid;
+  const AppNotificationsCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.title = const Value.absent(),
+    this.body = const Value.absent(),
+    this.route = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AppNotificationsCompanion.insert({
+    required String id,
+    required String kind,
+    required String title,
+    this.body = const Value.absent(),
+    required String route,
+    required DateTime createdAt,
+    this.readAt = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       kind = Value(kind),
+       title = Value(title),
+       route = Value(route),
+       createdAt = Value(createdAt);
+  static Insertable<AppNotification> custom({
+    Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? title,
+    Expression<String>? body,
+    Expression<String>? route,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? readAt,
+    Expression<int>? seq,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (title != null) 'title': title,
+      if (body != null) 'body': body,
+      if (route != null) 'route': route,
+      if (createdAt != null) 'created_at': createdAt,
+      if (readAt != null) 'read_at': readAt,
+      if (seq != null) 'seq': seq,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AppNotificationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? kind,
+    Value<String>? title,
+    Value<String?>? body,
+    Value<String>? route,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? readAt,
+    Value<int>? seq,
+    Value<int>? rowid,
+  }) {
+    return AppNotificationsCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      route: route ?? this.route,
+      createdAt: createdAt ?? this.createdAt,
+      readAt: readAt ?? this.readAt,
+      seq: seq ?? this.seq,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (route.present) {
+      map['route'] = Variable<String>(route.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (readAt.present) {
+      map['read_at'] = Variable<DateTime>(readAt.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppNotificationsCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('title: $title, ')
+          ..write('body: $body, ')
+          ..write('route: $route, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('seq: $seq, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$SignalDb extends GeneratedDatabase {
   _$SignalDb(QueryExecutor e) : super(e);
   $SignalDbManager get managers => $SignalDbManager(this);
@@ -2981,6 +3471,9 @@ abstract class _$SignalDb extends GeneratedDatabase {
   late final $SignalMetaTable signalMeta = $SignalMetaTable(this);
   late final $ChatMessagesTable chatMessages = $ChatMessagesTable(this);
   late final $ChatReactionsTable chatReactions = $ChatReactionsTable(this);
+  late final $AppNotificationsTable appNotifications = $AppNotificationsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2994,6 +3487,7 @@ abstract class _$SignalDb extends GeneratedDatabase {
     signalMeta,
     chatMessages,
     chatReactions,
+    appNotifications,
   ];
 }
 
@@ -4648,6 +5142,265 @@ typedef $$ChatReactionsTableProcessedTableManager =
       ChatReaction,
       PrefetchHooks Function()
     >;
+typedef $$AppNotificationsTableCreateCompanionBuilder =
+    AppNotificationsCompanion Function({
+      required String id,
+      required String kind,
+      required String title,
+      Value<String?> body,
+      required String route,
+      required DateTime createdAt,
+      Value<DateTime?> readAt,
+      Value<int> seq,
+      Value<int> rowid,
+    });
+typedef $$AppNotificationsTableUpdateCompanionBuilder =
+    AppNotificationsCompanion Function({
+      Value<String> id,
+      Value<String> kind,
+      Value<String> title,
+      Value<String?> body,
+      Value<String> route,
+      Value<DateTime> createdAt,
+      Value<DateTime?> readAt,
+      Value<int> seq,
+      Value<int> rowid,
+    });
+
+class $$AppNotificationsTableFilterComposer
+    extends Composer<_$SignalDb, $AppNotificationsTable> {
+  $$AppNotificationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get route => $composableBuilder(
+    column: $table.route,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppNotificationsTableOrderingComposer
+    extends Composer<_$SignalDb, $AppNotificationsTable> {
+  $$AppNotificationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get route => $composableBuilder(
+    column: $table.route,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppNotificationsTableAnnotationComposer
+    extends Composer<_$SignalDb, $AppNotificationsTable> {
+  $$AppNotificationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get route =>
+      $composableBuilder(column: $table.route, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get readAt =>
+      $composableBuilder(column: $table.readAt, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+}
+
+class $$AppNotificationsTableTableManager
+    extends
+        RootTableManager<
+          _$SignalDb,
+          $AppNotificationsTable,
+          AppNotification,
+          $$AppNotificationsTableFilterComposer,
+          $$AppNotificationsTableOrderingComposer,
+          $$AppNotificationsTableAnnotationComposer,
+          $$AppNotificationsTableCreateCompanionBuilder,
+          $$AppNotificationsTableUpdateCompanionBuilder,
+          (
+            AppNotification,
+            BaseReferences<_$SignalDb, $AppNotificationsTable, AppNotification>,
+          ),
+          AppNotification,
+          PrefetchHooks Function()
+        > {
+  $$AppNotificationsTableTableManager(
+    _$SignalDb db,
+    $AppNotificationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppNotificationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppNotificationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppNotificationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> body = const Value.absent(),
+                Value<String> route = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> readAt = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppNotificationsCompanion(
+                id: id,
+                kind: kind,
+                title: title,
+                body: body,
+                route: route,
+                createdAt: createdAt,
+                readAt: readAt,
+                seq: seq,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String kind,
+                required String title,
+                Value<String?> body = const Value.absent(),
+                required String route,
+                required DateTime createdAt,
+                Value<DateTime?> readAt = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppNotificationsCompanion.insert(
+                id: id,
+                kind: kind,
+                title: title,
+                body: body,
+                route: route,
+                createdAt: createdAt,
+                readAt: readAt,
+                seq: seq,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppNotificationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$SignalDb,
+      $AppNotificationsTable,
+      AppNotification,
+      $$AppNotificationsTableFilterComposer,
+      $$AppNotificationsTableOrderingComposer,
+      $$AppNotificationsTableAnnotationComposer,
+      $$AppNotificationsTableCreateCompanionBuilder,
+      $$AppNotificationsTableUpdateCompanionBuilder,
+      (
+        AppNotification,
+        BaseReferences<_$SignalDb, $AppNotificationsTable, AppNotification>,
+      ),
+      AppNotification,
+      PrefetchHooks Function()
+    >;
 
 class $SignalDbManager {
   final _$SignalDb _db;
@@ -4668,4 +5421,6 @@ class $SignalDbManager {
       $$ChatMessagesTableTableManager(_db, _db.chatMessages);
   $$ChatReactionsTableTableManager get chatReactions =>
       $$ChatReactionsTableTableManager(_db, _db.chatReactions);
+  $$AppNotificationsTableTableManager get appNotifications =>
+      $$AppNotificationsTableTableManager(_db, _db.appNotifications);
 }

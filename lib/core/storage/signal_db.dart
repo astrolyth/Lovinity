@@ -103,6 +103,34 @@ class ChatReactions extends Table {
   Set<Column> get primaryKey => {messageId, reactorId, emoji};
 }
 
+/// Persisted local activity feed: pairing, prayer check-ins, shared cycle
+/// updates, daily question answers, shared duas, and revealed gratitude
+/// notes (see docs/superpowers/specs/2026-08-01-notification-inbox-v2-design.md).
+/// Deliberately excludes chat messages/reactions -- those already have their
+/// own unread badge on the chat button. Named `AppNotifications`, not
+/// `Notifications` -- Drift would otherwise generate a row class literally
+/// called `Notification`, colliding with `package:flutter/widgets.dart`'s own
+/// `Notification` class wherever this table and Flutter widgets are imported
+/// together.
+///
+/// Uses `seq` as a monotonic insertion sequence number to provide stable
+/// ordering among notifications created in the same second (Drift's
+/// DateTimeColumn maps to second-precision SQL, not millisecond precision) --
+/// see `NotificationStore.insert`/`watchAll` (Task 2) for how it's used.
+class AppNotifications extends Table {
+  TextColumn get id => text()();
+  TextColumn get kind => text()(); // 'pairing'|'prayer'|'cycle'|'question'|'dua'|'gratitude'
+  TextColumn get title => text()();
+  TextColumn get body => text().nullable()();
+  TextColumn get route => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get readAt => dateTime().nullable()();
+  IntColumn get seq => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(tables: [
   SignalSessions,
   SignalPrekeys,
@@ -112,6 +140,7 @@ class ChatReactions extends Table {
   SignalMeta,
   ChatMessages,
   ChatReactions,
+  AppNotifications,
 ])
 class SignalDb extends _$SignalDb {
   SignalDb() : super(driftDatabase(name: 'lovinity_signal'));
@@ -120,7 +149,7 @@ class SignalDb extends _$SignalDb {
   SignalDb.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -145,6 +174,7 @@ class SignalDb extends _$SignalDb {
             await m.addColumn(chatMessages, chatMessages.localMediaPath);
             await m.addColumn(chatMessages, chatMessages.downloadStatus);
           }
+          if (from < 5) await m.createTable(appNotifications);
         },
       );
 
@@ -157,6 +187,7 @@ class SignalDb extends _$SignalDb {
     await transaction(() async {
       await delete(chatMessages).go();
       await delete(chatReactions).go();
+      await delete(appNotifications).go();
       await delete(signalSessions).go();
       await delete(signalPrekeys).go();
       await delete(signalSignedPrekeys).go();
