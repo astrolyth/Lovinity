@@ -11,9 +11,15 @@ final dailyContentRepositoryProvider =
 });
 
 /// Today's verse/hadith/question for the couple. Reloads only when the
-/// current couple changes, not on every rebuild.
+/// couple id changes (narrowed via `.select`), not on every realtime
+/// reconnect of `currentCoupleProvider` -- a raw `.asData?.value` watch
+/// would rebuild on every reconnect (each producing an intermediate
+/// AsyncLoading), which re-baselines the daily-question notification pump
+/// downstream and swallows partner activity that happened while backgrounded.
 final dailyContentProvider = FutureProvider<DailyContent?>((ref) async {
-  final couple = ref.watch(currentCoupleProvider).asData?.value;
-  if (couple == null) return null;
+  final coupleId = ref.watch(
+    currentCoupleProvider.select((c) => c.asData?.value?.id),
+  );
+  if (coupleId == null) return null;
   return ref.read(dailyContentRepositoryProvider).forDate();
 });

@@ -18,12 +18,19 @@ final pairingRepositoryProvider = Provider<PairingRepository>((ref) {
 /// Emits null immediately when there is no session, so downstream consumers
 /// (router redirect, home screen) see a resolved value rather than staying
 /// in a permanent loading state after sign-out.
+///
+/// Narrowed to the scalar user id, not the whole Session -- watching the
+/// Session object directly would rebuild this provider (emitting an
+/// intermediate AsyncLoading with a null `.asData`) on every token refresh
+/// (~hourly), which re-baselines every downstream notification pump that
+/// diffs this provider's output and swallows partner activity that happened
+/// while backgrounded.
 final currentCoupleProvider = StreamProvider<Couple?>((ref) {
-  final session = ref.watch(authSessionProvider).asData?.value;
-  if (session == null) return Stream.value(null);
-  return ref
-      .read(pairingRepositoryProvider)
-      .watchCurrentCouple(session.user.id);
+  final userId = ref.watch(
+    authSessionProvider.select((s) => s.asData?.value?.user.id),
+  );
+  if (userId == null) return Stream.value(null);
+  return ref.read(pairingRepositoryProvider).watchCurrentCouple(userId);
 });
 
 /// Writes a "You're connected" notification the moment pairing becomes
