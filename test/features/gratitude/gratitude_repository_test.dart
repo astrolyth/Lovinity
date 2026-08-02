@@ -108,4 +108,63 @@ void main() {
       {'A private note from A', 'A revealed note from A'},
     );
   });
+
+  test(
+      'RLS itself blocks a partner from reading an unrevealed note -- '
+      'querying the table directly (bypassing the repository\'s client-side '
+      'filter) must not return it', () async {
+    final clientA = _anonClient();
+    final clientB = _anonClient();
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final pairing = await _pairCouple(clientA, clientB, stamp);
+
+    final repoA = GratitudeRepository(clientA);
+
+    await repoA.add(
+      coupleId: pairing.coupleId,
+      userId: pairing.userA,
+      body: 'A private note from A, RLS edition',
+      revealToSpouse: false,
+    );
+    await repoA.add(
+      coupleId: pairing.coupleId,
+      userId: pairing.userA,
+      body: 'A revealed note from A, RLS edition',
+      revealToSpouse: true,
+    );
+
+    // Bypass GratitudeRepository entirely: query the table raw, as B, with
+    // B's own JWT. If RLS is doing its job, the private row simply isn't in
+    // the result set -- not filtered by us, never sent over the wire.
+    final rawRows = await clientB
+        .from('gratitude_notes')
+        .select()
+        .eq('couple_id', pairing.coupleId);
+    final bodies = rawRows.map((r) => r['body'] as String).toSet();
+
+    expect(bodies, contains('A revealed note from A, RLS edition'));
+    expect(bodies, isNot(contains('A private note from A, RLS edition')));
+
+    // Also confirm B cannot update or delete A's private note directly.
+    final privateRow = await clientA
+        .from('gratitude_notes')
+        .select()
+        .eq('couple_id', pairing.coupleId)
+        .eq('body', 'A private note from A, RLS edition')
+        .single();
+    final privateId = privateRow['id'] as String;
+
+    final updateResult = await clientB
+        .from('gratitude_notes')
+        .update({'reveal_to_spouse': true}).eq('id', privateId).select();
+    expect(updateResult, isEmpty,
+        reason: 'B must not be able to update A\'s private note');
+
+    final stillPrivate = await clientA
+        .from('gratitude_notes')
+        .select()
+        .eq('id', privateId)
+        .single();
+    expect(stillPrivate['reveal_to_spouse'], isFalse);
+  });
 }

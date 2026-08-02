@@ -33,11 +33,17 @@ class GratitudeRepository {
   GratitudeRepository(this._client);
   final SupabaseClient _client;
 
-  /// Own notes plus the spouse's `reveal_to_spouse: true` notes only -- a
-  /// still-private spouse note must never reach this device at all (fixes
-  /// a real leak: the previous unfiltered query relied on the UI alone to
-  /// hide `note.body`, but the raw text was already delivered to the
-  /// client). Supabase's `.or(...)` filter expresses this server-side.
+  /// Own notes plus the spouse's `reveal_to_spouse: true` notes only.
+  ///
+  /// The real enforcement is server-side RLS (see
+  /// `supabase/migrations/20260801000001_gratitude_rls.sql`): a still-private
+  /// spouse row is never returned to this client's JWT in the first place.
+  /// The `.map(...)` filter below is a client-side belt-and-suspenders layer
+  /// on top of that, not the mechanism that makes this safe -- `.or(...)`
+  /// is not available on `SupabaseStreamFilterBuilder` in this package
+  /// version (`.stream()` supports only a single eq/neq/lt/lte/gt/gte/
+  /// inFilter), so it cannot express "own OR revealed" server-side from the
+  /// client query itself; RLS is what actually does that job.
   Stream<List<GratitudeNote>> watchAll({
     required String coupleId,
     required String selfUserId,
