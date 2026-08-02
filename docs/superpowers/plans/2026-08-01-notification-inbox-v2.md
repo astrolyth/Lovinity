@@ -917,7 +917,7 @@ git commit -m "feat(notifications): daily question answer notification pump"
 - Modify: `lib/features/duas/domain/dua_providers.dart`
 
 **Interfaces:**
-- Consumes: `newRowDetector` (Task 4), `notificationStoreProvider` (Task 3), the *existing* `duasProvider` (`lib/features/duas/domain/dua_providers.dart` — already a `StreamProvider<List<Dua>>` filtered to `visibility == 'shared' || authorId == me`, no repository change needed), `authSessionProvider` (existing, already imported in this file).
+- Consumes: `newRowDetector` (Task 4), `notificationStoreProvider` (Task 3), the existing `duaRepositoryProvider.watch(coupleId)` (unmodified — returns every dua regardless of visibility), `currentCoupleProvider`/`authSessionProvider` (existing, already imported in this file).
 - Produces: `duaNotificationPumpProvider` (`Provider<void>`) — watched from `HomeScreen` in Task 12.
 
 - [ ] **Step 1: Add the provider**
@@ -933,17 +933,30 @@ import '../../../core/notifications/notification_providers.dart';
 
 Append this provider at the end of the file:
 
+**Note on why this reads the repository directly rather than `duasProvider`:**
+an earlier draft of this task watched `duasProvider.stream` to reuse that
+provider's existing `visibility == 'shared' || authorId == me` filter. That
+does not compile: `flutter_riverpod` (the version pinned in this project's
+`pubspec.lock`, confirmed by reading the installed package source and its
+changelog directly) removed the `.stream` modifier from plain functional
+`StreamProvider`s — it does not exist to watch. Every other pump in this
+plan (pairing/prayer/cycle) already reads its repository directly rather
+than reusing a higher-level list-provider for exactly this reason; this task
+does the same, applying the `visibility`/`authorId` filter itself in
+`onNew` instead of relying on `duasProvider` to have pre-filtered it.
+
 ```dart
-/// Writes a notification when the spouse adds a new SHARED dua. Diffs the
-/// existing `duasProvider`'s snapshots by id -- that provider already
-/// filters to `visibility == 'shared' || authorId == me`, so any
-/// partner-authored row reaching this detector is, by construction, a
-/// shared one; the `authorId == selfId` check below is what's actually
-/// needed (to skip the user's own duas), kept as the one guard here for
-/// defense in depth. Watched once from HomeScreen.
+/// Writes a notification when the spouse adds a new SHARED dua. Diffs
+/// `DuaRepository.watch`'s snapshots by id -- `watch` itself returns every
+/// dua regardless of visibility (the repository already needs that so an
+/// author can manage their own private ones), so this pump filters to
+/// `visibility == 'shared' && authorId != self` itself in `onNew`, the same
+/// division of responsibility the cycle pump already uses for its own
+/// visibility filter. Watched once from HomeScreen.
 final duaNotificationPumpProvider = Provider<void>((ref) {
   final authSession = ref.watch(authSessionProvider).asData?.value;
-  if (authSession == null) return;
+  final couple = ref.watch(currentCoupleProvider).asData?.value;
+  if (authSession == null || couple == null) return;
   final selfId = authSession.user.id;
   final store = ref.read(notificationStoreProvider);
 
@@ -951,6 +964,7 @@ final duaNotificationPumpProvider = Provider<void>((ref) {
     keyOf: (d) => d.id,
     onNew: (dua) {
       if (dua.authorId == selfId) return;
+      if (!dua.isShared) return;
       unawaited(store.insert(
         kind: 'dua',
         title: 'Your partner added a dua',
@@ -960,7 +974,7 @@ final duaNotificationPumpProvider = Provider<void>((ref) {
     },
   );
 
-  final sub = ref.watch(duasProvider.stream).listen(detector);
+  final sub = ref.read(duaRepositoryProvider).watch(couple.id).listen(detector);
   ref.onDispose(sub.cancel);
 });
 ```
@@ -1234,16 +1248,25 @@ import '../../../core/notifications/notification_providers.dart';
 
 Append this provider at the end of the file:
 
+**Note:** as with Tasks 8-9, this watches the repository directly rather
+than `gratitudeNotesProvider.stream` — the `.stream` modifier does not
+exist on plain functional `StreamProvider`s in this project's installed
+`flutter_riverpod` version (removed from the package; confirmed against
+its source and changelog in Task 8). This matches every other pump in the
+plan.
+
 ```dart
 /// Writes a notification the moment a partner's gratitude note becomes
-/// visible to you. Diffs `gratitudeNotesProvider`'s snapshots by id -- since
-/// the query fix above guarantees a partner row only ever appears here once
-/// it's genuinely visible (created-and-revealed immediately, or revealed
-/// later), a plain new-row diff already means "revealed," with no separate
-/// reveal-transition tracking needed. Watched once from HomeScreen.
+/// visible to you. Diffs `GratitudeRepository.watchAll`'s (fixed, above)
+/// snapshots by id -- since the query fix guarantees a partner row only
+/// ever appears here once it's genuinely visible (created-and-revealed
+/// immediately, or revealed later), a plain new-row diff already means
+/// "revealed," with no separate reveal-transition tracking needed. Watched
+/// once from HomeScreen.
 final gratitudeNotificationPumpProvider = Provider<void>((ref) {
   final authSession = ref.watch(authSessionProvider).asData?.value;
-  if (authSession == null) return;
+  final couple = ref.watch(currentCoupleProvider).asData?.value;
+  if (authSession == null || couple == null) return;
   final selfId = authSession.user.id;
   final store = ref.read(notificationStoreProvider);
 
@@ -1259,7 +1282,10 @@ final gratitudeNotificationPumpProvider = Provider<void>((ref) {
     },
   );
 
-  final sub = ref.watch(gratitudeNotesProvider.stream).listen(detector);
+  final sub = ref
+      .read(gratitudeRepositoryProvider)
+      .watchAll(coupleId: couple.id, selfUserId: selfId)
+      .listen(detector);
   ref.onDispose(sub.cancel);
 });
 ```
