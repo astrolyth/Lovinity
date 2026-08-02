@@ -44,6 +44,9 @@ void main() {
     final rows = await store.watchAll().first;
     expect(rows, hasLength(5));
     expect(rows.map((r) => r.title).toSet(), {'a', 'b', 'c', 'd', 'e'});
+    expect(rows.map((r) => r.seq).toSet(), hasLength(5),
+        reason: 'each concurrent insert must get a distinct seq value; a race in '
+            'the max(seq)+1 read-then-insert would produce duplicates here');
   });
 
   test('watchUnreadCount counts unread; markRead clears one; markAllRead clears all',
