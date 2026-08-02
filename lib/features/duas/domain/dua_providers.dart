@@ -13,7 +13,13 @@ final duaRepositoryProvider = Provider<DuaRepository>((ref) {
   return DuaRepository(ref.read(supabaseClientProvider));
 });
 
-/// All couple's duas (respecting RLS on private/shared visibility).
+/// All couple's duas. `duas_own`/`duas_spouse_shared_read` RLS on
+/// `public.duas` is what actually keeps a partner's `private` dua off the
+/// wire -- a partner's client never receives that row at all. The `.where`
+/// below is defense in depth on top of that server-side enforcement, not a
+/// substitute for it: it also guards against anomalous rows (e.g. a
+/// visibility value RLS didn't anticipate) and keeps this stream's contract
+/// self-documenting for callers who don't know about the DB policies.
 final duasProvider = StreamProvider<List<Dua>>((ref) {
   final couple = ref.watch(currentCoupleProvider).asData?.value;
   final session = ref.watch(authSessionProvider).asData?.value;
