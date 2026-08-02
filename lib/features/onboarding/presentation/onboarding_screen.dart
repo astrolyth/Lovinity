@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/errors/failures.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
 import '../domain/onboarding_providers.dart';
@@ -16,6 +18,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   String? _gender;
   String _madhhab = 'shafi';
   bool _saving = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -26,15 +29,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _submit() async {
     final session = ref.read(authSessionProvider).asData?.value;
     if (session == null || _gender == null) return;
-    setState(() => _saving = true);
-    await ref.read(onboardingRepositoryProvider).saveProfile(
-          userId: session.user.id,
-          displayName: _name.text.trim(),
-          gender: _gender!,
-          madhhab: _madhhab,
-        );
-    ref.invalidate(ownProfileProvider);
-    if (mounted) context.go('/pair');
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref.read(onboardingRepositoryProvider).saveProfile(
+            userId: session.user.id,
+            displayName: _name.text.trim(),
+            gender: _gender!,
+            madhhab: _madhhab,
+          );
+      ref.invalidate(ownProfileProvider);
+      if (mounted) context.go('/pair');
+    } on AppFailure catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   @override
@@ -72,6 +88,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ],
             onChanged: (v) => setState(() => _madhhab = v ?? 'shafi'),
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            LovInlineError(message: _error!),
+          ],
           const Spacer(),
           FilledButton(
             onPressed: canContinue ? _submit : null,
