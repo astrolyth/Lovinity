@@ -40,6 +40,51 @@ final cyclePredictionProvider = Provider<CyclePrediction>((ref) {
   return predictCycle(history);
 });
 
+/// Filters [records] (as returned by `watchCoupleShared`) down to the
+/// partner's shared rows, newest first. Pure/side-effect-free so it can be
+/// unit-tested independently of the widget tree and provider wiring, the
+/// same pattern as `isSelectedDateExemptForCurrentUser` in
+/// prayer_log_screen.dart.
+///
+/// RLS (see supabase/migrations/20260715000002_cycle_rls.sql) already
+/// restricts what `watchCoupleShared` returns to exactly the wife's
+/// `visibility: 'shared'` rows -- a private record never reaches this stream
+/// at the database layer. The `visibility == 'shared' && userId != selfId`
+/// filter below is reapplied client-side as defense in depth, matching
+/// `cycleNotificationPumpProvider`'s convention above.
+List<CycleRecord> filterPartnerShared(
+  List<CycleRecord> records, {
+  required String selfId,
+}) {
+  return [
+    for (final r in records)
+      if (r.visibility == 'shared' && r.userId != selfId) r,
+  ]..sort((a, b) => b.startedOn.compareTo(a.startedOn));
+}
+
+/// The partner's shared cycle records (for the husband's read-only view).
+final partnerSharedCycleProvider = StreamProvider<List<CycleRecord>>((ref) {
+  final selfId = ref.watch(authSessionProvider).asData?.value?.user.id;
+  final coupleId = ref.watch(currentCoupleProvider).asData?.value?.id;
+  if (selfId == null || coupleId == null) return Stream.value(const []);
+  return ref
+      .read(cycleRepositoryProvider)
+      .watchCoupleShared(coupleId: coupleId)
+      .map((records) => filterPartnerShared(records, selfId: selfId));
+});
+
+/// Whether the partner currently has an active (ongoing) shared cycle
+/// record, mirroring how `activeCycleProvider` derives the viewer's own.
+final partnerActiveCycleProvider = Provider<CycleRecord?>((ref) {
+  final shared =
+      ref.watch(partnerSharedCycleProvider).asData?.value ?? const [];
+  final today = DateTime.now();
+  for (final r in shared) {
+    if (r.isActiveOn(today)) return r;
+  }
+  return null;
+});
+
 /// Writes a notification when the spouse shares a cycle update. Diffs
 /// `watchCoupleShared`'s snapshots by record id. Client-side filters to
 /// `visibility == 'shared' && userId != self` as defense in depth even
