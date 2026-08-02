@@ -8,7 +8,6 @@ import '../../../core/time/prayer_engine.dart';
 import '../../../shared/models/prayer_log.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../auth/domain/auth_controller.dart';
-import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/prayer_log_repository.dart';
 
@@ -120,11 +119,18 @@ final prayerDaySummaryProvider =
   );
 });
 
-/// Writes a notification when the spouse logs a prayer today. Diffs
-/// `watchDay`'s snapshots (keyed by user+prayer -- the stream is already
-/// scoped to one date) so only genuinely new check-ins fire, never the
-/// existing history a fresh subscription loads, and never the user's own
-/// check-ins. Watched once from HomeScreen.
+/// Writes a notification when the spouse logs a prayer, on ANY day. Diffs
+/// `watchCouple`'s snapshots (keyed by user+prayer+date) so only genuinely
+/// new check-ins fire, never the existing history a fresh subscription
+/// loads, and never the user's own check-ins. Watched once from HomeScreen.
+///
+/// Deliberately uses `watchCouple`, not `watchDay`: prayer times are (and
+/// should stay) anchored to each partner's own local calendar day, but that
+/// means the two devices can legitimately disagree about what "today" is.
+/// `watchDay` would filter the partner's row out entirely whenever her local
+/// date differs from this device's, silently dropping the very activity
+/// this pump exists to surface. `watchCouple` has no date filter, so it
+/// can't drop a cross-timezone check-in.
 final prayerNotificationPumpProvider = Provider<void>((ref) {
   // Narrowed to scalar ids so a token refresh (~hourly) or a couple-object
   // rebuild (Couple has no operator==, and SupabaseStreamBuilder refetches
@@ -134,16 +140,25 @@ final prayerNotificationPumpProvider = Provider<void>((ref) {
       ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
   final coupleId =
       ref.watch(currentCoupleProvider.select((c) => c.asData?.value?.id));
-  // Re-subscribe once the calendar day rolls over. `watchDay` captures
-  // `DateTime.now()` into a client-side date-key filter at subscribe time;
-  // without watching a day-granularity key here, this non-autoDispose pump
-  // would keep filtering for yesterday's key forever once midnight passes.
-  ref.watch(todayKeyProvider);
+  // NOTE: no `ref.watch(todayKeyProvider)` here (unlike before this fix).
+  // That watch existed solely to force a daily re-subscribe, because
+  // `watchDay` baked a client-side date-key filter in at subscribe time and
+  // would otherwise keep filtering for yesterday's key forever past
+  // midnight. `watchCouple` has no date filter at all, so there's nothing
+  // for a day-rollover to invalidate -- the stream just keeps emitting.
+  // Watching it now would be actively harmful: every such rebuild resets
+  // `newRowDetector`'s baseline, and per its "never fires on the first
+  // emission" rule, any partner check-in that happens to land right at the
+  // resubscribe would be silently absorbed as baseline instead of firing.
   if (selfId == null || coupleId == null) return;
   final store = ref.read(notificationStoreProvider);
 
   final detector = newRowDetector<PrayerLogEntry>(
-    keyOf: (e) => '${e.userId}:${e.prayer.dbName}',
+    // Date is part of the key: without it, the same prayer logged on two
+    // different days would collide on one key, and the second day's
+    // check-in would look like a re-emit of the first rather than new
+    // activity -- so it would never notify.
+    keyOf: (e) => '${e.userId}:${e.dateKey}:${e.prayer.dbName}',
     onNew: (entry) {
       if (entry.userId == selfId) return;
       if (entry.status != PrayerStatus.prayed) return;
@@ -157,7 +172,7 @@ final prayerNotificationPumpProvider = Provider<void>((ref) {
 
   final sub = ref
       .read(prayerLogRepositoryProvider)
-      .watchDay(coupleId: coupleId, date: DateTime.now())
+      .watchCouple(coupleId: coupleId)
       .listen(detector);
   ref.onDispose(sub.cancel);
 });

@@ -45,6 +45,31 @@ class PrayerLogRepository {
             ]);
   }
 
+  /// Live stream of ALL of [coupleId]'s prayer logs, with no client-side
+  /// date filter.
+  ///
+  /// Prayer times are anchored to each partner's own local calendar day (by
+  /// product design, that's correct and unrelated to this method) -- but
+  /// that means the two partners' devices can legitimately disagree about
+  /// what "today" is (different timezones, or one device past midnight).
+  /// `watchDay` filters rows down to one caller-supplied date key, so a
+  /// partner's row written under a different date key is silently dropped
+  /// and never reaches listeners. That's fine for the UI (which is showing
+  /// one specific day), but wrong for anything that needs to observe the
+  /// couple's activity regardless of which day either device thinks it is --
+  /// e.g. the cross-device notification pump. Use this method for those
+  /// cases; keep using `watchDay` for date-scoped UI.
+  Stream<List<PrayerLogEntry>> watchCouple({required String coupleId}) {
+    return _client
+        .from('prayer_logs')
+        .stream(primaryKey: ['id'])
+        .eq('couple_id', coupleId)
+        .map((rows) => [
+              for (final r in rows)
+                PrayerLogEntry.fromRow(Map<String, dynamic>.from(r)),
+            ]);
+  }
+
   Future<void> logPrayer({
     required String coupleId,
     required String userId,
