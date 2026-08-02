@@ -17,6 +17,7 @@ import '../../features/duas/presentation/dua_list_screen.dart';
 import '../../features/gratitude/presentation/gratitude_screen.dart';
 import '../../features/home/domain/home_providers.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pairing/domain/pairing_providers.dart';
 import '../../features/pairing/presentation/pair_screen.dart';
@@ -177,6 +178,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'chat',
             builder: (_, _) => const ChatScreen(),
+          ),
+          GoRoute(
+            path: 'notifications',
+            builder: (_, _) => const NotificationsScreen(),
           ),
         ],
       ),
