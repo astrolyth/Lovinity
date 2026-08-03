@@ -466,6 +466,7 @@ git commit -m "feat(daily): add currentQuestionProvider, repoint answers + pump 
 
 **Files:**
 - Modify: `lib/features/daily/presentation/question_screen.dart`
+- Modify: `lib/features/daily/presentation/question_card.dart`
 - Test: `test/features/daily/question_screen_test.dart` (new)
 
 **Interfaces:**
@@ -498,6 +499,14 @@ In `lib/features/daily/presentation/question_screen.dart`:
 
 ⚠️ **The next question must load only on that explicit tap** — never automatically when the second answer arrives, or the user never gets to read their partner's answer.
 
+Also in `lib/features/daily/presentation/question_card.dart` (the home-screen card):
+
+- Line 19 reads `ref.watch(dailyContentProvider).asData?.value` and takes `content?.question`, but line 23 already reads `questionAnswersProvider` — which Task 4 repointed at the queue. **These are now two different questions**, so the card's `myAnswered`/`spouseAnswered`/`bothAnswered` badges are computed from answers to a question the card isn't showing. Repoint the card's question to `ref.watch(currentQuestionProvider).asData?.value` so both halves describe the same question.
+- The existing `if (q == null) return const SizedBox.shrink();` already covers queue exhaustion for the card — no empty state needed here, the card just disappears. Keep that.
+- Remove the `daily_content_providers.dart` import if nothing else in the file uses it.
+
+This file was missing from the original plan's file list; it was caught after Task 4 by tracing every remaining `dailyContentProvider` consumer.
+
 - [ ] **Step 4: Run to verify it passes**
 
 Run: `flutter test test/features/daily/question_screen_test.dart`
@@ -508,7 +517,7 @@ If any widget test hangs >30s, stop and report — this project's sandbox has a 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/features/daily/presentation/question_screen.dart test/features/daily/question_screen_test.dart
+git add lib/features/daily/presentation/question_screen.dart lib/features/daily/presentation/question_card.dart test/features/daily/question_screen_test.dart
 git commit -m "feat(daily): question screen reads the queue, locks after reveal, advances on tap"
 ```
 
