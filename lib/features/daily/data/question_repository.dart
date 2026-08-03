@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../shared/models/daily_content.dart';
+
 class QuestionAnswer {
   const QuestionAnswer({
     required this.id,
@@ -56,6 +58,17 @@ class QuestionRepository {
                 if (r['question_id'] == questionId)
                   QuestionAnswer.fromRow(Map<String, dynamic>.from(r)),
             ]);
+  }
+
+  /// The couple's current queue question — the first approved question they
+  /// have not both answered. Null when they've answered every approved
+  /// question (the generator in supabase/functions/generate-questions is
+  /// what normally keeps that from happening).
+  Future<QuestionOfDay?> currentQuestion() async {
+    final rows = await _client.rpc('get_current_question');
+    final list = (rows is List) ? rows : [rows];
+    if (list.isEmpty || list.first == null) return null;
+    return QuestionOfDay.fromRow(Map<String, dynamic>.from(list.first as Map));
   }
 
   Future<void> submit({
