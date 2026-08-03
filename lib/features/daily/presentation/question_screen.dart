@@ -12,7 +12,6 @@ import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/question_repository.dart';
-import '../domain/daily_content_providers.dart';
 import '../domain/question_providers.dart';
 
 class QuestionScreen extends ConsumerStatefulWidget {
@@ -35,17 +34,17 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   Future<void> _submit() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    final content = ref.read(dailyContentProvider).asData?.value;
+    final question = ref.read(currentQuestionProvider).asData?.value;
     final couple = ref.read(currentCoupleProvider).asData?.value;
     final session = ref.read(authSessionProvider).asData?.value;
-    if (content?.question == null || couple == null || session == null) return;
+    if (question == null || couple == null || session == null) return;
 
     setState(() => _submitting = true);
     try {
       await ref.read(questionRepositoryProvider).submit(
             coupleId: couple.id,
             userId: session.user.id,
-            questionId: content!.question!.id,
+            questionId: question.id,
             answer: text,
           );
       unawaited(LovHaptics.selection());
@@ -58,7 +57,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final content = ref.watch(dailyContentProvider).asData?.value;
+    final questionAsync = ref.watch(currentQuestionProvider);
     final session = ref.watch(authSessionProvider).asData?.value;
     final ownName = ref.watch(ownProfileProvider).asData?.value?.displayName;
     final spouseName =
@@ -66,7 +65,12 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     final answersAsync = ref.watch(questionAnswersProvider);
     final answers = answersAsync.asData?.value ?? const <QuestionAnswer>[];
 
-    final q = content?.question;
+    // `.value`, not `asData?.value`: while "Next question" is refetching, the
+    // state is an AsyncLoading that still carries the previous value, and
+    // `asData` returns null for it -- which would flash the "all caught up"
+    // empty state on every tap. Paired with the isLoading/hasValue guard
+    // below, a null `q` here means one thing only: an exhausted queue.
+    final q = questionAsync.value;
     final myId = session?.user.id;
     final myAnswer =
         answers.where((a) => a.authorId == myId).cast<QuestionAnswer?>().firstOrNull;
@@ -74,6 +78,106 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
         .where((a) => a.authorId != myId)
         .cast<QuestionAnswer?>()
         .firstOrNull;
+    // Both sides in: the answers reveal, the composer is gone for good, and
+    // the queue advances only when the user taps "Next question".
+    final bothAnswered = myAnswer != null && spouseAnswer != null;
+
+    final Widget body;
+    if (questionAsync.isLoading || !questionAsync.hasValue) {
+      // In flight (first load or a "Next question" refetch), or errored
+      // without ever resolving -- none of which is an exhausted queue, which
+      // resolves to a real `null` value below.
+      body = const Center(child: LovShimmerBox(height: 24, width: 240));
+    } else if (q == null) {
+      body = const _QueueEmptyState();
+    } else {
+      body = SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: LovSpace.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LovEnter(
+              child: Text(
+                q.question,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  height: 1.25,
+                ),
+              ),
+            ),
+            const SizedBox(height: LovSpace.xxxl),
+
+            // Your answer
+            LovEnter(
+              delay: const Duration(milliseconds: 100),
+              child: _AnswerBlock(
+                label: myAnswer == null ? 'Your answer' : (ownName ?? 'You'),
+                answer: myAnswer?.answer,
+                isOwn: true,
+              ),
+            ),
+
+            // Composer -- gone the moment you've answered. An answer is
+            // final: there is deliberately no edit affordance afterwards.
+            if (myAnswer == null) ...[
+              const SizedBox(height: LovSpace.md),
+              LovEnter(
+                delay: const Duration(milliseconds: 160),
+                child: TextField(
+                  controller: _controller,
+                  maxLines: 4,
+                  minLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'A sentence, a paragraph, whatever fits.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: LovSpace.md),
+              LovEnter(
+                delay: const Duration(milliseconds: 220),
+                child: LovButton(
+                  label: 'Send answer',
+                  icon: Icons.send_rounded,
+                  loading: _submitting,
+                  onPressed: _submitting ? null : _submit,
+                  expand: true,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: LovSpace.xxl),
+
+            // Spouse's answer (blurred until you've answered)
+            LovEnter(
+              delay: const Duration(milliseconds: 280),
+              child: _AnswerBlock(
+                label: spouseName ?? 'Your spouse',
+                answer: spouseAnswer?.answer,
+                isOwn: false,
+                hidden: myAnswer == null && spouseAnswer != null,
+                pending: spouseAnswer == null,
+              ),
+            ),
+
+            // Advancing the queue is an explicit act. Nothing else on this
+            // screen may invalidate currentQuestionProvider -- if the second
+            // answer landing advanced it automatically, the reveal would be
+            // swapped away before either partner could read it.
+            if (bothAnswered) ...[
+              const SizedBox(height: LovSpace.xxl),
+              LovEnter(
+                delay: const Duration(milliseconds: 340),
+                child: LovButton(
+                  label: 'Next question',
+                  trailingIcon: Icons.arrow_forward_rounded,
+                  onPressed: () => ref.invalidate(currentQuestionProvider),
+                  expand: true,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
 
     return LovScaffold(
       title: 'Question',
@@ -81,77 +185,44 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
       ),
-      child: q == null
-          ? const Center(child: LovShimmerBox(height: 24, width: 240))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: LovSpace.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  LovEnter(
-                    child: Text(
-                      q.question,
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        height: 1.25,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: LovSpace.xxxl),
+      child: body,
+    );
+  }
+}
 
-                  // Your answer
-                  LovEnter(
-                    delay: const Duration(milliseconds: 100),
-                    child: _AnswerBlock(
-                      label: myAnswer == null
-                          ? 'Your answer'
-                          : (ownName ?? 'You'),
-                      answer: myAnswer?.answer,
-                      isOwn: true,
-                    ),
-                  ),
+/// Shown when the queue is exhausted -- the couple has answered every
+/// approved question and the generator hasn't added a new one yet.
+class _QueueEmptyState extends StatelessWidget {
+  const _QueueEmptyState();
 
-                  if (myAnswer == null) ...[
-                    const SizedBox(height: LovSpace.md),
-                    LovEnter(
-                      delay: const Duration(milliseconds: 160),
-                      child: TextField(
-                        controller: _controller,
-                        maxLines: 4,
-                        minLines: 3,
-                        decoration: const InputDecoration(
-                          hintText: 'A sentence, a paragraph, whatever fits.',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: LovSpace.md),
-                    LovEnter(
-                      delay: const Duration(milliseconds: 220),
-                      child: LovButton(
-                        label: 'Send answer',
-                        icon: Icons.send_rounded,
-                        loading: _submitting,
-                        onPressed: _submitting ? null : _submit,
-                        expand: true,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: LovSpace.xxl),
-
-                  // Spouse's answer (blurred until you've answered)
-                  LovEnter(
-                    delay: const Duration(milliseconds: 280),
-                    child: _AnswerBlock(
-                      label: spouseName ?? 'Your spouse',
-                      answer: spouseAnswer?.answer,
-                      isOwn: false,
-                      hidden: myAnswer == null && spouseAnswer != null,
-                      pending: spouseAnswer == null,
-                    ),
-                  ),
-                ],
-              ),
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            size: 48,
+            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+          ),
+          const SizedBox(height: LovSpace.lg),
+          Text(
+            "You're all caught up",
+            style: theme.textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: LovSpace.sm),
+          Text(
+            'New questions are on their way. Check back soon.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
