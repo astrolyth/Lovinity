@@ -34,7 +34,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   Future<void> _submit() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    final question = ref.read(currentQuestionProvider).asData?.value;
+    final question = ref.read(currentQuestionProvider).value;
     final couple = ref.read(currentCoupleProvider).asData?.value;
     final session = ref.read(authSessionProvider).asData?.value;
     if (question == null || couple == null || session == null) return;
@@ -65,11 +65,13 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     final answersAsync = ref.watch(questionAnswersProvider);
     final answers = answersAsync.asData?.value ?? const <QuestionAnswer>[];
 
-    // `.value`, not `asData?.value`: while "Next question" is refetching, the
-    // state is an AsyncLoading that still carries the previous value, and
-    // `asData` returns null for it -- which would flash the "all caught up"
-    // empty state on every tap. Paired with the isLoading/hasValue guard
-    // below, a null `q` here means one thing only: an exhausted queue.
+    // On "Next question" the invalidate refreshes seamlessly: the state stays
+    // AsyncData carrying the previous question with `isLoading` set, so
+    // `asData?.value` would hand back the stale answered question too --
+    // the isLoading/hasValue guard below, not the accessor, is what routes
+    // that frame to the shimmer. `.value` differs only for an error carrying
+    // a previous value, where it keeps the question up rather than claiming
+    // the queue is exhausted; past the guard a null `q` means exactly that.
     final q = questionAsync.value;
     final myId = session?.user.id;
     final myAnswer =

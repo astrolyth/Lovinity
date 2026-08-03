@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,5 +121,89 @@ void main() {
             'remain anywhere on the screen');
     expect(find.text('Send answer'), findsNothing);
     expect(find.text('Next question'), findsOneWidget);
+  });
+
+  testWidgets('queue exhausted: the all-caught-up empty state replaces the '
+      'composer', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        authSessionProvider
+            .overrideWith((ref) => Stream.value(_signedInSession('me'))),
+        ownProfileProvider.overrideWith((ref) async => _me),
+        spouseProfileProvider.overrideWith((ref) async => _spouse),
+        // A resolved `null` -- hasValue is true, so this is the exhausted
+        // queue, not a load still in flight.
+        currentQuestionProvider.overrideWith((ref) async => null),
+        questionAnswersProvider.overrideWith((ref) => const Stream.empty()),
+      ],
+      child: const MaterialApp(home: QuestionScreen()),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text("You're all caught up"), findsOneWidget);
+    expect(find.text('New questions are on their way. Check back soon.'),
+        findsOneWidget);
+    expect(find.byType(TextField), findsNothing,
+        reason: 'there is no question to answer, so no composer may render');
+    expect(find.text('Next question'), findsNothing);
+  });
+
+  testWidgets('the queue advances on the explicit tap and on nothing else',
+      (tester) async {
+    // The feature's defining property. A static override can't catch a
+    // regression here -- the question would be identical either way -- so
+    // this counts how many times currentQuestionProvider is built and drives
+    // the answers from a controller, separating "the second answer landed"
+    // from "the user tapped".
+    var questionBuilds = 0;
+    final answers = StreamController<List<QuestionAnswer>>();
+    addTearDown(answers.close);
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        authSessionProvider
+            .overrideWith((ref) => Stream.value(_signedInSession('me'))),
+        ownProfileProvider.overrideWith((ref) async => _me),
+        spouseProfileProvider.overrideWith((ref) async => _spouse),
+        currentQuestionProvider.overrideWith((ref) async {
+          questionBuilds++;
+          return _question;
+        }),
+        questionAnswersProvider.overrideWith((ref) => answers.stream),
+      ],
+      child: const MaterialApp(home: QuestionScreen()),
+    ));
+    answers.add([_answer('me', 'Your voice note')]);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(questionBuilds, 1,
+        reason: 'answers arriving must never rebuild the question provider');
+
+    // The partner answers: the reveal happens, and that is all it does.
+    answers.add([
+      _answer('me', 'Your voice note'),
+      _answer('spouse', 'The dua you sent'),
+    ]);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('The dua you sent'), findsOneWidget);
+    expect(find.text('Next question'), findsOneWidget);
+    expect(questionBuilds, 1,
+        reason: 'the second answer must not advance the queue -- if it did, '
+            'the reveal would be swapped away before either partner could '
+            'read it');
+
+    await tester.tap(find.text('Next question'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    // A third pump: the refetched question remounts the LovEnter stagger, and
+    // its delay timers are created during the previous frame's build -- they
+    // have to be run out or the tree is disposed with timers pending.
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(questionBuilds, 2,
+        reason: 'the explicit tap is the one thing that advances the queue');
   });
 }

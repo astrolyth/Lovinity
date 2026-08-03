@@ -18,10 +18,13 @@ class QuestionCard extends ConsumerWidget {
     // The queue question, not the calendar one: `questionAnswersProvider`
     // below is scoped to the queue, so reading the question from anywhere
     // else would badge this card with answers to a different question.
-    // `.value` so a refetch (the question screen's "Next question") doesn't
-    // blank this card out of the home feed mid-refresh -- `asData` is null
-    // for an AsyncLoading even when it still carries a value.
-    final q = ref.watch(currentQuestionProvider).value;
+    // `asData?.value`: the question screen's "Next question" invalidate
+    // refreshes seamlessly (the state stays AsyncData carrying the previous
+    // value), so this card doesn't blank mid-refetch either way. The two
+    // accessors diverge on a dependency-driven reload or an error carrying a
+    // previous value, where `.value` would leave a stale question sitting on
+    // the home feed -- hiding the card via the null check below is honest.
+    final q = ref.watch(currentQuestionProvider).asData?.value;
     final session = ref.watch(authSessionProvider).asData?.value;
     final ownName = ref.watch(ownProfileProvider).asData?.value?.displayName;
     final spouseName =
