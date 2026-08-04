@@ -7,28 +7,26 @@ class DailyContentRepository {
 
   final SupabaseClient _client;
 
-  /// Fetches (creating if needed) today's verse / hadith / question for the
-  /// caller's couple. Returns null values when the corresponding library is
-  /// empty on the server.
+  /// Fetches (creating if needed) today's verse / hadith for the caller's
+  /// couple. Returns null values when the corresponding library is empty on
+  /// the server.
   ///
-  /// The question of the day is a *joint* activity: both partners must be
-  /// shown the exact same question. `get_daily_content(p_date)` picks content
-  /// deterministically per `(couple_id, date)`, so if each device sent its
-  /// own `DateTime.now()` as `p_date`, two partners in different timezones
-  /// (or just past midnight for one of them) could disagree on the calendar
-  /// day and be handed different content entirely. To avoid that, when no
-  /// explicit [date] is requested we omit `p_date` from the RPC params
-  /// altogether so the server falls back to its own `coalesce(p_date,
-  /// current_date)` -- one clock, shared by both partners, instead of each
-  /// device's local clock. (Confirmed against local PostgREST: an omitted
-  /// key, an explicit `null`, and an explicit date string all round-trip
-  /// correctly for this defaulted `date` argument -- see
-  /// partner-sync-fix-report.md for the verification transcript. We still
-  /// omit rather than send `null` explicitly, since that's the form the task
-  /// calls out as the safe one across PostgREST versions.)
+  /// Both partners must be shown the same verse and hadith.
+  /// `get_daily_content(p_date)` picks deterministically per
+  /// `(couple_id, date)`, so if each device sent its own `DateTime.now()` as
+  /// `p_date`, two partners in different timezones (or just past midnight
+  /// for one of them) could disagree on the calendar day and be handed
+  /// different content. So when no explicit [date] is requested we omit
+  /// `p_date` from the RPC params altogether and let the server fall back to
+  /// its own `coalesce(p_date, current_date)` -- one clock, shared by both
+  /// partners. Callers wanting a specific day may still pass [date].
   ///
-  /// Callers that want a specific day (not "today") may still pass [date]
-  /// explicitly -- that path is untouched.
+  /// The returned `question` is vestigial: the question of the day moved to
+  /// a per-couple queue (`QuestionRepository.currentQuestion`) and nothing in
+  /// this app reads this field any more. It is still hydrated for older
+  /// builds; removing it is a separate follow-up. Since 20260803000001 the
+  /// RPC only ever picks an `approved` question here, so the field can no
+  /// longer leak an unreviewed or rejected one.
   Future<DailyContent> forDate([DateTime? date]) async {
     final params = <String, dynamic>{};
     if (date != null) {

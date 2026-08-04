@@ -34,7 +34,15 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   Future<void> _submit() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    final question = ref.read(currentQuestionProvider).value;
+    final questionState = ref.read(currentQuestionProvider);
+    // An errored state keeps its previous value (AsyncError.copyWithPrevious),
+    // so `.value` here can be a STALE, already-answered question. Submitting
+    // against that id would upsert on (couple_id, question_id, author_id) and
+    // destroy the user's original answer. `build` routes an errored state to
+    // the error branch so this button isn't reachable then; this is the
+    // second lock on the same door.
+    if (questionState.hasError) return;
+    final question = questionState.value;
     final couple = ref.read(currentCoupleProvider).asData?.value;
     final session = ref.read(authSessionProvider).asData?.value;
     if (question == null || couple == null || session == null) return;
@@ -68,10 +76,12 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     // On "Next question" the invalidate refreshes seamlessly: the state stays
     // AsyncData carrying the previous question with `isLoading` set, so
     // `asData?.value` would hand back the stale answered question too --
-    // the isLoading/hasValue guard below, not the accessor, is what routes
-    // that frame to the shimmer. `.value` differs only for an error carrying
-    // a previous value, where it keeps the question up rather than claiming
-    // the queue is exhausted; past the guard a null `q` means exactly that.
+    // the isLoading guard below, not the accessor, is what routes that frame
+    // to the shimmer. The other case where `.value` outlives its state is an
+    // error retaining a previous value, and the error branch below intercepts
+    // that before `q` is ever read. So by the time this is used, `q` comes
+    // from a genuine AsyncData and a null means exactly one thing: the queue
+    // is exhausted.
     final q = questionAsync.value;
     final myId = session?.user.id;
     final myAnswer =
@@ -85,10 +95,41 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     final bothAnswered = myAnswer != null && spouseAnswer != null;
 
     final Widget body;
-    if (questionAsync.isLoading || !questionAsync.hasValue) {
-      // In flight (first load or a "Next question" refetch), or errored
-      // without ever resolving -- none of which is an exhausted queue, which
-      // resolves to a real `null` value below.
+    if (questionAsync.isLoading) {
+      // In flight: first load, a "Next question" refetch, or a retry after
+      // an error. Not an exhausted queue -- that resolves to a real `null`
+      // value below.
+      body = const Center(child: LovShimmerBox(height: 24, width: 240));
+    } else if (questionAsync.hasError) {
+      // Checked BEFORE `hasValue`, and that order is the whole fix.
+      //
+      // `AsyncError.copyWithPrevious` retains the previous value, so a
+      // FAILED REFETCH leaves hasValue true / isLoading false / asData null
+      // with `.value` still holding the previous, already-answered question.
+      // Rendering it would put a question the user has already answered back
+      // on screen with an OPEN composer -- because questionAnswersProvider
+      // keys off `asData?.value?.id`, which is null here, so it degrades to
+      // an empty answer list and `myAnswer` reads as "hasn't answered yet".
+      // Sending then upserts on (couple_id, question_id, author_id) against
+      // the old id and destroys the original answer, contradicting the
+      // answers-are-final rule this screen enforces everywhere else.
+      //
+      // Also catches "errored on first load and never resolved" (hasValue
+      // false), which the previous guard folded into the loading branch as a
+      // permanent shimmer with no way out.
+      body = LovEmpty(
+        icon: Icons.cloud_off_rounded,
+        title: "Couldn't load your question",
+        description: 'Check your connection and try again.',
+        action: LovButton(
+          label: 'Try again',
+          icon: Icons.refresh_rounded,
+          onPressed: () => ref.invalidate(currentQuestionProvider),
+        ),
+      );
+    } else if (!questionAsync.hasValue) {
+      // Defensive: not loading, not errored, no value is not a state
+      // AsyncValue produces. Shimmer rather than a wrong answer surface.
       body = const Center(child: LovShimmerBox(height: 24, width: 240));
     } else if (q == null) {
       body = const _QueueEmptyState();

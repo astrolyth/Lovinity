@@ -149,6 +149,148 @@ void main() {
     expect(find.text('Next question'), findsNothing);
   });
 
+  testWidgets('a FAILED REFETCH shows the error state, never the previous '
+      'question with an open composer', (tester) async {
+    // The defect this covers: `AsyncError.copyWithPrevious` keeps the
+    // previous value, so a failed refetch leaves hasValue true / isLoading
+    // false / asData null with `.value` still holding the previous,
+    // ALREADY-ANSWERED question. Meanwhile questionAnswersProvider keys off
+    // `asData?.value?.id` -- null here -- so it yields no answers and the
+    // screen reads "you haven't answered yet" and opens the composer.
+    // Sending would then upsert on (couple_id, question_id, author_id)
+    // against the old question id and destroy the original answer.
+    //
+    // Driven through the real sequence rather than a synthesised state: load
+    // the question, answer it on both sides, then tap "Next question" and
+    // have that refetch FAIL. That is precisely what produces an AsyncError
+    // carrying the previous value.
+    //
+    // Runs under riverpod's DEFAULT retry policy, deliberately. riverpod 3
+    // auto-retries a failed provider with exponential backoff (~11 attempts
+    // over ~30s) before the state settles into a real AsyncError, and only
+    // then does isLoading go false and the hazard open up. So this pumps out
+    // the whole backoff in virtual time -- the state the user actually ends
+    // up in on a sustained network failure.
+    var failing = false;
+    final answers = StreamController<List<QuestionAnswer>>.broadcast();
+    addTearDown(answers.close);
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        authSessionProvider
+            .overrideWith((ref) => Stream.value(_signedInSession('me'))),
+        ownProfileProvider.overrideWith((ref) async => _me),
+        spouseProfileProvider.overrideWith((ref) async => _spouse),
+        currentQuestionProvider.overrideWith((ref) async {
+          if (failing) throw Exception('network down');
+          return _question;
+        }),
+        questionAnswersProvider.overrideWith((ref) => answers.stream),
+      ],
+      child: const MaterialApp(home: QuestionScreen()),
+    ));
+    answers.add([
+      _answer('me', 'Your voice note'),
+      _answer('spouse', 'The dua you sent'),
+    ]);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Next question'), findsOneWidget);
+
+    failing = true;
+    await tester.tap(find.text('Next question'));
+    // The real questionAnswersProvider keys off `asData?.value?.id`, which is
+    // null once the state is an error, so it degrades to no answers. Model
+    // that faithfully -- it is half of what opens the composer.
+    answers.add(const []);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    // Mid-backoff the state is AsyncLoading, so the shimmer is showing. Even
+    // here no composer may appear.
+    expect(find.byType(TextField), findsNothing,
+        reason: 'no composer while the refetch is still retrying either');
+
+    // Run the retry backoff out; the state settles into AsyncError.
+    await tester.pump(const Duration(seconds: 60));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byType(TextField), findsNothing,
+        reason: 'an errored question must never render a composer -- '
+            'submitting would overwrite the existing answer for that id');
+    expect(find.text('Send answer'), findsNothing);
+    expect(find.text(_question.question), findsNothing,
+        reason: 'the stale previous question must not be presented as '
+            'current');
+    expect(find.text("Couldn't load your question"), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+  });
+
+  testWidgets('an error on FIRST load shows the error state, not a permanent '
+      'shimmer', (tester) async {
+    // hasValue is false here. The pre-fix guard folded this into the loading
+    // branch, leaving a shimmer that never resolved and offered no retry.
+    //
+    // riverpod's auto-retry is switched off so the settled AsyncError is
+    // reached immediately and this test doesn't depend on the exact backoff
+    // schedule. The failed-refetch test above covers the real timeline.
+    await tester.pumpWidget(ProviderScope(
+      retry: (retryCount, error) => null,
+      overrides: [
+        authSessionProvider
+            .overrideWith((ref) => Stream.value(_signedInSession('me'))),
+        ownProfileProvider.overrideWith((ref) async => _me),
+        spouseProfileProvider.overrideWith((ref) async => _spouse),
+        currentQuestionProvider
+            .overrideWith((ref) async => throw Exception('network down')),
+        questionAnswersProvider.overrideWith((ref) => const Stream.empty()),
+      ],
+      child: const MaterialApp(home: QuestionScreen()),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text("Couldn't load your question"), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text("You're all caught up"), findsNothing,
+        reason: 'a failure is not an exhausted queue');
+  });
+
+  testWidgets('the error state retry refetches the question', (tester) async {
+    // Auto-retry off so `attempts` counts only the two builds this test
+    // cares about: the initial failure and the one the tap triggers.
+    var attempts = 0;
+    await tester.pumpWidget(ProviderScope(
+      retry: (retryCount, error) => null,
+      overrides: [
+        authSessionProvider
+            .overrideWith((ref) => Stream.value(_signedInSession('me'))),
+        ownProfileProvider.overrideWith((ref) async => _me),
+        spouseProfileProvider.overrideWith((ref) async => _spouse),
+        currentQuestionProvider.overrideWith((ref) async {
+          attempts++;
+          if (attempts == 1) throw Exception('network down');
+          return _question;
+        }),
+        questionAnswersProvider.overrideWith((ref) => Stream.value(const [])),
+      ],
+      child: const MaterialApp(home: QuestionScreen()),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Try again'), findsOneWidget);
+
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(attempts, 2);
+    expect(find.text(_question.question), findsOneWidget);
+    expect(find.text("Couldn't load your question"), findsNothing);
+  });
+
   testWidgets('the queue advances on the explicit tap and on nothing else',
       (tester) async {
     // The feature's defining property. A static override can't catch a

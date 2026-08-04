@@ -45,18 +45,45 @@ class QuestionRepository {
     ];
   }
 
+  /// Live stream of the couple's answers to one specific question. For UI
+  /// that is showing that question; see [watchCoupleAnswers] for anything
+  /// that must observe activity across a queue advance.
   Stream<List<QuestionAnswer>> watchAnswers({
     required String coupleId,
     required String questionId,
   }) {
+    return watchCoupleAnswers(coupleId: coupleId)
+        .map((answers) => [
+              for (final a in answers)
+                if (a.questionId == questionId) a,
+            ]);
+  }
+
+  /// Live stream of ALL of [coupleId]'s question answers, with no
+  /// question filter.
+  ///
+  /// The queue advances server-side the instant both partners have answered,
+  /// but a client only re-reads which question is current on an explicit
+  /// "Next question" tap. A subscription keyed on one question id therefore
+  /// has to be torn down and re-opened whenever the client notices the
+  /// advance -- and a fresh subscription's first emission is existing state,
+  /// which `newRowDetector` deliberately absorbs as baseline. Any partner
+  /// answer that landed in that window is swallowed permanently. The window
+  /// is user-driven and unbounded: the partner can answer Q1, tap Next and
+  /// answer Q2 hours before this device ever re-reads the queue.
+  ///
+  /// This stream is question-agnostic, so it never restarts on a queue
+  /// advance and there is no re-baselining to lose an answer to. Use it for
+  /// the notification pump; keep using [watchAnswers] for question-scoped UI.
+  /// (Same shape as PrayerLogRepository.watchCouple vs watchDay.)
+  Stream<List<QuestionAnswer>> watchCoupleAnswers({required String coupleId}) {
     return _client
         .from('question_answers')
         .stream(primaryKey: ['id'])
         .eq('couple_id', coupleId)
         .map((rows) => [
               for (final r in rows)
-                if (r['question_id'] == questionId)
-                  QuestionAnswer.fromRow(Map<String, dynamic>.from(r)),
+                QuestionAnswer.fromRow(Map<String, dynamic>.from(r)),
             ]);
   }
 
