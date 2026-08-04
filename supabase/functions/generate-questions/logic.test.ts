@@ -28,6 +28,7 @@ import {
   parseGenerated,
   QUESTION_SCHEMA,
   SYSTEM_PROMPT,
+  timingSafeEqual,
 } from "./logic.ts";
 
 // ---------------------------------------------------------------------------
@@ -513,4 +514,42 @@ Deno.test("logic.ts performs no env lookups", () => {
     Error,
     "must never read Deno.env",
   );
+});
+
+// ---------------------------------------------------------------------------
+// timingSafeEqual
+//
+// This is the only thing standing between the public internet and a paid
+// generation run (index.ts gates on it before any env read). It is a byte-for-
+// byte mirror of push-dispatch/logic.ts's copy -- each Edge Function deploys as
+// a self-contained bundle, so the duplication is deliberate. These tests mirror
+// push-dispatch/index.test.ts's so the two copies cannot silently diverge.
+// ---------------------------------------------------------------------------
+
+Deno.test("timingSafeEqual: true for identical strings", () => {
+  assert(timingSafeEqual("Bearer abc123", "Bearer abc123"));
+});
+
+Deno.test("timingSafeEqual: false for different strings, including different lengths", () => {
+  assert(!timingSafeEqual("Bearer abc123", "Bearer abc124"));
+  assert(!timingSafeEqual("Bearer abc123", "Bearer abc12"));
+  assert(!timingSafeEqual("", "Bearer abc123"));
+});
+
+Deno.test("timingSafeEqual: alone, it would let an absent secret authenticate", () => {
+  // This is why index.ts short-circuits on a missing GENERATE_QUESTIONS_SECRET
+  // *before* comparing: with the secret unset, `expected` collapses to the bare
+  // prefix "Bearer ", which a caller can simply send. The comparison itself is
+  // perfectly happy with that -- the fail-closed `!secret ||` guard is what
+  // actually stops it, so that guard must never be dropped.
+  assert(timingSafeEqual("Bearer ", `Bearer ${""}`));
+
+  // A real secret is still not matched by an empty token.
+  assert(!timingSafeEqual("Bearer realsecret", "Bearer "));
+});
+
+Deno.test("timingSafeEqual: compares bytes, not code units", () => {
+  // Multi-byte input must not be truncated or normalized into a match.
+  assert(timingSafeEqual("Bearer sécret", "Bearer sécret"));
+  assert(!timingSafeEqual("Bearer sécret", "Bearer secret"));
 });
