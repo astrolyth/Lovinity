@@ -57,15 +57,48 @@ export const MIN_QUESTION_LEN = 10;
  * Written as escapes on purpose: literal invisible characters in source are
  * unreviewable.
  */
-const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/g;
+export const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/g;
 
 /**
- * Key used to spot duplicates inside one batch: case-folded with runs of
- * whitespace collapsed, so "What Made You Smile?" and "what made  you smile?"
- * count as the same question.
+ * Key used to spot duplicate questions: zero-width stripped, trimmed,
+ * case-folded, and runs of whitespace collapsed, so "What Made You Smile?" and
+ * "what made  you smile?" count as the same question.
+ *
+ * Exported because index.ts needs the *same* normalization to dedupe a fresh
+ * batch against the rows already in daily_questions. It used to keep a private
+ * copy; nothing asserted the two stayed in sync, so a change here would have
+ * silently weakened cross-batch dedupe.
+ *
+ * parseGenerated calls this on an already-stripped, already-trimmed string, so
+ * the leading two steps are no-ops there -- they exist for callers (index.ts)
+ * that pass raw text straight from the database.
  */
-function dedupeKey(question: string): string {
-  return question.toLowerCase().replace(/\s+/g, " ");
+export function dedupeKey(question: string): string {
+  return question
+    .replace(ZERO_WIDTH_RE, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Constant-time string comparison, for secrets. Mirrors push-dispatch/logic.ts:
+ * each Edge Function is deployed as a self-contained bundle, so its pure logic
+ * lives in its own ./logic.ts rather than reaching across function directories.
+ *
+ * Compares byte-by-byte with no early exit, so the time taken does not depend
+ * on how many leading bytes matched. Length is allowed to leak (it always is,
+ * via the header) but the contents are not.
+ */
+export function timingSafeEqual(a: string, b: string): boolean {
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    diff |= aBytes[i] ^ bBytes[i];
+  }
+  return diff === 0;
 }
 
 // ---------------------------------------------------------------------------

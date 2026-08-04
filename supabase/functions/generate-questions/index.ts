@@ -9,17 +9,33 @@
 // where get_current_question() only ever selects status='approved'). This
 // function must never write status='approved'.
 //
-// Intended to run at most monthly via pg_cron, and to be safe to invoke by
+// Intended to run at most monthly on a schedule, and to be safe to invoke by
 // hand. It ignores the request body entirely: there is no input to this
 // function, so there is nothing a caller can steer -- in particular no way to
 // ask for a different status, category, language, or batch size.
 //
-// Pure logic (prompt, schema, validation) lives in ./logic.ts so it can be
-// unit tested without --allow-net; same split as push-dispatch.
+// Authentication is a shared secret (GENERATE_QUESTIONS_SECRET), the same
+// pattern push-dispatch uses, and supabase/config.toml turns verify_jwt off for
+// this function. JWT verification would NOT protect this endpoint: the anon key
+// is itself a JWT signed with the project's JWT secret and is compiled into the
+// shipped Flutter binary (lib/core/config/env.dart), as is any user's session
+// token. Every invocation below the threshold costs a paid Opus call and
+// inserts up to BATCH pending rows, and there is no concurrency control, so an
+// unauthenticated endpoint here is a billing and review-queue hazard.
+//
+// Pure logic (prompt, schema, validation, secret comparison) lives in
+// ./logic.ts so it can be unit tested without --allow-net; same split as
+// push-dispatch.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.115.0";
-import { parseGenerated, QUESTION_SCHEMA, SYSTEM_PROMPT } from "./logic.ts";
+import {
+  dedupeKey,
+  parseGenerated,
+  QUESTION_SCHEMA,
+  SYSTEM_PROMPT,
+  timingSafeEqual,
+} from "./logic.ts";
 
 /** Top up when approved questions fall below this. */
 const THRESHOLD = 20;
@@ -41,14 +57,6 @@ const MAX_TOKENS = 16000;
  */
 const SCAN_PAGE = 500;
 
-/**
- * Zero-width characters `String.prototype.trim` does not remove. Mirrors
- * ZERO_WIDTH_RE in ./logic.ts, which is module-private there; kept identical
- * so a question already in the table and a freshly generated one normalize to
- * the same dedupe key.
- */
-const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/g;
-
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -66,23 +74,20 @@ function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-/**
- * Normalized comparison key for a question: zero-width stripped, trimmed,
- * case-folded, whitespace runs collapsed. Same normalization ./logic.ts uses
- * for within-batch duplicates, applied here across batches.
- */
-function dedupeKey(question: string): string {
-  return question
-    .replace(ZERO_WIDTH_RE, "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
 Deno.serve(async (req: Request) => {
   try {
     if (req.method !== "POST") {
       return jsonResponse({ error: "method_not_allowed" }, 405);
+    }
+
+    // Shared-secret gate, before any env read or any work. Fails closed: a
+    // missing GENERATE_QUESTIONS_SECRET short-circuits to 401 rather than
+    // comparing against "Bearer " and letting an empty token through.
+    const generateQuestionsSecret = Deno.env.get("GENERATE_QUESTIONS_SECRET");
+    const authHeader = req.headers.get("authorization") ?? "";
+    const expected = `Bearer ${generateQuestionsSecret ?? ""}`;
+    if (!generateQuestionsSecret || !timingSafeEqual(authHeader, expected)) {
+      return jsonResponse({ error: "unauthorized" }, 401);
     }
 
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -154,7 +159,15 @@ Deno.serve(async (req: Request) => {
     const client = new Anthropic({ apiKey });
     let response;
     try {
-      response = await client.messages.create({
+      // Streaming, not messages.create: MAX_TOKENS is high enough that a slow
+      // generation can outlive the Edge Function's wall-clock ceiling (a couple
+      // of minutes) while the SDK is still waiting on its own 10-minute request
+      // timeout. The platform would kill the invocation before the SDK returned
+      // -- the catch below would never run, nothing would be logged, no
+      // response would be sent, and the call would still be billed. A stream
+      // keeps bytes moving; finalMessage() gives back the same complete Message
+      // the non-streaming call would have, so every check below is unchanged.
+      response = await client.messages.stream({
         model: MODEL,
         max_tokens: MAX_TOKENS,
         system: SYSTEM_PROMPT,
@@ -170,7 +183,7 @@ Deno.serve(async (req: Request) => {
             `Write ${BATCH} new questions. Vary the categories and don't repeat ` +
             `phrasings or themes within the batch.`,
         }],
-      });
+      }).finalMessage();
     } catch (e) {
       console.error("generate-questions: Claude request failed:", errorMessage(e));
       return jsonResponse({ error: "generation_failed" }, 502);
@@ -181,7 +194,14 @@ Deno.serve(async (req: Request) => {
       // this prompt means something is wrong with the prompt, and a quietly
       // substituted model would change the tone the review queue exists to
       // protect. Surface it instead.
-      console.error("generate-questions: model refused the request");
+      // stop_details.category is a fixed enum ("cyber", "bio", ... or null) --
+      // no model text, nothing caller-supplied. It is the only signal that says
+      // *why* the refusal happened, and this is the hardest failure here to
+      // reproduce, so log it.
+      console.error(
+        "generate-questions: model refused the request; category =",
+        response.stop_details?.category ?? "unknown",
+      );
       return jsonResponse({ error: "generation_refused" }, 502);
     }
     if (response.stop_reason === "max_tokens") {
@@ -200,12 +220,31 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "generation_failed" }, 502);
     }
 
+    // JSON.parse is deliberately NOT inside the validation try below. V8 builds
+    // its SyntaxError message out of an excerpt of the input -- e.g. `Unexpected
+    // token 'h', "here are t"... is not valid JSON` -- so echoing that message
+    // would leak ~30 characters of raw model output to the caller. Fixed
+    // message here; parseGenerated's messages (built from indices and module
+    // constants only) stay informative below.
+    let payload: unknown;
+    try {
+      payload = JSON.parse(textBlock.text);
+    } catch {
+      console.error(
+        `generate-questions: response text is not valid JSON (${textBlock.text.length} chars)`,
+      );
+      return jsonResponse(
+        { error: "invalid_generated_payload", message: "response was not valid JSON" },
+        502,
+      );
+    }
+
     // parseGenerated is all-or-nothing and throws on anything malformed: a bad
     // batch is rejected whole rather than partially inserted, and unvalidated
     // model output is never written.
     let generated;
     try {
-      generated = parseGenerated(JSON.parse(textBlock.text));
+      generated = parseGenerated(payload);
     } catch (e) {
       const message = errorMessage(e);
       console.error("generate-questions: invalid generated payload:", message);

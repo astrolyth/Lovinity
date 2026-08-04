@@ -411,6 +411,15 @@ deno_version = 2
 [functions.push-dispatch]
 verify_jwt = false
 
+# generate-questions: tops up the daily_questions pool via the Claude API. It
+# authenticates callers with a shared secret (GENERATE_QUESTIONS_SECRET), not a
+# Supabase JWT, so JWT verification must stay off. verify_jwt = true would be
+# worse than useless here: the anon key is itself a JWT signed by the project
+# secret and ships inside the Flutter binary, so every install could trigger a
+# paid generation run.
+[functions.generate-questions]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
