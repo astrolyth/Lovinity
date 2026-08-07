@@ -4,11 +4,20 @@
 // pattern as test/features/chat/chat_repository_test.dart and
 // test/features/gratitude/gratitude_repository_test.dart.
 //
-// Regression coverage for FIX 2 (partner-sync): a partner's prayer_logs row
-// written under a DIFFERENT calendar date than the local device's (e.g. two
-// devices in different timezones, or one past midnight) must still be
-// visible to `watchCouple` -- the stream the notification pump uses -- even
-// though `watchDay` (used by the date-scoped UI) correctly excludes it.
+// Regression coverage for cross-timezone partner sync.
+//
+// A partner's prayer_logs row is written under HER local calendar date, which
+// legitimately differs from this device's (different zones, or one device past
+// midnight). Two streams must both cope:
+//
+//   * `watchCouple` (the notification pump) sees every row regardless of date;
+//   * `watchDays` (the date-scoped UI) scopes each row to ITS OWN OWNER's day,
+//     so her rows survive under her key while his survive under his.
+//
+// The second is the fix. The previous `watchDay(date)` applied one caller-
+// supplied key to both spouses, so her rows were silently discarded and the UI
+// rendered "Not yet" for prayers she had already completed. An earlier version
+// of this test asserted that exclusion as correct behaviour -- it was the bug.
 @Tags(['integration'])
 library;
 
@@ -77,9 +86,8 @@ void main() {
   });
 
   test(
-      'watchCouple surfaces a partner check-in dated differently from the '
-      "local device's date, while watchDay correctly excludes it",
-      () async {
+      'watchDays scopes each spouse to their own calendar day, and watchCouple '
+      'still surfaces everything', () async {
     final clientA = _anonClient();
     final clientB = _anonClient();
     final stamp = DateTime.now().microsecondsSinceEpoch;
@@ -106,12 +114,41 @@ void main() {
       prayer: Prayer.isha,
     );
 
-    // UI provider path (`watchDay`, date-scoped): from A's perspective,
-    // looking at "today" (localToday) must show only A's own check-in --
-    // this behavior must NOT change.
-    final dayView =
-        await repoA.watchDay(coupleId: pairing.coupleId, date: localToday).first;
-    expect(dayView.map((e) => e.userId), [pairing.userA]);
+    // UI provider path (`watchDays`, per-owner scoped): from A's perspective
+    // looking at "today", A is anchored to July 30th and B to her own July
+    // 31st. BOTH check-ins must survive -- this is the whole fix. Under the
+    // old single-key filter B's row was dropped and the UI said "Not yet" for
+    // a prayer she had completed.
+    final dayView = await repoA.watchDays(
+      coupleId: pairing.coupleId,
+      dayKeyByUserId: {
+        pairing.userA: '2026-07-30',
+        pairing.userB: '2026-07-31',
+      },
+    ).first;
+    expect(
+      dayView.map((e) => e.userId).toSet(),
+      {pairing.userA, pairing.userB},
+    );
+
+    // ...and each row is still pinned to its own owner's day: anchoring B to
+    // A's date must drop B's row, not silently re-file it.
+    final mismatched = await repoA.watchDays(
+      coupleId: pairing.coupleId,
+      dayKeyByUserId: {
+        pairing.userA: '2026-07-30',
+        pairing.userB: '2026-07-30',
+      },
+    ).first;
+    expect(mismatched.map((e) => e.userId), [pairing.userA]);
+
+    // A user absent from the anchor map has no honest day to be filed under,
+    // so their rows are excluded rather than defaulted.
+    final unanchored = await repoA.watchDays(
+      coupleId: pairing.coupleId,
+      dayKeyByUserId: {pairing.userA: '2026-07-30'},
+    ).first;
+    expect(unanchored.map((e) => e.userId), [pairing.userA]);
 
     // Notification-pump path (`watchCouple`, unscoped): must see BOTH
     // check-ins, including the partner's row dated a different day. This is

@@ -48,7 +48,13 @@ final spouseProfileProvider = FutureProvider<UserProfile?>((ref) async {
 /// Emits DateTime.now() every 30 seconds. Used to drive countdowns without
 /// putting a long-running `while (true)` inside a `ref.watch`ing generator
 /// — a pattern that fights with Riverpod's invalidation during builds.
-final _nowTickerProvider = StreamProvider<DateTime>((ref) {
+///
+/// Public because the prayer log's dual clock needs the same heartbeat to keep
+/// both spouses' local times current. Watch it only from things that genuinely
+/// re-render every tick: anything that opens a subscription must depend on a
+/// value that changes at most daily (see [todayKeyProvider]) instead, or it
+/// will tear down and rebuild that subscription every 30 seconds.
+final nowTickerProvider = StreamProvider<DateTime>((ref) {
   return Stream<DateTime>.periodic(
     const Duration(seconds: 30),
     (_) => DateTime.now(),
@@ -64,7 +70,7 @@ final _nowTickerProvider = StreamProvider<DateTime>((ref) {
 /// changes instead of either never rebuilding (stuck on yesterday) or
 /// rebuilding on every tick (dropping in-flight state every 30s).
 final todayKeyProvider = Provider<String>((ref) {
-  final now = ref.watch(_nowTickerProvider).asData?.value ?? DateTime.now();
+  final now = ref.watch(nowTickerProvider).asData?.value ?? DateTime.now();
   final y = now.year.toString().padLeft(4, '0');
   final m = now.month.toString().padLeft(2, '0');
   final d = now.day.toString().padLeft(2, '0');
@@ -75,7 +81,7 @@ final todayKeyProvider = Provider<String>((ref) {
 final nextPrayerProvider = Provider<ScheduledPrayer?>((ref) {
   final profile = ref.watch(ownProfileProvider).asData?.value;
   // Watch the ticker so this provider re-emits every 30s.
-  ref.watch(_nowTickerProvider);
+  ref.watch(nowTickerProvider);
   if (profile == null ||
       profile.latitude == null ||
       profile.longitude == null) {
@@ -88,12 +94,16 @@ final nextPrayerProvider = Provider<ScheduledPrayer?>((ref) {
   );
   final config = PrayerConfig(
     madhab: profile.madhhab == 'hanafi' ? Madhab.hanafi : Madhab.shafi,
-    method: _mapMethod(profile.calcMethod),
+    method: calcMethodFromDb(profile.calcMethod),
   );
   return nextPrayer(now: DateTime.now(), loc: loc, config: config);
 });
 
-CalcMethod _mapMethod(String s) => switch (s) {
+/// Maps a `users.calc_method` value to its enum. Public because the prayer log
+/// computes the SPOUSE's prayer times too — to tell "she hasn't prayed Isha"
+/// apart from "Isha isn't due where she is yet" — and that needs HER method,
+/// not this device's.
+CalcMethod calcMethodFromDb(String s) => switch (s) {
       'egyptian' => CalcMethod.egyptian,
       'karachi' => CalcMethod.karachi,
       'umm_al_qura' => CalcMethod.ummAlQura,

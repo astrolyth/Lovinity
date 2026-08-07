@@ -7,7 +7,10 @@ import '../../../core/notifications/notification_providers.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/time/prayer_engine.dart';
+import '../../../core/time/tz_sync.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../calendar/domain/calendar_providers.dart';
+import '../../calendar/presentation/calendar_card.dart';
 import '../../chat/domain/chat_providers.dart';
 import '../../cycle/domain/cycle_providers.dart';
 import '../../daily/domain/question_providers.dart';
@@ -44,6 +47,14 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(questionNotificationPumpProvider);
     ref.watch(duaNotificationPumpProvider);
     ref.watch(gratitudeNotificationPumpProvider);
+    ref.watch(calendarNotificationPumpProvider);
+
+    // Publishes this device's IANA zone to `users.timezone` when it changes,
+    // so the spouse's device can anchor this user's prayer day (and dual
+    // clock) to the right place. Watched here for the same reason as the
+    // pumps: it must run for the whole authed session, not only while the
+    // prayer log is open.
+    ref.watch(timezonePublishProvider);
 
     final theme = Theme.of(context);
     final own = ref.watch(ownProfileProvider);
@@ -183,6 +194,8 @@ class HomeScreen extends ConsumerWidget {
                       const QuestionCard(),
                       const SizedBox(height: LovSpace.md),
                       const GratitudeCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const CalendarCard(),
                       const SizedBox(height: LovSpace.md),
                       const DuaCard(),
                     ],

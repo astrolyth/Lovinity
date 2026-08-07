@@ -24,6 +24,10 @@ import '../../../shared/models/prayer_log.dart';
 /// True only when she is the wife AND [selectedDate] falls within one of her
 /// own cycle records (`CycleRecord.isActiveOn`). Pure/side-effect-free so it
 /// can be unit-tested independently of the widget tree.
+///
+/// [selectedDate] must be the user's OWN resolved day. Exemption is a fact
+/// about her body on her calendar; resolving it against a partner's day (or a
+/// shared one) would excuse or un-excuse the wrong date near midnight.
 bool isSelectedDateExemptForCurrentUser({
   required bool isWife,
   required List<CycleRecord> ownCycleHistory,
@@ -39,32 +43,45 @@ class PrayerLogScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final selectedDate = ref.watch(prayerLogSelectedDateProvider);
+    final offset = ref.watch(prayerLogDayOffsetProvider);
     final summary = ref.watch(prayerDaySummaryProvider);
+    final view = ref.watch(prayerDayViewProvider);
     final ownProfile = ref.watch(ownProfileProvider).asData?.value;
     final spouseProfile = ref.watch(spouseProfileProvider).asData?.value;
     final logsAsync = ref.watch(prayerLogsForDayProvider);
     final isWife = ref.watch(isWifeProvider);
     final ownCycleHistory =
         ref.watch(ownCycleHistoryProvider).asData?.value ?? const [];
+    final spouseSchedule = ref.watch(spousePrayerTimesProvider);
+    final now = ref.watch(nowTickerProvider).asData?.value ?? DateTime.now();
 
-    final today = DateTime.now();
-    final isToday = _sameDay(selectedDate, today);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final isYesterday = _sameDay(selectedDate, yesterday);
-    final loggable = isLoggableDate(selectedDate);
+    // The day anchor is unknown until the device timezone resolves. Showing a
+    // skeleton beats rendering a day that might be wrong for a frame.
+    if (view == null) {
+      return LovScaffold(
+        title: 'Prayer log',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+        child: const _LogSkeleton(),
+      );
+    }
+
+    final loggable = isLoggableOffset(offset);
     final isExempt = isSelectedDateExemptForCurrentUser(
       isWife: isWife,
       ownCycleHistory: ownCycleHistory,
-      selectedDate: selectedDate,
+      selectedDate: view.ownDay,
     );
+    final spouseName = spouseProfile?.displayName ?? 'Your spouse';
 
     return LovScaffold(
       title: 'Prayer log',
       subtitle: Text(
-        isToday
-            ? DateFormat('EEEE, d MMMM').format(selectedDate)
-            : DateFormat('EEEE, d MMM y').format(selectedDate),
+        offset == 0
+            ? DateFormat('EEEE, d MMMM').format(view.ownDay)
+            : DateFormat('EEEE, d MMM y').format(view.ownDay),
       ),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -73,21 +90,15 @@ class PrayerLogScreen extends ConsumerWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () {
-            ref.read(prayerLogSelectedDateProvider.notifier).set(
-              selectedDate.subtract(const Duration(days: 1)),
-            );
-          },
+          onPressed: () =>
+              ref.read(prayerLogDayOffsetProvider.notifier).goBack(),
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right),
-          onPressed: isToday
+          onPressed: offset == 0
               ? null
-              : () {
-                  ref.read(prayerLogSelectedDateProvider.notifier).set(
-                    selectedDate.add(const Duration(days: 1)),
-                  );
-                },
+              : () =>
+                  ref.read(prayerLogDayOffsetProvider.notifier).goForward(),
         ),
       ],
       child: logsAsync.when(
@@ -102,22 +113,18 @@ class PrayerLogScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _DayToggle(
-                isToday: isToday,
-                isYesterday: isYesterday,
-                onSelect: (d) {
-                  ref.read(prayerLogSelectedDateProvider.notifier).set(d);
-                },
-                today: today,
-                yesterday: yesterday,
+                offset: offset,
+                onSelect: (o) =>
+                    ref.read(prayerLogDayOffsetProvider.notifier).set(o),
               ),
               const SizedBox(height: LovSpace.lg),
               LovEnter(
                 child: _TogetherStrip(
-                  ownCount: summary.ownCount,
-                  spouseCount: summary.spouseCount,
-                  togetherWindowSeconds: summary.togetherWindowSeconds,
+                  summary: summary,
+                  view: view,
+                  offset: offset,
                   ownName: ownProfile?.displayName ?? 'You',
-                  spouseName: spouseProfile?.displayName ?? 'Your spouse',
+                  spouseName: spouseName,
                 ),
               ),
               if (isExempt) ...[
@@ -138,11 +145,20 @@ class PrayerLogScreen extends ConsumerWidget {
                         ownExempt: isExempt,
                         ownLog: _findLog(logs, ownProfile?.id, p),
                         spouseLog: _findLog(logs, spouseProfile?.id, p),
+                        spouseName: spouseName,
+                        // Only meaningful for the current day; a past day is
+                        // entirely in the past for both of them.
+                        spouseDue: offset != 0 ||
+                            isPrayerDueForSpouse(
+                              prayer: p,
+                              schedule: spouseSchedule,
+                              now: now,
+                            ),
                         onOwnToggle: (newStatus) async {
                           await _toggleOwn(
                             ref: ref,
                             prayer: p,
-                            date: selectedDate,
+                            date: view.ownDay,
                             newStatus: newStatus,
                           );
                         },
@@ -169,9 +185,6 @@ class PrayerLogScreen extends ConsumerWidget {
     }
     return null;
   }
-
-  bool _sameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 
   Future<void> _toggleOwn({
     required WidgetRef ref,
@@ -210,19 +223,10 @@ class PrayerLogScreen extends ConsumerWidget {
 }
 
 class _DayToggle extends StatelessWidget {
-  const _DayToggle({
-    required this.isToday,
-    required this.isYesterday,
-    required this.onSelect,
-    required this.today,
-    required this.yesterday,
-  });
+  const _DayToggle({required this.offset, required this.onSelect});
 
-  final bool isToday;
-  final bool isYesterday;
-  final ValueChanged<DateTime> onSelect;
-  final DateTime today;
-  final DateTime yesterday;
+  final int offset;
+  final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -232,8 +236,8 @@ class _DayToggle extends StatelessWidget {
         Expanded(
           child: _DayToggleButton(
             label: 'Today',
-            selected: isToday,
-            onTap: () => onSelect(today),
+            selected: offset == 0,
+            onTap: () => onSelect(0),
             theme: theme,
           ),
         ),
@@ -241,8 +245,8 @@ class _DayToggle extends StatelessWidget {
         Expanded(
           child: _DayToggleButton(
             label: 'Yesterday',
-            selected: isYesterday,
-            onTap: () => onSelect(yesterday),
+            selected: offset == 1,
+            onTap: () => onSelect(1),
             theme: theme,
           ),
         ),
@@ -296,25 +300,35 @@ class _DayToggleButton extends StatelessWidget {
   }
 }
 
+/// Counts for both spouses, and — when their zones disagree — the dual clock
+/// that explains those counts.
+///
+/// The clock is adaptive rather than always-on: same-zone couples (the common
+/// case) see exactly the layout they always have, and the extra chrome appears
+/// only when there is a real discrepancy to account for. Without it, "0 of 5"
+/// for a partner whose day started an hour ago reads as neglect instead of as
+/// an early hour.
 class _TogetherStrip extends StatelessWidget {
   const _TogetherStrip({
-    required this.ownCount,
-    required this.spouseCount,
-    required this.togetherWindowSeconds,
+    required this.summary,
+    required this.view,
+    required this.offset,
     required this.ownName,
     required this.spouseName,
   });
 
-  final int ownCount;
-  final int spouseCount;
-  final int? togetherWindowSeconds;
+  final PrayerDaySummary summary;
+  final PrayerDayView view;
+  final int offset;
   final String ownName;
   final String spouseName;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final togetherOK = togetherWindowSeconds != null;
+    final onSec = theme.colorScheme.onSecondary;
+    final dual = view.zonesDiffer;
+    final progress = spouseDayProgressLabel(view: view, offset: offset);
 
     return Container(
       padding: const EdgeInsets.all(LovSpace.lg),
@@ -322,61 +336,106 @@ class _TogetherStrip extends StatelessWidget {
         color: theme.colorScheme.secondary,
         borderRadius: BorderRadius.circular(LovRadius.lg),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ownName,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSecondary
-                        .withValues(alpha: 0.7),
-                  ),
+          Row(
+            // Centred rather than top-aligned with fixed padding: the dual
+            // clock adds a line to each side, so any fixed offset would drift
+            // out of alignment exactly when the layout expands.
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _SideColumn(
+                  name: ownName,
+                  count: summary.ownCount,
+                  clock: dual ? view.ownLocalTime : null,
+                  day: dual ? view.ownDay : null,
+                  alignEnd: false,
                 ),
-                const SizedBox(height: 2),
-                LovDigitRow(
-                  value: ownCount,
-                  minDigits: 1,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    color: theme.colorScheme.onSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+              Icon(
+                summary.matchedCount > 0
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_outline_rounded,
+                color: onSec,
+                size: 20,
+              ),
+              Expanded(
+                child: _SideColumn(
+                  name: spouseName,
+                  count: summary.spouseCount,
+                  clock: dual ? view.spouseLocalTime : null,
+                  day: dual ? view.spouseDay : null,
+                  alignEnd: true,
                 ),
-              ],
+              ),
+            ],
+          ),
+          if (dual) ...[
+            const SizedBox(height: LovSpace.md),
+            Text(
+              [spouseOffsetSentence(view), progress]
+                  .where((s) => s.isNotEmpty)
+                  .join(' · '),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: onSec.withValues(alpha: 0.75),
+              ),
             ),
-          ),
-          Icon(
-            togetherOK ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-            color: theme.colorScheme.onSecondary,
-            size: 20,
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  spouseName,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSecondary
-                        .withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                LovDigitRow(
-                  value: spouseCount,
-                  minDigits: 1,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    color: theme.colorScheme.onSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _SideColumn extends StatelessWidget {
+  const _SideColumn({
+    required this.name,
+    required this.count,
+    required this.clock,
+    required this.day,
+    required this.alignEnd,
+  });
+
+  final String name;
+  final int count;
+  final DateTime? clock;
+  final DateTime? day;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSec = theme.colorScheme.onSecondary;
+    return Column(
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          name,
+          style: theme.textTheme.labelMedium
+              ?.copyWith(color: onSec.withValues(alpha: 0.7)),
+        ),
+        if (clock != null && day != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            '${DateFormat('EEE d MMM').format(day!)} · '
+            '${DateFormat.jm().format(clock!)}',
+            style: theme.textTheme.labelSmall
+                ?.copyWith(color: onSec.withValues(alpha: 0.6)),
+          ),
+        ],
+        const SizedBox(height: 2),
+        LovDigitRow(
+          value: count,
+          minDigits: 1,
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: onSec,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -410,6 +469,8 @@ class _PrayerRow extends StatelessWidget {
     required this.spouseLog,
     required this.isEditable,
     required this.onOwnToggle,
+    required this.spouseName,
+    required this.spouseDue,
     this.ownExempt = false,
   });
 
@@ -418,6 +479,10 @@ class _PrayerRow extends StatelessWidget {
   final PrayerLogEntry? spouseLog;
   final bool isEditable;
   final ValueChanged<PrayerStatus?> onOwnToggle;
+  final String spouseName;
+
+  /// Whether this prayer's time has arrived where the spouse is.
+  final bool spouseDue;
   final bool ownExempt;
 
   @override
@@ -461,7 +526,7 @@ class _PrayerRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _footerLabel(ownLog, spouseLog),
+                    _footerLabel(),
                     style: theme.textTheme.bodySmall,
                   ),
                 ],
@@ -500,16 +565,43 @@ class _PrayerRow extends StatelessWidget {
         Prayer.isha => 'ٱلْعِشَاء',
       };
 
-  String _footerLabel(PrayerLogEntry? own, PrayerLogEntry? spouse) {
-    if (own == null && spouse == null) return 'Not yet';
-    if (own?.status == PrayerStatus.prayed &&
-        spouse?.status == PrayerStatus.prayed) {
-      return 'Both prayed';
+  /// States only what the data supports.
+  ///
+  /// The important case is the last one: when the spouse has not logged AND
+  /// the prayer is not yet due where she is, a flat "Not yet" invites the
+  /// reader to conclude she skipped it. She hasn't — it isn't time there.
+  String _footerLabel() {
+    final ownDone = ownLog?.status == PrayerStatus.prayed;
+    final spouseDone = spouseLog?.status == PrayerStatus.prayed;
+    final notDue = spouseDue ? '' : 'not due yet for $spouseName';
+
+    if (ownDone && spouseDone) {
+      final gap = _gapLabel();
+      return gap == null ? 'Both prayed' : 'Both prayed · $gap';
     }
-    if (own?.status == PrayerStatus.prayed) return "You've prayed";
-    if (spouse?.status == PrayerStatus.prayed) return 'Your spouse prayed';
-    return 'Not yet';
+    if (ownDone) {
+      return notDue.isEmpty ? "You've prayed" : "You've prayed · $notDue";
+    }
+    if (spouseDone) return '$spouseName prayed';
+    return notDue.isEmpty ? 'Not yet' : _capitalise(notDue);
   }
+
+  /// Real elapsed time between the two check-ins, shown only when it is small
+  /// enough to describe as shared. Computed on `time_logged` instants, which
+  /// are absolute — so this is one of the few quantities here that is already
+  /// timezone-independent.
+  String? _gapLabel() {
+    final own = ownLog;
+    final spouse = spouseLog;
+    if (own == null || spouse == null) return null;
+    final gap = syncGap(a: own.timeLogged, b: spouse.timeLogged);
+    if (gap > kTogethernessWindow) return null;
+    if (gap.inMinutes < 1) return 'within a minute';
+    return '${gap.inMinutes}m apart';
+  }
+
+  String _capitalise(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
 class _CheckToggle extends StatefulWidget {

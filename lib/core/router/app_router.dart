@@ -8,6 +8,7 @@ import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_screen.dart';
+import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/care/presentation/care_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/cycle/presentation/cycle_screen.dart';
@@ -160,6 +161,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'cycle',
             builder: (_, _) => const CycleScreen(),
+          ),
+          GoRoute(
+            path: 'calendar',
+            builder: (_, _) => const CalendarScreen(),
           ),
           GoRoute(
             path: 'care',
