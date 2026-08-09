@@ -13,6 +13,9 @@ import '../../calendar/domain/calendar_providers.dart';
 import '../../calendar/presentation/calendar_card.dart';
 import '../../chat/domain/chat_providers.dart';
 import '../../cycle/domain/cycle_providers.dart';
+import '../../dates/domain/date_providers.dart';
+import '../../learning/domain/learning_providers.dart';
+import '../../lovemap/domain/lovemap_providers.dart';
 import '../../daily/domain/question_providers.dart';
 import '../../daily/presentation/question_card.dart';
 import '../../daily/presentation/verse_card.dart';
@@ -53,6 +56,9 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(calendarNotificationPumpProvider);
     ref.watch(groceryNotificationPumpProvider);
     ref.watch(letterNotificationPumpProvider);
+    ref.watch(learningNotificationPumpProvider);
+    ref.watch(loveMapNotificationPumpProvider);
+    ref.watch(dateNotificationPumpProvider);
 
     // Publishes this device's IANA zone to `users.timezone` when it changes,
     // so the spouse's device can anchor this user's prayer day (and dual
