@@ -20,6 +20,7 @@ import '../../duas/domain/dua_providers.dart';
 import '../../duas/presentation/dua_card.dart';
 import '../../gratitude/domain/gratitude_providers.dart';
 import '../../gratitude/presentation/gratitude_card.dart';
+import '../../letters/domain/letter_providers.dart';
 import '../../location/data/location_service.dart';
 import '../../location/domain/location_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
@@ -51,6 +52,7 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(gratitudeNotificationPumpProvider);
     ref.watch(calendarNotificationPumpProvider);
     ref.watch(groceryNotificationPumpProvider);
+    ref.watch(letterNotificationPumpProvider);
 
     // Publishes this device's IANA zone to `users.timezone` when it changes,
     // so the spouse's device can anchor this user's prayer day (and dual

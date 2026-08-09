@@ -18,6 +18,7 @@ import '../../features/duas/presentation/dua_list_screen.dart';
 import '../../features/gratitude/presentation/gratitude_screen.dart';
 import '../../features/home/domain/home_providers.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/letters/presentation/letters_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pairing/domain/pairing_providers.dart';
@@ -180,6 +181,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'recipes',
             builder: (_, _) => const RecipeListScreen(),
+          ),
+          GoRoute(
+            path: 'letters',
+            builder: (_, _) => const LettersScreen(),
           ),
           GoRoute(
             path: 'care',

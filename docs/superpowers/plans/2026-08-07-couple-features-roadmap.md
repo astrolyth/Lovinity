@@ -6,6 +6,31 @@
 
 **Key finding:** `20260712000002_full_schema.sql` already creates tables for six of the seven. There is no application code for any of them — `lib/features/` contains none of these directories. So the work is overwhelmingly Dart + targeted schema corrections, not greenfield modelling.
 
+## Status (updated 2026-08-08)
+
+| Item | State |
+|---|---|
+| F0 realtime publication | **Done** — 7 tables published, verified against `pg_publication_tables` |
+| #3 Shared calendar | **Done** — 41 tests (23 Hijri, 14 resolution, 4 integration) |
+| #7 Weekly plan / groceries / recipes | **Done** — 22 tests, incl. the concurrent-tick regression |
+| #6 Future letters | **Done** — 18 tests, incl. server-side seal verified via the recipient's own JWT |
+| #1 Co-studied lessons | Not started — needs `questions` column + hand-authored content |
+| #4 Love map | Not started — needs `love_map_truths` (feature cannot work without it) |
+| #5 Date ideas | Not started — needs new schema |
+| #2 OS widget | Not started — native track |
+
+Suite: **390 passing**, analyze clean, all migrations apply from a clean `supabase db reset`.
+
+Two bugs found and fixed while building, both worth remembering:
+
+* `nextGregorianOccurrence` returned the start date before validating `FREQ`, so an
+  unsupported recurrence rule behaved like a valid one.
+* Letter ciphertext was written as bare hex, copying `ChatRepository`'s convention.
+  That convention only works because `send_message` calls `decode(..., 'hex')`
+  explicitly; a direct PostgREST insert needs the `\x` prefix or Postgres parses the
+  string as legacy *escape* format and stores the ASCII of the hex digits. The symptom
+  was a GCM authentication failure — i.e. it looked like tampering, not encoding.
+
 ## Decisions taken
 
 | Decision | Choice |
