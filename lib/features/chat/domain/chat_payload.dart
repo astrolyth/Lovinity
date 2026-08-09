@@ -66,6 +66,25 @@ class AttachmentPayload extends ChatPayload {
   final String? replyToMessageId;
 }
 
+/// Carries the couple's long-lived future-letter key to the spouse's device.
+///
+/// Same shape as [AttachmentPayload]: a Signal-encrypted pointer carrying an
+/// AES key whose ciphertext lives elsewhere — here in `future_letters`, not
+/// Storage. The letter key cannot ride the Double Ratchet itself, because the
+/// ratchet destroys old key material and a letter must stay readable for years
+/// (see `lib/core/crypto/letter_crypto.dart`).
+///
+/// This is a control message, not conversation: it must never be rendered in
+/// the chat thread.
+class LetterKeyPayload extends ChatPayload {
+  const LetterKeyPayload({required this.coupleId, required this.letterKey});
+
+  final String coupleId;
+
+  /// 32-byte AES-256 key. Travels only inside this Signal-encrypted envelope.
+  final Uint8List letterKey;
+}
+
 /// A payload from a newer/unknown client — skipped, never fatal.
 class UnsupportedPayload extends ChatPayload {
   const UnsupportedPayload();
@@ -101,6 +120,12 @@ Uint8List encodePayload(ChatPayload p) {
         'thumb': base64Encode(p.thumbnailBytes),
         if (p.caption != null) 'caption': p.caption,
         if (p.replyToMessageId != null) 'reply': p.replyToMessageId,
+      },
+    LetterKeyPayload() => {
+        'v': _payloadVersion,
+        'kind': 'letterKey',
+        'couple': p.coupleId,
+        'key': base64Encode(p.letterKey),
       },
     UnsupportedPayload() => {'v': _payloadVersion, 'kind': 'unsupported'},
   };
@@ -155,6 +180,11 @@ ChatPayload decodePayload(Uint8List bytes) {
           thumbnailBytes: base64Decode(m['thumb'] as String),
           caption: m['caption'] as String?,
           replyToMessageId: m['reply'] as String?,
+        ),
+      'letterKey' when m['couple'] is String && m['key'] is String =>
+        LetterKeyPayload(
+          coupleId: m['couple'] as String,
+          letterKey: base64Decode(m['key'] as String),
         ),
       _ => const UnsupportedPayload(),
     };

@@ -23,6 +23,8 @@ import '../../gratitude/presentation/gratitude_card.dart';
 import '../../location/data/location_service.dart';
 import '../../location/domain/location_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
+import '../../planning/domain/planning_providers.dart';
+import '../../planning/presentation/planning_card.dart';
 import '../../prayer_log/domain/prayer_log_providers.dart';
 import '../../prayer_log/presentation/prayer_log_card.dart';
 import '../../scoring/presentation/scoreboard_card.dart';
@@ -48,6 +50,7 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(duaNotificationPumpProvider);
     ref.watch(gratitudeNotificationPumpProvider);
     ref.watch(calendarNotificationPumpProvider);
+    ref.watch(groceryNotificationPumpProvider);
 
     // Publishes this device's IANA zone to `users.timezone` when it changes,
     // so the spouse's device can anchor this user's prayer day (and dual
@@ -196,6 +199,8 @@ class HomeScreen extends ConsumerWidget {
                       const GratitudeCard(),
                       const SizedBox(height: LovSpace.md),
                       const CalendarCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const PlanningCard(),
                       const SizedBox(height: LovSpace.md),
                       const DuaCard(),
                     ],

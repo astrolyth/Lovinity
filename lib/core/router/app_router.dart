@@ -22,6 +22,9 @@ import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pairing/domain/pairing_providers.dart';
 import '../../features/pairing/presentation/pair_screen.dart';
+import '../../features/planning/presentation/grocery_list_screen.dart';
+import '../../features/planning/presentation/recipe_list_screen.dart';
+import '../../features/planning/presentation/week_plan_screen.dart';
 import '../../features/prayer_log/presentation/prayer_log_screen.dart';
 import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -165,6 +168,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'calendar',
             builder: (_, _) => const CalendarScreen(),
+          ),
+          GoRoute(
+            path: 'plan',
+            builder: (_, _) => const WeekPlanScreen(),
+          ),
+          GoRoute(
+            path: 'groceries',
+            builder: (_, _) => const GroceryListScreen(),
+          ),
+          GoRoute(
+            path: 'recipes',
+            builder: (_, _) => const RecipeListScreen(),
           ),
           GoRoute(
             path: 'care',

@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 import 'package:uuid/uuid.dart';
 import '../../../core/crypto/attachment_crypto.dart';
+import '../../../core/crypto/letter_crypto.dart';
 import '../../../core/crypto/signal_session_service.dart';
 import '../../../core/storage/media_cache.dart';
 import '../data/chat_repository.dart';
@@ -18,6 +19,7 @@ class ChatService {
     required this.selfDeviceNum,
     required this.coupleId,
     required this.cache,
+    this.letterKeys,
   });
 
   final SignalSessionService session;
@@ -28,6 +30,12 @@ class ChatService {
   final int selfDeviceNum;
   final String coupleId;
   final MediaCache cache;
+
+  /// Persists the couple's future-letter key when the spouse's device sends
+  /// it. Optional so existing ChatService construction sites (and tests that
+  /// only exercise messaging) need no change; a null store simply drops the
+  /// control message, and the sender re-delivers on the next request.
+  final LetterKeyService? letterKeys;
 
   /// Bounded retry for envelopes that fail to decrypt (e.g. corrupt
   /// ciphertext, or a session we can never rebuild). Counted in-memory only:
@@ -76,6 +84,34 @@ class ChatService {
         // The optimistic write itself may have failed, so there's no row to
         // mark 'failed' against. Nothing more we can do here.
       }
+    }
+  }
+
+  /// Delivers the couple's future-letter key to the spouse's devices.
+  ///
+  /// Unlike [sendText] this writes no local message row: it is a control
+  /// message, and a letter key appearing in the chat thread would be both
+  /// confusing and a disclosure of the surprise it protects.
+  ///
+  /// Returns whether delivery succeeded so the caller can decide whether it is
+  /// safe to seal a letter yet — writing one the spouse can never open is
+  /// worse than refusing to write it.
+  Future<bool> sendLetterKey(Uint8List letterKey) async {
+    try {
+      final copies = await session.encryptFor(
+        recipientUserId: spouseUserId,
+        plaintext: encodePayload(
+          LetterKeyPayload(coupleId: coupleId, letterKey: letterKey),
+        ),
+      );
+      await repo.sendEnvelopes(
+        senderDeviceNum: selfDeviceNum,
+        copies: copies,
+        messageId: const Uuid().v4(),
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -386,6 +422,19 @@ class ChatService {
           emoji: payload.emoji,
           add: payload.add,
         );
+      case LetterKeyPayload():
+        // A control message, never a conversation turn: it is deliberately NOT
+        // written to the message store, so it cannot surface in the chat
+        // thread as an empty or garbled bubble.
+        //
+        // Only accepted from the spouse. Ignoring the own-device sync copy
+        // matters: this device generated the key and already holds it, and
+        // re-writing it would be a no-op at best and, if the two devices ever
+        // raced on generation, could overwrite the key the spouse actually
+        // received with a losing one.
+        if (senderId != selfUserId && payload.coupleId == coupleId) {
+          await letterKeys?.write(coupleId, payload.letterKey);
+        }
       case UnsupportedPayload():
         break; // skip, still delete the envelope below
     }
