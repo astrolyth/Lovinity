@@ -117,26 +117,6 @@ String _hex(Uint8List bytes) {
 ///     id must be reused as-is (sessions and TOFU pins bind to them), while
 ///     the signed prekey and one-time prekeys are regenerated fresh, which
 ///     is normal and safe.
-/// Wipe the device-local data if it belongs to a DIFFERENT user, then record
-/// the current owner. The local DB (chat history + Signal state) is
-/// device-global and survives sign-out, so switching accounts on one device
-/// must clear it — otherwise the new user sees the previous user's messages
-/// and reuses their sessions. The SAME user (or a brand-new device, owner
-/// null) keeps everything. Run this before [ensureRegistered].
-Future<void> guardAccountSwitch({
-  required SignalDb db,
-  required KeyVault vault,
-  required String selfUserId,
-}) async {
-  final owner = await db.readOwnerUserId();
-  if (owner != null && owner != selfUserId) {
-    await db.wipeAll();
-    await vault.wipe();
-  }
-  // wipeAll clears signal_meta, so (re)set the owner afterwards.
-  await db.setOwnerUserId(selfUserId);
-}
-
 Future<int> ensureRegistered({
   required SignalDb db,
   required KeyVault vault,

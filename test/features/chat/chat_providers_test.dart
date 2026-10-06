@@ -7,15 +7,15 @@ import 'package:lovinity/features/chat/data/chat_store.dart';
 import 'package:lovinity/features/chat/domain/chat_providers.dart';
 
 void main() {
-  test('chatStoreProvider builds over the shared SignalDb', () {
+  test("chatStoreProvider builds over the account's own SignalDb", () {
     final c = ProviderContainer(overrides: [
-      signalDbProvider.overrideWith((ref) {
+      signalDbProvider.overrideWith((ref, userId) {
         final db = SignalDb.memory();
         ref.onDispose(db.close);
         return db;
       }),
     ]);
     addTearDown(c.dispose);
-    expect(c.read(chatStoreProvider), isA<ChatStore>());
+    expect(c.read(chatStoreProvider('user-A')), isA<ChatStore>());
   });
 }

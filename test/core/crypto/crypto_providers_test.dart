@@ -17,6 +17,7 @@ import 'package:lovinity/core/notifications/push_service.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
 import 'package:lovinity/features/auth/data/auth_repository.dart';
 import 'package:lovinity/features/auth/domain/auth_controller.dart';
+import 'package:lovinity/features/chat/domain/chat_providers.dart';
 import 'package:lovinity/shared/providers/supabase_provider.dart';
 
 /// No-op stand-in for the real Supabase-backed bundle source. Real
@@ -55,7 +56,7 @@ Session _signedInSession(String userId) {
   return session;
 }
 
-SignalDb _memoryDb(Ref ref) {
+SignalDb _memoryDb(Ref ref, String userId) {
   final db = SignalDb.memory();
   ref.onDispose(db.close);
   return db;
@@ -71,26 +72,20 @@ void main() {
     registerFallbackValue(_MockSupabaseClient());
   });
 
-  test('signalDbProvider is a singleton within a container', () {
-    // Overridden with an in-memory SignalDb, not the bare (default)
-    // ProviderContainer the brief sketched: the real signalDbProvider opens
-    // an on-disk driftDatabase() that calls path_provider over a platform
-    // channel, which needs Flutter binding initialization this plain
-    // `flutter_test` run doesn't have (no precedent for mocking that channel
-    // anywhere in this suite — every other test uses SignalDb.memory()).
-    // The identity check below still exercises the exact same provider
-    // machinery; only the underlying db implementation changes.
+  test('signalDbProvider gives one db per account, reused for that account',
+      () {
+    // Overridden with in-memory dbs: the real provider opens an on-disk
+    // driftDatabase() that needs path_provider (a platform channel) which a
+    // plain flutter_test run doesn't have.
     final c = ProviderContainer(overrides: [
-      signalDbProvider.overrideWith((ref) {
-        final db = SignalDb.memory();
-        ref.onDispose(db.close);
-        return db;
-      }),
+      signalDbProvider.overrideWith(_memoryDb),
     ]);
     addTearDown(c.dispose);
-    final a = c.read(signalDbProvider);
-    final b = c.read(signalDbProvider);
-    expect(identical(a, b), isTrue);
+    expect(identical(c.read(signalDbProvider('A')), c.read(signalDbProvider('A'))),
+        isTrue);
+    expect(identical(c.read(signalDbProvider('A')), c.read(signalDbProvider('B'))),
+        isFalse,
+        reason: 'two accounts must never share a database');
   });
 
   test(
@@ -104,7 +99,7 @@ void main() {
       preKeyBundleSourceProvider.overrideWith((ref) => _NoopBundleSource()),
       authSessionProvider
           .overrideWith((ref) => Stream.value(_signedInSession('test-user'))),
-      keyVaultProvider.overrideWithValue(vault),
+      keyVaultProvider.overrideWith((ref, _) => vault),
     ]);
     addTearDown(c.dispose);
     // Establish an explicit subscription to authSessionProvider first (same
@@ -127,7 +122,7 @@ void main() {
       signalDbProvider.overrideWith(_memoryDb),
       preKeyBundleSourceProvider.overrideWith((ref) => _NoopBundleSource()),
       authSessionProvider.overrideWith((ref) => Stream.value(null)),
-      keyVaultProvider.overrideWithValue(vault),
+      keyVaultProvider.overrideWith((ref, _) => vault),
     ]);
     addTearDown(c.dispose);
     c.listen(authSessionProvider, (_, _) {});
@@ -153,7 +148,7 @@ void main() {
       deviceRegistrarProvider.overrideWithValue(registrar),
       authSessionProvider
           .overrideWith((ref) => Stream.value(_signedInSession('test-user'))),
-      keyVaultProvider.overrideWithValue(vault),
+      keyVaultProvider.overrideWith((ref, _) => vault),
     ]);
     addTearDown(c.dispose);
     c.listen(authSessionProvider, (_, _) {});
@@ -184,7 +179,7 @@ void main() {
       final c = ProviderContainer(overrides: [
         signalDbProvider.overrideWith(_memoryDb),
         deviceRegistrarProvider.overrideWithValue(registrar),
-        keyVaultProvider.overrideWithValue(vault),
+        keyVaultProvider.overrideWith((ref, _) => vault),
         authRepositoryProvider.overrideWithValue(authRepo),
         supabaseClientProvider.overrideWithValue(client),
         pushServiceProvider.overrideWithValue(pushService),
@@ -205,14 +200,16 @@ void main() {
       final pushService = _MockPushService();
       final client = _MockSupabaseClient();
       final authRepo = _MockAuthRepo();
-      when(() => authRepo.currentUser).thenReturn(null);
+      final user = _MockUser();
+      when(() => user.id).thenReturn('test-user');
+      when(() => authRepo.currentUser).thenReturn(user);
       when(() => pushService.registerToken(any()))
           .thenThrow(Exception('boom'));
 
       final c = ProviderContainer(overrides: [
         signalDbProvider.overrideWith(_memoryDb),
         deviceRegistrarProvider.overrideWithValue(registrar),
-        keyVaultProvider.overrideWithValue(vault),
+        keyVaultProvider.overrideWith((ref, _) => vault),
         authRepositoryProvider.overrideWithValue(authRepo),
         supabaseClientProvider.overrideWithValue(client),
         pushServiceProvider.overrideWithValue(pushService),
@@ -223,6 +220,72 @@ void main() {
 
       expect(deviceNum, 1,
           reason: 'a push-token failure must never fail device registration');
+    });
+  });
+
+  group('account switching on one device', () {
+    late InMemorySecureStore keychain;
+    late _CountingRegistrar registrar;
+    late _MockAuthRepo authRepo;
+    late ProviderContainer c;
+    var currentUid = 'user-A';
+
+    setUp(() {
+      keychain = InMemorySecureStore();
+      registrar = _CountingRegistrar();
+      authRepo = _MockAuthRepo();
+      final user = _MockUser();
+      when(() => user.id).thenAnswer((_) => currentUid);
+      when(() => authRepo.currentUser).thenReturn(user);
+      final pushService = _MockPushService();
+      when(() => pushService.registerToken(any())).thenAnswer((_) async {});
+
+      c = ProviderContainer(overrides: [
+        signalDbProvider.overrideWith(_memoryDb),
+        // ONE shared keychain, like a real device.
+        secureStoreProvider.overrideWithValue(keychain),
+        deviceRegistrarProvider.overrideWithValue(registrar),
+        authRepositoryProvider.overrideWithValue(authRepo),
+        supabaseClientProvider.overrideWithValue(_MockSupabaseClient()),
+        pushServiceProvider.overrideWithValue(pushService),
+      ]);
+    });
+    tearDown(() => c.dispose());
+
+    test('each account keeps its device number: A -> B -> A registers twice',
+        () async {
+      currentUid = 'user-A';
+      final a1 = await c.read(ensureRegisteredProvider)();
+      currentUid = 'user-B';
+      final b = await c.read(ensureRegisteredProvider)();
+      currentUid = 'user-A';
+      final a2 = await c.read(ensureRegisteredProvider)();
+
+      expect(a2, a1,
+          reason: 'A must come back on the SAME device number, or messages '
+              'addressed to it while B was signed in are dropped');
+      expect(b, isNot(a1));
+      expect(registrar.registerCalls, 2,
+          reason: 'returning to A must not re-register a new device');
+    });
+
+    test("chat history is per account: B can't see A's, A keeps it",
+        () async {
+      await c.read(chatStoreProvider('user-A')).upsertMessage(
+          id: 'm1',
+          senderId: 'user-A',
+          body: 'hello',
+          createdAt: DateTime(2026),
+          status: 'sent');
+
+      expect(
+          await c.read(chatStoreProvider('user-B')).watchConversation().first,
+          isEmpty);
+      expect(
+          (await c.read(chatStoreProvider('user-A')).watchConversation().first)
+              .single
+              .body,
+          'hello');
     });
   });
 
@@ -292,6 +355,32 @@ class _FakeRegistrar implements DeviceRegistrar {
     registerCalls++;
     return 1;
   }
+
+  @override
+  Future<void> uploadOneTimePrekeys({
+    required int deviceNum,
+    required Map<int, Uint8List> prekeys,
+  }) async {}
+
+  @override
+  Future<int> unconsumedPrekeyCount(int deviceNum) async => 20;
+}
+
+/// Hands out a new device number per registration, like the server does, so
+/// a needless re-registration shows up as a changed number.
+class _CountingRegistrar implements DeviceRegistrar {
+  int registerCalls = 0;
+
+  @override
+  Future<int> register({
+    required String deviceId,
+    required int registrationId,
+    required Uint8List identityPub,
+    required int signedPrekeyId,
+    required Uint8List signedPrekeyPub,
+    required Uint8List signedPrekeySig,
+  }) async =>
+      ++registerCalls;
 
   @override
   Future<void> uploadOneTimePrekeys({

@@ -7,7 +7,6 @@ import 'package:lovinity/core/crypto/signal_keys.dart';
 import 'package:lovinity/core/crypto/signal_registration.dart';
 import 'package:lovinity/core/crypto/stores/drift_signal_store.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
-import 'package:lovinity/features/chat/data/chat_store.dart';
 
 class _FakeRegistrar implements DeviceRegistrar {
   int? registeredDeviceNum;
@@ -253,47 +252,6 @@ void main() {
         db: db, vault: vault, registrar: registrar, threshold: 10, topUpTo: 20);
 
     expect(registrar.uploaded, isEmpty);
-  });
-
-  test('guardAccountSwitch WIPES when a different user signs in', () async {
-    final db = SignalDb.memory();
-    final vault = KeyVault(InMemorySecureStore());
-    final store = ChatStore(db);
-    // Account A owns the device and has chat history.
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-A');
-    await store.upsertMessage(id: 'old', senderId: 'A-spouse', body: 'secret',
-        createdAt: DateTime(2026), status: 'delivered');
-    await vault.savePrivate(
-        generateBundle(deviceId: 'd', oneTimePrekeyCount: 1).private);
-
-    // A DIFFERENT user signs in on the same device.
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-B');
-
-    expect(await store.watchConversation().first, isEmpty,
-        reason: 'a different account must not see the previous user\'s chat');
-    expect(await vault.hasIdentity(), isFalse,
-        reason: 'the previous identity must be wiped too');
-    expect(await db.readOwnerUserId(), 'user-B');
-  });
-
-  test('guardAccountSwitch PRESERVES history when the same user re-logs in',
-      () async {
-    final db = SignalDb.memory();
-    final vault = KeyVault(InMemorySecureStore());
-    final store = ChatStore(db);
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-A');
-    await store.upsertMessage(id: 'mine', senderId: 'A-spouse', body: 'hi',
-        createdAt: DateTime(2026), status: 'delivered');
-    await vault.savePrivate(
-        generateBundle(deviceId: 'd', oneTimePrekeyCount: 1).private);
-
-    // Same user signs out and back in — sign-out no longer wipes anything.
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-A');
-
-    expect((await store.watchConversation().first).length, 1,
-        reason: 'the same user keeps their chat history across re-login');
-    expect(await vault.hasIdentity(), isTrue,
-        reason: 'the same user keeps their identity/device');
   });
 }
 

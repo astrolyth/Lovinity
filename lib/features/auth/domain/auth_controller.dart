@@ -8,8 +8,17 @@ import '../../../core/crypto/secure_store.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../data/auth_repository.dart';
 
-final keyVaultProvider = Provider<KeyVault>((ref) {
-  return KeyVault(FlutterSecureStore(ref.read(secureStorageProvider)));
+/// The device's secure storage (Keychain / Keystore). Overridable so tests can
+/// share one in-memory store between several accounts.
+final secureStoreProvider = Provider<SecureStore>((ref) {
+  return FlutterSecureStore(ref.read(secureStorageProvider));
+});
+
+/// The Signal key vault for ONE account, keyed by user id. Each account's keys
+/// are namespaced in secure storage, so accounts sharing a device keep their
+/// own identity and device number across sign-out / account switches.
+final keyVaultProvider = Provider.family<KeyVault, String>((ref, userId) {
+  return KeyVault(ref.read(secureStoreProvider), scope: userId);
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

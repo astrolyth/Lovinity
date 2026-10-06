@@ -100,7 +100,13 @@ class ChatReactions extends Table {
   ChatReactions,
 ])
 class SignalDb extends _$SignalDb {
-  SignalDb() : super(driftDatabase(name: 'lovinity_signal'));
+  /// One on-disk database PER ACCOUNT. Chat history and Signal state are
+  /// local-only (the server copy is single-use ciphertext), so isolating them
+  /// by file is what lets several accounts share a device: switching accounts
+  /// never has to wipe anything, nobody can read another account's history,
+  /// and each account keeps its own identity + device number.
+  SignalDb.forUser(String userId)
+      : super(driftDatabase(name: 'lovinity_signal_$userId'));
 
   /// In-memory instance for tests.
   SignalDb.memory() : super(NativeDatabase.memory());
@@ -119,39 +125,4 @@ class SignalDb extends _$SignalDb {
           }
         },
       );
-
-  /// Delete ALL local data — chat history and Signal session/identity/key
-  /// state. Called when a different account registers on this device (and on
-  /// sign-out) so one user never sees another's messages or reuses their
-  /// Signal sessions. This DB is device-global and not scoped per user, so it
-  /// must be cleared on an account switch.
-  Future<void> wipeAll() async {
-    await transaction(() async {
-      await delete(chatMessages).go();
-      await delete(chatReactions).go();
-      await delete(signalSessions).go();
-      await delete(signalPrekeys).go();
-      await delete(signalSignedPrekeys).go();
-      await delete(signalIdentities).go();
-      await delete(signalIdentityChanges).go();
-      await delete(signalMeta).go();
-    });
-  }
-
-  static const _ownerKey = '_owner_user_id';
-
-  /// The user id that currently owns this device's local data. Stored in the
-  /// DB (which is NOT wiped on sign-out) so an account SWITCH can be detected:
-  /// the same user signing back in keeps their data; a different user triggers
-  /// [wipeAll]. Null on a brand-new device.
-  Future<String?> readOwnerUserId() async {
-    final row = await (select(signalMeta)..where((t) => t.key.equals(_ownerKey)))
-        .getSingleOrNull();
-    return row?.value;
-  }
-
-  Future<void> setOwnerUserId(String userId) async {
-    await into(signalMeta).insertOnConflictUpdate(
-        SignalMetaCompanion.insert(key: _ownerKey, value: userId));
-  }
 }

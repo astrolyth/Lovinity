@@ -13,8 +13,9 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(ref.read(supabaseClientProvider));
 });
 
-final chatStoreProvider = Provider<ChatStore>((ref) {
-  return ChatStore(ref.watch(signalDbProvider));
+/// Chat history for ONE account, over that account's own database.
+final chatStoreProvider = Provider.family<ChatStore, String>((ref, userId) {
+  return ChatStore(ref.watch(signalDbProvider(userId)));
 });
 
 /// Null until signed in + paired + this device is registered.
@@ -32,13 +33,13 @@ final chatServiceProvider = FutureProvider<ChatService?>((ref) async {
   if (authSession == null || couple == null) return null;
   final selfId = authSession.user.id;
 
-  final deviceNum = await ref.read(keyVaultProvider).readDeviceNum();
+  final deviceNum = await ref.read(keyVaultProvider(selfId)).readDeviceNum();
   if (deviceNum == null) return null; // not registered yet
 
   return ChatService(
     session: session,
     repo: ref.read(chatRepositoryProvider),
-    store: ref.read(chatStoreProvider),
+    store: ref.read(chatStoreProvider(selfId)),
     selfUserId: selfId,
     spouseUserId: couple.spouseOf(selfId),
     selfDeviceNum: deviceNum,
@@ -47,7 +48,9 @@ final chatServiceProvider = FutureProvider<ChatService?>((ref) async {
 
 final conversationMessagesProvider =
     StreamProvider<List<ChatMessageRow>>((ref) {
-  return ref.watch(chatStoreProvider).watchConversation();
+  final authSession = ref.watch(authSessionProvider).asData?.value;
+  if (authSession == null) return Stream.value(const []);
+  return ref.watch(chatStoreProvider(authSession.user.id)).watchConversation();
 });
 
 /// Live count of unread incoming messages, for the home chat badge. Emits 0
@@ -55,7 +58,8 @@ final conversationMessagesProvider =
 final unreadChatCountProvider = StreamProvider<int>((ref) {
   final authSession = ref.watch(authSessionProvider).asData?.value;
   if (authSession == null) return Stream.value(0);
-  return ref.watch(chatStoreProvider).watchUnreadCount(authSession.user.id);
+  final selfId = authSession.user.id;
+  return ref.watch(chatStoreProvider(selfId)).watchUnreadCount(selfId);
 });
 
 /// Subscribes to the inbox stream and feeds each row through
@@ -82,8 +86,8 @@ final receiptPumpProvider = Provider<void>((ref) {
   final svc = ref.watch(chatServiceProvider).asData?.value;
   final couple = ref.watch(currentCoupleProvider).asData?.value;
   if (svc == null || couple == null) return;
-  final store = ref.read(chatStoreProvider);
   final selfId = svc.selfUserId;
+  final store = ref.read(chatStoreProvider(selfId));
   final sub =
       ref.read(chatRepositoryProvider).watchMyMessages(couple.id).listen((rows) async {
     for (final r in rows) {
