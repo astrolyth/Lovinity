@@ -343,6 +343,14 @@ See [`supabase/functions/push-dispatch/README.md`](supabase/functions/push-dispa
 - `dispatch_push()` calls out over `pg_net` from Postgres; reaching a deployed edge function from the **local Docker stack (path A)** can be finicky depending on your network. Push is primarily exercised as a **cloud feature (path B)** — set up path B (or point local dev at a cloud project's `push-dispatch` function) if you want to see real notifications end-to-end.
 - Until `private.push_config` is seeded, `dispatch_push()` is a silent no-op and chat/pairing behave exactly as they do without any of this setup.
 
+### Redeploying after updates
+
+The `push-dispatch` function validates the notification type. When a release adds a new type (Our Wall added `wall`), redeploy it once, otherwise those pushes are rejected:
+
+```bash
+supabase functions deploy push-dispatch
+```
+
 ---
 
 ## Project layout

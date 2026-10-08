@@ -45,6 +45,7 @@ String? routeForTap(NotificationTap tap) {
   const chatTypes = {'chat', 'message', 'reaction'};
   if (chatTypes.contains(tap.type)) return '/home/chat';
   if (tap.type == 'pairing') return '/home';
+  if (tap.type == 'wall') return '/home/wall';
   return null;
 }
 

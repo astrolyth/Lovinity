@@ -50,6 +50,17 @@ Deno.test("parseDispatchBody: accepts a well-formed pairing payload", () => {
   assertEquals(result, input);
 });
 
+Deno.test("parseDispatchBody: accepts a well-formed wall payload", () => {
+  const input = {
+    user_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    type: "wall",
+    title: "Aisha shared something",
+    body: "New on your Wall 💛",
+  };
+  const result = parseDispatchBody(input);
+  assertEquals(result, input);
+});
+
 Deno.test("parseDispatchBody: rejects null/non-object input", () => {
   assertThrows(() => parseDispatchBody(null));
   assertThrows(() => parseDispatchBody("not an object"));
@@ -75,7 +86,7 @@ Deno.test("parseDispatchBody: rejects a type outside the allow-list", () => {
   assertThrows(() =>
     parseDispatchBody({
       user_id: "11111111-2222-3333-4444-555555555555",
-      type: "marketing", // not 'chat' | 'pairing'
+      type: "marketing", // not 'chat' | 'pairing' | 'wall'
       title: "t",
       body: "b",
     })

@@ -43,7 +43,7 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Must match the contract from Task 1's dispatch_push() callers.
-const ALLOWED_TYPES = new Set(["chat", "pairing"]);
+const ALLOWED_TYPES = new Set(["chat", "pairing", "wall"]);
 
 const MAX_TITLE_LEN = 200;
 const MAX_BODY_LEN = 1000;
@@ -65,7 +65,7 @@ export function parseDispatchBody(json: unknown): DispatchBody {
     throw new Error("user_id must be a UUID string");
   }
   if (typeof type !== "string" || !ALLOWED_TYPES.has(type)) {
-    throw new Error("type must be one of 'chat' | 'pairing'");
+    throw new Error("type must be one of 'chat' | 'pairing' | 'wall'");
   }
   if (typeof title !== "string" || title.length === 0 || title.length > MAX_TITLE_LEN) {
     throw new Error(`title must be a non-empty string (max ${MAX_TITLE_LEN} chars)`);

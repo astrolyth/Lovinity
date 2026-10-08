@@ -28,6 +28,10 @@ void main() {
       expect(routeForTap(const NotificationTap(type: 'pairing')), '/home');
     });
 
+    test("'wall' routes to /home/wall", () {
+      expect(routeForTap(const NotificationTap(type: 'wall')), '/home/wall');
+    });
+
     test('an unrecognized type routes nowhere', () {
       expect(routeForTap(const NotificationTap(type: 'unknown')), isNull);
     });
