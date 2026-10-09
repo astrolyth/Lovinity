@@ -26,6 +26,8 @@ class LinkPreviewService {
       : _client = client ?? http.Client();
 
   static const maxBytes = 512 * 1024;
+  static const _maxRedirects = 5;
+  static const _redirectCodes = {301, 302, 303, 307, 308};
   static const _userAgent = 'Mozilla/5.0 (compatible; LovinityLinkPreview/1.0)';
 
   final http.Client _client;
@@ -57,10 +59,28 @@ class LinkPreviewService {
       }
     }
 
-    final req = http.Request('GET', uri)
-      ..headers['User-Agent'] = _userAgent
-      ..headers['Accept'] = 'text/html,application/xhtml+xml';
-    final res = await _client.send(req);
+    // Redirects are followed by hand so every hop is checked for scheme and
+    // so relative URLs resolve against the URL that actually served the page.
+    var current = uri;
+    late final http.StreamedResponse res;
+    for (var hop = 0;; hop++) {
+      final req = http.Request('GET', current)
+        ..followRedirects = false
+        ..headers['User-Agent'] = _userAgent
+        ..headers['Accept'] = 'text/html,application/xhtml+xml';
+      final r = await _client.send(req);
+      if (!_redirectCodes.contains(r.statusCode)) {
+        res = r;
+        break;
+      }
+      await r.stream.drain<void>(); // ignore the redirect body
+      if (hop >= _maxRedirects) return null;
+      final location = r.headers['location'];
+      if (location == null) return null;
+      final next = current.resolve(location.trim());
+      if (next.scheme != 'http' && next.scheme != 'https') return null;
+      current = next;
+    }
     if (res.statusCode != 200) return null;
     final type = res.headers['content-type'] ?? '';
     if (!type.contains('html')) return null;
@@ -71,7 +91,7 @@ class LinkPreviewService {
       if (bytes.length >= maxBytes) break; // cancels the rest of the body
     }
     final html = utf8.decode(bytes.takeBytes(), allowMalformed: true);
-    return parseHtmlPreview(html, baseUrl: res.request?.url ?? uri);
+    return parseHtmlPreview(html, baseUrl: current);
   }
 
   void close() => _client.close();
