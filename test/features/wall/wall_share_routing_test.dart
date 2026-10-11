@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -14,10 +16,10 @@ class _MockSession extends Mock implements Session {}
 
 class _MockUser extends Mock implements User {}
 
-Session _session() {
+Session _session([String userId = 'me']) {
   final s = _MockSession();
   final u = _MockUser();
-  when(() => u.id).thenReturn('me');
+  when(() => u.id).thenReturn(userId);
   when(() => s.user).thenReturn(u);
   return s;
 }
@@ -69,6 +71,47 @@ void main() {
         session: _session(), couple: _couple, profile: _profile(gender: null));
     expect(await c.read(acceptShareProvider)(_share), isFalse);
     expect(c.read(pendingShareProvider), isNull);
+  });
+
+  group('pending share across account changes', () {
+    late StreamController<Session?> auth;
+    late ProviderContainer c;
+
+    setUp(() async {
+      auth = StreamController<Session?>();
+      c = ProviderContainer(overrides: [
+        authSessionProvider.overrideWith((ref) => auth.stream),
+      ]);
+      c.listen(pendingShareAccountGuardProvider, (_, _) {});
+      auth.add(_session('a'));
+      await c.read(authSessionProvider.future);
+      c.read(pendingShareProvider.notifier).set(_share);
+    });
+
+    tearDown(() async {
+      c.dispose();
+      await auth.close();
+    });
+
+    Future<void> emit(Session? s) async {
+      auth.add(s);
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    test('is dropped when another account signs in', () async {
+      await emit(_session('b'));
+      expect(c.read(pendingShareProvider), isNull);
+    });
+
+    test('is dropped on sign-out', () async {
+      await emit(null);
+      expect(c.read(pendingShareProvider), isNull);
+    });
+
+    test('survives a session refresh for the same account', () async {
+      await emit(_session('a'));
+      expect(c.read(pendingShareProvider)?.text, _share.text);
+    });
   });
 
   test('ignores the share when signed out', () async {

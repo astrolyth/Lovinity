@@ -70,6 +70,8 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
     // default state for this repo) must never crash boot.
     unawaited(_initPush());
     unawaited(_initShareIntake());
+    // Lives as long as the app: clears a pending share on account change.
+    ref.listenManual(pendingShareAccountGuardProvider, (_, _) {});
   }
 
   Future<void> _initPush() async {

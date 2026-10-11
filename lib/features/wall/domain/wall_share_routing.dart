@@ -31,3 +31,19 @@ final acceptShareProvider = Provider<Future<bool> Function(SharedPayload)>((ref)
     return true;
   };
 });
+
+/// Drops a waiting share when the signed-in account changes (sign-out, or a
+/// different account on a shared device), so it can never open for someone
+/// else. Kept alive by the app shell (app.dart). Token refreshes for the same
+/// user don't count; signing in from signed-out has nothing to drop (shares
+/// are only accepted with a session).
+final pendingShareAccountGuardProvider = Provider<void>((ref) {
+  ref.listen<String?>(
+    authSessionProvider.select((s) => s.value?.user.id),
+    (previous, next) {
+      if (previous != null && previous != next) {
+        ref.read(pendingShareProvider.notifier).clear();
+      }
+    },
+  );
+});
