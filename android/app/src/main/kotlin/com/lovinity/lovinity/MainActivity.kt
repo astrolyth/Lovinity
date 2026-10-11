@@ -17,7 +17,9 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         initialShare = sharePayload(intent)
-        // Consume it so a process restore doesn't redeliver the same share.
+        // Same-process recreation (e.g. rotation) re-reads this same Intent
+        // object, so reset its action once the share is held. A relaunch after
+        // process death is covered separately in sharePayload.
         if (initialShare != null) intent.action = Intent.ACTION_MAIN
         channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "lovinity/share").also {
             it.setMethodCallHandler { call, result ->
@@ -42,6 +44,10 @@ class MainActivity : FlutterActivity() {
 
     private fun sharePayload(intent: Intent?): Map<String, String?>? {
         if (intent?.action != Intent.ACTION_SEND) return null
+        // Relaunched from Recents (e.g. after process death): the system hands
+        // back the original ACTION_SEND intent, which is a stale share, not a
+        // new one.
+        if ((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) return null
         if (intent.type?.startsWith("text/") != true) return null
         val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
         return mapOf("text" to text, "subject" to intent.getStringExtra(Intent.EXTRA_SUBJECT))
