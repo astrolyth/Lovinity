@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/features/auth/domain/auth_controller.dart';
 import 'package:lovinity/features/home/domain/home_providers.dart';
+import 'package:lovinity/features/pairing/domain/pairing_providers.dart';
+import 'package:lovinity/features/wall/data/wall_repository.dart';
 import 'package:lovinity/features/wall/domain/wall_models.dart';
 import 'package:lovinity/features/wall/domain/wall_providers.dart';
+import 'package:lovinity/shared/models/couple.dart';
 
 WallItem _item(String id, {String by = 'sp', bool pinned = false,
         WallCollection? collection, DateTime? at}) =>
@@ -41,6 +46,54 @@ Future<void> _settle(ProviderContainer c) async {
   c.listen(wallReactionsProvider, (_, _) {});
   await c.read(wallItemsProvider.future);
   await c.read(wallReactionsProvider.future);
+}
+
+/// Records which couples were opened; serves fixed items.
+class _FakeRepo extends Fake implements WallRepository {
+  _FakeRepo({this.items = const []});
+
+  final List<WallItem> items;
+  final itemCalls = <String>[];
+
+  @override
+  Stream<List<WallItem>> watchItems(String coupleId) {
+    itemCalls.add(coupleId);
+    return Stream.value(items);
+  }
+
+  @override
+  Stream<List<WallReaction>> watchReactions(String coupleId) =>
+      Stream.value(const <WallReaction>[]);
+
+  @override
+  Stream<List<WallComment>> watchComments(String coupleId) =>
+      Stream.value(const <WallComment>[]);
+}
+
+/// Container that lets the real couple-gating in wall_providers run.
+ProviderContainer _coupleContainer({
+  required Stream<Couple?> couple,
+  required _FakeRepo repo,
+}) {
+  final c = ProviderContainer(overrides: [
+    wallSelfIdProvider.overrideWithValue('me'),
+    currentCoupleProvider.overrideWith((ref) => couple),
+    wallRepositoryProvider.overrideWithValue(repo),
+    spouseProfileProvider.overrideWith((ref) async => null),
+    secureStoreProvider.overrideWithValue(InMemorySecureStore()),
+  ]);
+  addTearDown(c.dispose);
+  return c;
+}
+
+/// Container for one account on a device whose secure store may be shared.
+ProviderContainer _accountContainer(String userId, SecureStore store) {
+  final c = ProviderContainer(overrides: [
+    wallSelfIdProvider.overrideWithValue(userId),
+    secureStoreProvider.overrideWithValue(store),
+  ]);
+  addTearDown(c.dispose);
+  return c;
 }
 
 void main() {
@@ -98,5 +151,62 @@ void main() {
     await c.read(wallLastVisitProvider.notifier).markNow();
     expect(c.read(unseenWallItemIdsProvider), isEmpty);
     expect(await store.read('wall.last_visit.me'), isNotNull);
+  });
+
+  test('items stay loading while the couple is still loading', () async {
+    final couple = StreamController<Couple?>();
+    addTearDown(couple.close);
+    final repo = _FakeRepo();
+    final c = _coupleContainer(couple: couple.stream, repo: repo);
+    c.listen(wallItemsProvider, (_, _) {});
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(wallItemsProvider).isLoading, isTrue);
+    expect(repo.itemCalls, isEmpty, reason: 'no feed opened before the couple resolves');
+  });
+
+  test('items are empty, not loading, when there is no couple', () async {
+    final repo = _FakeRepo();
+    final c = _coupleContainer(couple: Stream<Couple?>.value(null), repo: repo);
+    c.listen(wallItemsProvider, (_, _) {});
+    expect(await c.read(wallItemsProvider.future), isEmpty);
+    expect(repo.itemCalls, isEmpty);
+  });
+
+  test('opens the couple feed once paired', () async {
+    final repo = _FakeRepo(items: [_item('p')]);
+    final couple = Stream<Couple?>.value(const Couple(
+      id: 'c1',
+      memberA: 'me',
+      memberB: 'sp',
+      status: 'active',
+      longDistance: false,
+    ));
+    final c = _coupleContainer(couple: couple, repo: repo);
+    c.listen(wallItemsProvider, (_, _) {});
+    expect((await c.read(wallItemsProvider.future)).map((i) => i.id), ['p']);
+    expect(repo.itemCalls, ['c1']);
+  });
+
+  test('disposing the container closes the preview service client', () async {
+    // A closed http.Client throws; fetch() swallows that and returns null.
+    // The URL is under .invalid so no real request can succeed either way.
+    final c = ProviderContainer();
+    final service = c.read(linkPreviewServiceProvider);
+    c.dispose();
+    expect(await service.fetch('https://lovinity-test.invalid/'), isNull);
+  });
+
+  test('last visit is per account on a shared device', () async {
+    final store = InMemorySecureStore();
+    final mine = _accountContainer('me', store);
+    final theirs = _accountContainer('other', store);
+    mine.listen(wallLastVisitProvider, (_, _) {});
+    await mine.read(wallLastVisitProvider.future);
+    await mine.read(wallLastVisitProvider.notifier).markNow();
+
+    expect(await store.read('wall.last_visit.me'), isNotNull);
+    expect(await store.read('wall.last_visit.other'), isNull);
+    theirs.listen(wallLastVisitProvider, (_, _) {});
+    expect(await theirs.read(wallLastVisitProvider.future), isNull);
   });
 }
