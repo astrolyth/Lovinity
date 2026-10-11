@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home-screen widget layout.
+
+  RemoteViews supports only a fixed subset of views and attributes — no custom
+  views, no ConstraintLayout, no data binding. LinearLayout with TextViews is
+  deliberate rather than lazy.
+
+  Every TextView is populated from the snapshot in LovinityWidgetProvider, so
+  none carry placeholder text: a hardcoded default would flash on screen before
+  the first bind and read as real data.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/lovinity_widget_background">
+
+    <TextView
+        android:id="@+id/widget_prayer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/widget_counts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@android:color/white" />
+
+    <!--
+      Day attribution. Empty for same-zone couples, so the widget only pays for
+      the extra line when there is a real discrepancy to explain.
+    -->
+    <TextView
+        android:id="@+id/widget_days"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:alpha="0.75"
+        android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/widget_verse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textSize="12sp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:alpha="0.9"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

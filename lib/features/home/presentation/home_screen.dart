@@ -32,6 +32,7 @@ import '../../planning/presentation/planning_card.dart';
 import '../../prayer_log/domain/prayer_log_providers.dart';
 import '../../prayer_log/presentation/prayer_log_card.dart';
 import '../../scoring/presentation/scoreboard_card.dart';
+import '../../widget/domain/widget_providers.dart';
 import '../domain/home_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -59,6 +60,11 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(learningNotificationPumpProvider);
     ref.watch(loveMapNotificationPumpProvider);
     ref.watch(dateNotificationPumpProvider);
+
+    // Keeps the OS home-screen widget in step. Mounted here for the same reason
+    // as the pumps: it must track the whole authed session, not just whichever
+    // screen happens to be open.
+    ref.watch(widgetPublisherProvider);
 
     // Publishes this device's IANA zone to `users.timezone` when it changes,
     // so the spouse's device can anchor this user's prayer day (and dual

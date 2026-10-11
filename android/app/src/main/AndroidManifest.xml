@@ -42,6 +42,25 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Home-screen widget: next prayer, both spouses' check-ins, verse.
+
+             `exported="true"` is required, not optional: the launcher is a
+             different process and must be able to deliver APPWIDGET_UPDATE
+             here. The receiver reads only the snapshot the app has already
+             written and performs no privileged action, so there is nothing for
+             another app to gain by broadcasting to it. -->
+        <receiver
+            android:name=".LovinityWidgetProvider"
+            android:label="@string/lovinity_widget_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lovinity_widget_info" />
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
