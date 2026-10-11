@@ -128,6 +128,9 @@ class WallLastVisit extends AsyncNotifier<DateTime?> {
   }
 
   Future<void> markNow() async {
+    // The Wall defers this out of dispose(); if the whole scope went away in
+    // the meantime (sign-out, app teardown) there is nothing left to mark.
+    if (!ref.mounted) return;
     final userId = ref.read(wallSelfIdProvider);
     if (userId == null) return;
     final now = DateTime.now();

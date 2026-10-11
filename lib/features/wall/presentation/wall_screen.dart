@@ -25,6 +25,14 @@ class WallScreen extends ConsumerStatefulWidget {
 class _WallScreenState extends ConsumerState<WallScreen> {
   late final WallLastVisit _lastVisit;
 
+  /// Ids whose entrance animation has already been scheduled. Plain
+  /// bookkeeping read by [_AnimateOnce] at mount time, so no setState.
+  final Set<String> _animatedIds = {};
+
+  /// The first batch of items shown keeps a staggered entrance; anything that
+  /// arrives later animates immediately.
+  List<String>? _initialBatch;
+
   @override
   void initState() {
     super.initState();
@@ -34,8 +42,11 @@ class _WallScreenState extends ConsumerState<WallScreen> {
 
   @override
   void dispose() {
-    // Leaving the Wall marks everything up to now as seen.
-    unawaited(_lastVisit.markNow());
+    // Leaving the Wall marks everything up to now as seen. Riverpod forbids
+    // writing provider state while the tree is being torn down, so defer the
+    // write to a microtask (the notifier outlives this widget).
+    final lastVisit = _lastVisit;
+    scheduleMicrotask(() => unawaited(lastVisit.markNow()));
     super.dispose();
   }
 
@@ -56,6 +67,12 @@ class _WallScreenState extends ConsumerState<WallScreen> {
     final unseen = ref.watch(unseenWallItemIdsProvider);
     final ownName = ref.watch(ownProfileProvider).asData?.value?.displayName ?? 'You';
     final spouseName = ref.watch(wallSpouseNameProvider) ?? 'Your partner';
+
+    final shown = itemsAsync.asData?.value;
+    if (_initialBatch == null && shown != null && shown.isNotEmpty) {
+      _initialBatch = [for (final e in shown.take(6)) e.id];
+    }
+    final initialBatch = _initialBatch ?? const <String>[];
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -190,13 +207,23 @@ class _WallScreenState extends ConsumerState<WallScreen> {
                         sliver: SliverList.separated(
                           itemCount: items.length,
                           separatorBuilder: (_, _) => const SizedBox(height: LovSpace.md),
+                          // Keyed cards keep their elements when indices
+                          // shift (item indices; separators are handled by
+                          // SliverList.separated).
+                          findItemIndexCallback: (key) {
+                            if (key is! ValueKey<String>) return null;
+                            final i = items.indexWhere((e) => e.id == key.value);
+                            return i < 0 ? null : i;
+                          },
                           itemBuilder: (context, i) {
                             final item = items[i];
-                            // Keyed by id so an item arriving live at the top
-                            // gets a fresh entrance animation.
-                            return LovEnter(
+                            final stagger = initialBatch.indexOf(item.id);
+                            return _AnimateOnce(
                               key: ValueKey(item.id),
-                              delay: Duration(milliseconds: i < 6 ? 60 * i : 0),
+                              id: item.id,
+                              animatedIds: _animatedIds,
+                              delay: Duration(
+                                  milliseconds: stagger < 0 ? 0 : 60 * stagger),
                               child: _ConnectedCard(
                                 item: item,
                                 sharerName: nameFor(item.addedBy),
@@ -214,6 +241,36 @@ class _WallScreenState extends ConsumerState<WallScreen> {
       ),
     );
   }
+}
+
+/// Plays the entrance animation the first time [id] is ever built, then never
+/// again: a card that is recreated (scrolled off and back, or re-mounted) is
+/// shown as-is. The decision is made once, in initState, so rebuilds of a
+/// mounted card never swap its widget type.
+class _AnimateOnce extends StatefulWidget {
+  const _AnimateOnce({
+    super.key,
+    required this.id,
+    required this.animatedIds,
+    required this.delay,
+    required this.child,
+  });
+
+  final String id;
+  final Set<String> animatedIds;
+  final Duration delay;
+  final Widget child;
+
+  @override
+  State<_AnimateOnce> createState() => _AnimateOnceState();
+}
+
+class _AnimateOnceState extends State<_AnimateOnce> {
+  late final bool _animate = widget.animatedIds.add(widget.id);
+
+  @override
+  Widget build(BuildContext context) =>
+      _animate ? LovEnter(delay: widget.delay, child: widget.child) : widget.child;
 }
 
 class _ConnectedCard extends ConsumerWidget {
