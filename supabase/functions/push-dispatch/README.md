@@ -73,7 +73,7 @@ comments for the graceful-degradation rationale.
 ## Behavior
 
 - `POST /` with header `Authorization: Bearer <PUSH_DISPATCH_SECRET>` and body
-  `{ "user_id": "<uuid>", "type": "chat" | "pairing", "title": "<text>", "body": "<text>" }`.
+  `{ "user_id": "<uuid>", "type": "chat" | "pairing" | "wall", "title": "<text>", "body": "<text>" }`.
 - 401 if the bearer secret is missing or wrong.
 - 400 if the body doesn't match the shape above.
 - Loads all `device_push_tokens` rows for `user_id` using the service-role
