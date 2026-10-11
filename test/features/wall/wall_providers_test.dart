@@ -111,6 +111,19 @@ void main() {
     expect(c.read(filteredWallItemsProvider).value!, hasLength(3));
   });
 
+  test('the filter resets once nothing watches the Wall list any more', () async {
+    final c = _container(items: [_item('a', collection: WallCollection.recipes)]);
+    await _settle(c);
+    final sub = c.listen(filteredWallItemsProvider, (_, _) {});
+    c.read(wallFilterProvider.notifier).select(WallCollection.recipes);
+    expect(c.read(wallFilterProvider), WallCollection.recipes);
+
+    sub.close(); // the Wall screen went away
+    await Future<void>.delayed(Duration.zero);
+    expect(c.exists(wallFilterProvider), isFalse);
+    expect(c.read(wallFilterProvider), isNull);
+  });
+
   test('pinned items and single-item lookup', () async {
     final c = _container(items: [_item('a', pinned: true), _item('b')]);
     await _settle(c);
@@ -170,6 +183,50 @@ void main() {
     c.listen(wallItemsProvider, (_, _) {});
     expect(await c.read(wallItemsProvider.future), isEmpty);
     expect(repo.itemCalls, isEmpty);
+  });
+
+  test('items error, not empty, when the couple fails to load', () async {
+    final repo = _FakeRepo();
+    final c = ProviderContainer(
+      retry: (_, _) => null,
+      overrides: [
+        wallSelfIdProvider.overrideWithValue('me'),
+        currentCoupleProvider
+            .overrideWith((ref) => Stream<Couple?>.error(Exception('offline'))),
+        wallRepositoryProvider.overrideWithValue(repo),
+      ],
+    );
+    addTearDown(c.dispose);
+    c.listen(wallItemsProvider, (_, _) {});
+    await expectLater(c.read(wallItemsProvider.future), throwsA(isA<Exception>()));
+    expect(c.read(wallItemsProvider).hasError, isTrue);
+    expect(repo.itemCalls, isEmpty);
+  });
+
+  test('keeps the last couple feed when the couple stream errors later', () async {
+    final couple = StreamController<Couple?>();
+    addTearDown(couple.close);
+    final repo = _FakeRepo(items: [_item('p')]);
+    final c = ProviderContainer(
+      retry: (_, _) => null,
+      overrides: [
+        wallSelfIdProvider.overrideWithValue('me'),
+        currentCoupleProvider.overrideWith((ref) => couple.stream),
+        wallRepositoryProvider.overrideWithValue(repo),
+      ],
+    );
+    addTearDown(c.dispose);
+    c.listen(wallItemsProvider, (_, _) {});
+    couple.add(const Couple(
+        id: 'c1', memberA: 'me', memberB: 'sp', status: 'active', longDistance: false));
+    expect((await c.read(wallItemsProvider.future)).map((i) => i.id), ['p']);
+
+    couple.addError(Exception('blip'));
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(currentCoupleProvider).hasError, isTrue);
+    // The feed reopens for the last known couple instead of going empty.
+    expect((await c.read(wallItemsProvider.future)).map((i) => i.id), ['p']);
+    expect(repo.itemCalls, ['c1', 'c1']);
   });
 
   test('opens the couple feed once paired', () async {

@@ -36,12 +36,17 @@ final wallNameForProvider = Provider<String Function(String userId)>((ref) {
   return (userId) => userId == self ? 'You' : (spouse ?? 'Your partner');
 });
 
-/// Opens [open] for the current couple. Stays loading while the couple is
-/// loading (no empty-state flash); empty when there is no couple.
+/// Opens [open] for the current couple (the last known one while the couple
+/// stream reloads or errors). Stays loading while the couple is loading (no
+/// empty-state flash); errors when the couple failed to load at all (not
+/// "Share your first find"); empty when there is no couple.
 Stream<T> _forCouple<T>(Ref ref, T empty, Stream<T> Function(String coupleId) open) {
   final coupleAsync = ref.watch(currentCoupleProvider);
-  final couple = coupleAsync.asData?.value;
+  final couple = coupleAsync.value;
   if (couple == null) {
+    if (coupleAsync.hasError && !coupleAsync.hasValue) {
+      return Stream<T>.error(coupleAsync.error!, coupleAsync.stackTrace);
+    }
     return coupleAsync.isLoading ? Stream<T>.empty() : Stream<T>.value(empty);
   }
   return open(couple.id);
@@ -68,10 +73,14 @@ class WallFilter extends Notifier<WallCollection?> {
   void select(WallCollection? collection) => state = collection;
 }
 
+/// The Wall's collection filter. Auto-disposed (with the filtered list that
+/// keeps it alive) once the Wall is gone, so it resets on leaving the Wall
+/// and never carries over to another account.
 final wallFilterProvider =
-    NotifierProvider<WallFilter, WallCollection?>(WallFilter.new);
+    NotifierProvider.autoDispose<WallFilter, WallCollection?>(WallFilter.new);
 
-final filteredWallItemsProvider = Provider<AsyncValue<List<WallItem>>>((ref) {
+final filteredWallItemsProvider =
+    Provider.autoDispose<AsyncValue<List<WallItem>>>((ref) {
   final filter = ref.watch(wallFilterProvider);
   return ref.watch(wallItemsProvider).whenData((items) => filter == null
       ? items
