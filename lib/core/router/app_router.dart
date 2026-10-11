@@ -23,6 +23,7 @@ import '../../features/pairing/presentation/pair_screen.dart';
 import '../../features/prayer_log/presentation/prayer_log_screen.dart';
 import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/wall/presentation/wall_screen.dart';
 import '../motion/motion.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
@@ -177,6 +178,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'chat',
             builder: (_, _) => const ChatScreen(),
+          ),
+          GoRoute(
+            path: 'wall',
+            builder: (_, _) => const WallScreen(),
           ),
         ],
       ),
