@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/motion/motion.dart';
+import 'package:lovinity/core/platform/share_intake.dart';
 import 'package:lovinity/core/theme/theme.dart';
 import 'package:lovinity/features/auth/domain/auth_controller.dart';
 import 'package:lovinity/features/home/domain/home_providers.dart';
@@ -178,5 +179,30 @@ void main() {
     expect(calls, 2);
     expect(find.text("Couldn't load the Wall"), findsNothing);
     expect(find.text('Share your first find'), findsOneWidget);
+  });
+
+  testWidgets('a pending share opens the sheet pre-filled; a second one queues',
+      (tester) async {
+    await pumpWall(tester, Stream.value(const <WallItem>[]));
+    await tester.pumpAndSettle();
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(WallScreen)));
+
+    container.read(pendingShareProvider.notifier)
+        .set(const SharedPayload(text: 'look https://youtu.be/first'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AddToWallSheet), findsOneWidget);
+    expect(find.text('https://youtu.be/first'), findsOneWidget);
+
+    container.read(pendingShareProvider.notifier)
+        .set(const SharedPayload(text: 'https://youtu.be/second'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AddToWallSheet), findsOneWidget, reason: 'no stacked sheets');
+
+    Navigator.of(tester.element(find.byType(AddToWallSheet))).pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(AddToWallSheet), findsOneWidget, reason: 'queued share opens next');
+    expect(find.text('https://youtu.be/second'), findsOneWidget);
+    expect(container.read(pendingShareProvider), isNull);
   });
 }

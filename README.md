@@ -353,6 +353,20 @@ supabase functions deploy push-dispatch
 
 ---
 
+## Our Wall (shared feed)
+
+A private two-person feed for links and notes (`lib/features/wall/`). Items, reactions and comments live in `feed_items` / `feed_reactions` / `feed_comments`, protected by RLS: both spouses can read, pin and file items, but only the author can delete. **The Wall is not end-to-end encrypted** (unlike chat) — it follows the same server-readable, RLS-protected model as prayer logs. Link previews are fetched on the phone, never by our server.
+
+**Android Share menu:** Lovinity appears as a share target for links and text. Sharing opens the "Add to our Wall" sheet pre-filled (signed-in, paired accounts only). Test it without other apps:
+
+```bash
+adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "https://youtu.be/dQw4w9WgXcQ" -n com.lovinity.lovinity/.MainActivity
+```
+
+iPhone share-sheet support is not built yet (it needs a Share Extension target and an App Group in Xcode).
+
+New Wall pushes use the `wall` type — redeploy `push-dispatch` once (see *Redeploying after updates* above).
+
 ## Project layout
 
 ```

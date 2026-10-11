@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/motion/motion.dart';
+import '../../../core/platform/share_intake.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../home/domain/home_providers.dart';
+import '../domain/link_detect.dart';
 import '../domain/wall_models.dart';
 import '../domain/wall_providers.dart';
 import 'add_to_wall_sheet.dart';
@@ -33,11 +35,16 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   /// arrives later animates immediately.
   List<String>? _initialBatch;
 
+  /// True while the add sheet is up, so a share that arrives meanwhile
+  /// queues instead of stacking a second sheet.
+  bool _sheetOpen = false;
+
   @override
   void initState() {
     super.initState();
     // Captured now: `ref` must not be used in dispose().
     _lastVisit = ref.read(wallLastVisitProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingShare());
   }
 
   @override
@@ -50,13 +57,30 @@ class _WallScreenState extends ConsumerState<WallScreen> {
     super.dispose();
   }
 
-  Future<void> _openSheet({String? initialUrl, String? initialNote}) =>
-      showAddToWallSheet(context, initialUrl: initialUrl, initialNote: initialNote);
+  Future<void> _openSheet({String? initialUrl, String? initialNote}) async {
+    _sheetOpen = true;
+    await showAddToWallSheet(context, initialUrl: initialUrl, initialNote: initialNote);
+    _sheetOpen = false;
+    // A share that arrived while the sheet was open opens now.
+    if (mounted) _consumePendingShare();
+  }
+
+  void _consumePendingShare() {
+    if (!mounted || _sheetOpen) return;
+    final share = ref.read(pendingShareProvider);
+    if (share == null) return;
+    ref.read(pendingShareProvider.notifier).clear();
+    final parsed = parseSharedText(share.text);
+    _openSheet(initialUrl: parsed.url, initialNote: parsed.note);
+  }
 
   void _openItem(WallItem item) => context.push('/home/wall/${item.id}');
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(pendingShareProvider, (_, next) {
+      if (next != null) _consumePendingShare();
+    });
     final theme = Theme.of(context);
     final itemsAsync = ref.watch(filteredWallItemsProvider);
     final hasAnyItems = ref.watch(wallItemsProvider).asData?.value.isNotEmpty ?? false;

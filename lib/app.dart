@@ -7,8 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/notifications/notification_providers.dart';
 import 'core/notifications/push_service.dart';
+import 'core/platform/share_intake.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/theme.dart';
+import 'features/wall/domain/wall_share_routing.dart';
 
 /// Handles a push notification the OS delivers while the app is backgrounded
 /// or terminated. Content-free by design (see push_service.dart) -- the OS
@@ -58,6 +60,7 @@ class LovinityApp extends ConsumerStatefulWidget {
 
 class _LovinityAppState extends ConsumerState<LovinityApp> {
   StreamSubscription<NotificationTap>? _tapSub;
+  StreamSubscription<SharedPayload>? _shareSub;
 
   @override
   void initState() {
@@ -66,6 +69,7 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
     // failure here (including no native Firebase config at all -- the
     // default state for this repo) must never crash boot.
     unawaited(_initPush());
+    unawaited(_initShareIntake());
   }
 
   Future<void> _initPush() async {
@@ -128,9 +132,35 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
     }
   }
 
+  Future<void> _initShareIntake() async {
+    try {
+      final intake = ref.read(shareIntakeProvider);
+      _shareSub = intake.shares.listen((p) => unawaited(_routeShare(p)));
+      final initial = await intake.takeInitialShare();
+      if (initial != null) unawaited(_routeShare(initial));
+    } catch (e, st) {
+      developer.log('Share intake setup failed',
+          name: 'LovinityApp', error: e, stackTrace: st);
+    }
+  }
+
+  Future<void> _routeShare(SharedPayload payload) async {
+    try {
+      final accepted = await ref.read(acceptShareProvider)(payload);
+      if (!accepted || !mounted) return;
+      await WidgetsBinding.instance.endOfFrame; // router attached
+      if (!mounted) return;
+      ref.read(appRouterProvider).go('/home/wall');
+    } catch (e, st) {
+      developer.log('Failed to route a shared link',
+          name: 'LovinityApp', error: e, stackTrace: st);
+    }
+  }
+
   @override
   void dispose() {
     unawaited(_tapSub?.cancel());
+    unawaited(_shareSub?.cancel());
     super.dispose();
   }
 
