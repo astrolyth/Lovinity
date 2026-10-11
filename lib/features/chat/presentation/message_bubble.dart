@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/tokens.dart';
 import '../data/chat_store.dart';
+import 'photo_viewer_screen.dart';
+import 'video_viewer_screen.dart';
 
 /// One chat bubble: aligns right for the current user, left for the spouse.
 ///
@@ -14,12 +16,14 @@ class MessageBubble extends StatelessWidget {
     required this.isOwn,
     required this.onReact,
     required this.onReply,
+    required this.onDownloadAttachment,
   });
 
   final ChatMessageRow message;
   final bool isOwn;
   final ValueChanged<String> onReact;
   final VoidCallback onReply;
+  final ValueChanged<String> onDownloadAttachment;
 
   static const _reactionEmojis = ['❤️', '👍', '😊'];
 
@@ -74,10 +78,24 @@ class MessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
-              Text(
-                message.body ?? '',
-                style: theme.textTheme.bodyMedium?.copyWith(color: fg),
-              ),
+              if (message.attachmentKind != null)
+                _AttachmentContent(
+                  message: message,
+                  onDownloadAttachment: onDownloadAttachment,
+                ),
+              if (message.attachmentKind == null)
+                Text(
+                  message.body ?? '',
+                  style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+                )
+              else if (message.body != null && message.body!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: LovSpace.xs),
+                  child: Text(
+                    message.body!,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+                  ),
+                ),
               if (isOwn) ...[
                 const SizedBox(height: LovSpace.xxs),
                 Align(
@@ -164,5 +182,84 @@ class _Receipt extends StatelessWidget {
       return ('✓✓', baseColor.withValues(alpha: 0.7));
     }
     return ('✓', baseColor.withValues(alpha: 0.7));
+  }
+}
+
+/// Renders one attachment message's media area: the embedded thumbnail is
+/// always shown (no network needed); tap behavior depends on downloadStatus:
+/// 'none'/'failed' triggers [onDownloadAttachment], 'downloading' is inert,
+/// 'downloaded' opens a full-screen viewer.
+class _AttachmentContent extends StatelessWidget {
+  const _AttachmentContent({
+    required this.message,
+    required this.onDownloadAttachment,
+  });
+
+  final ChatMessageRow message;
+  final ValueChanged<String> onDownloadAttachment;
+
+  static const _size = 220.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final isVideo = message.attachmentKind == 'video';
+    final thumb = message.thumbnailBytes;
+    final status = message.downloadStatus;
+
+    return GestureDetector(
+      onTap: () => _handleTap(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(LovRadius.md),
+        child: SizedBox(
+          width: _size,
+          height: _size,
+          child: Stack(
+            fit: StackFit.expand,
+            alignment: Alignment.center,
+            children: [
+              if (thumb != null)
+                Image.memory(
+                  thumb,
+                  fit: BoxFit.cover,
+                  // Decrypted/synced thumbnail bytes could in principle be
+                  // corrupt; fail soft with a placeholder rather than
+                  // surfacing a framework error overlay.
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint(
+                        'MessageBubble: failed to decode thumbnail: $error');
+                    return Container(color: Colors.black12);
+                  },
+                )
+              else
+                Container(color: Colors.black12),
+              if (isVideo && status != 'downloading')
+                const Icon(Icons.play_circle_fill, size: 48, color: Colors.white),
+              if (status == 'downloading') const CircularProgressIndicator(),
+              if (status == 'failed')
+                const Icon(Icons.error_outline, color: LovColors.error, size: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleTap(BuildContext context) {
+    if (message.downloadStatus == 'downloading') return;
+    if (message.downloadStatus == 'downloaded' && message.localMediaPath != null) {
+      _openViewer(context, message.localMediaPath!);
+      return;
+    }
+    onDownloadAttachment(message.id);
+  }
+
+  void _openViewer(BuildContext context, String path) {
+    if (message.attachmentKind == 'video') {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => VideoViewerScreen(filePath: path)));
+    } else {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => PhotoViewerScreen(filePath: path)));
+    }
   }
 }

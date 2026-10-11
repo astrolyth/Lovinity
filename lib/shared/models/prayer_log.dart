@@ -31,6 +31,12 @@ class PrayerLogEntry {
   final PrayerStatus status;
   final DateTime timeLogged;
 
+  /// `date` as a stable `YYYY-MM-DD` string -- handy as (part of) a
+  /// dedupe/detector key, so the same prayer logged on two different days
+  /// doesn't collide on one key.
+  String get dateKey =>
+      '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
   factory PrayerLogEntry.fromRow(Map<String, dynamic> row) {
     return PrayerLogEntry(
       userId: row['user_id'] as String,

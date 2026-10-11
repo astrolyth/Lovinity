@@ -8,18 +8,27 @@ import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_screen.dart';
+import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/care/presentation/care_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/cycle/presentation/cycle_screen.dart';
+import '../../features/dates/presentation/dates_screen.dart';
+import '../../features/learning/presentation/lesson_screen.dart';
+import '../../features/lovemap/presentation/lovemap_screen.dart';
 import '../../features/daily/presentation/question_screen.dart';
 import '../../features/daily/presentation/verse_reader.dart';
 import '../../features/duas/presentation/dua_list_screen.dart';
 import '../../features/gratitude/presentation/gratitude_screen.dart';
 import '../../features/home/domain/home_providers.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/letters/presentation/letters_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pairing/domain/pairing_providers.dart';
 import '../../features/pairing/presentation/pair_screen.dart';
+import '../../features/planning/presentation/grocery_list_screen.dart';
+import '../../features/planning/presentation/recipe_list_screen.dart';
+import '../../features/planning/presentation/week_plan_screen.dart';
 import '../../features/prayer_log/presentation/prayer_log_screen.dart';
 import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -161,6 +170,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const CycleScreen(),
           ),
           GoRoute(
+            path: 'calendar',
+            builder: (_, _) => const CalendarScreen(),
+          ),
+          GoRoute(
+            path: 'plan',
+            builder: (_, _) => const WeekPlanScreen(),
+          ),
+          GoRoute(
+            path: 'groceries',
+            builder: (_, _) => const GroceryListScreen(),
+          ),
+          GoRoute(
+            path: 'recipes',
+            builder: (_, _) => const RecipeListScreen(),
+          ),
+          GoRoute(
+            path: 'letters',
+            builder: (_, _) => const LettersScreen(),
+          ),
+          GoRoute(
+            path: 'learn',
+            builder: (_, _) => const LessonListScreen(),
+          ),
+          GoRoute(
+            path: 'lovemap',
+            builder: (_, _) => const LoveMapScreen(),
+          ),
+          GoRoute(
+            path: 'dates',
+            builder: (_, _) => const DatesScreen(),
+          ),
+          GoRoute(
             path: 'care',
             builder: (_, _) => const CareScreen(),
           ),
@@ -177,6 +218,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'chat',
             builder: (_, _) => const ChatScreen(),
+          ),
+          GoRoute(
+            path: 'notifications',
+            builder: (_, _) => const NotificationsScreen(),
           ),
         ],
       ),

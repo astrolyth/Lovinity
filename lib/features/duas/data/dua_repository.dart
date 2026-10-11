@@ -30,7 +30,12 @@ class Dua {
         authorId: row['author_id'] as String,
         title: row['title'] as String,
         body: row['body'] as String?,
-        visibility: (row['visibility'] as String?) ?? 'shared',
+        // Privacy field: fail closed. The column is `not null` with a
+        // 'shared' default at the DB level, so a real row always carries an
+        // explicit value -- this only kicks in for an anomalous payload
+        // (missing/null field), and a missing value must never be treated
+        // as permission to show the row to a partner.
+        visibility: (row['visibility'] as String?) ?? 'private',
         isAnswered: row['is_answered'] as bool? ?? false,
         createdAt: DateTime.parse(row['created_at'] as String),
         answeredAt: row['answered_at'] == null
@@ -72,20 +77,26 @@ class DuaRepository {
     });
   }
 
+  // Routed through the `set_dua_answered` RPC (security definer) rather than
+  // a direct `.update()`: RLS restricts direct writes on `duas` to the
+  // author, so a partner marking a *shared* dua as answered would silently
+  // no-op otherwise. The RPC re-opens exactly that one path -- only the
+  // answered-related columns, only for a couple member, and only when the
+  // dua is the caller's own or shared -- a partner still cannot touch a
+  // private dua through it.
   Future<void> setAnswered(String id, {String? note}) async {
-    await _client.from('duas').update({
-      'is_answered': true,
-      'answered_at': DateTime.now().toUtc().toIso8601String(),
-      if (note != null && note.isNotEmpty) 'answered_note': note,
-    }).eq('id', id);
+    await _client.rpc('set_dua_answered', params: {
+      'p_dua_id': id,
+      'p_answered': true,
+      if (note != null && note.isNotEmpty) 'p_note': note,
+    });
   }
 
   Future<void> setUnanswered(String id) async {
-    await _client.from('duas').update({
-      'is_answered': false,
-      'answered_at': null,
-      'answered_note': null,
-    }).eq('id', id);
+    await _client.rpc('set_dua_answered', params: {
+      'p_dua_id': id,
+      'p_answered': false,
+    });
   }
 
   Future<void> delete(String id) async {

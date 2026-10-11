@@ -6,8 +6,30 @@ import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/crypto/signal_keys.dart';
 import 'package:lovinity/core/crypto/signal_registration.dart';
 import 'package:lovinity/core/crypto/stores/drift_signal_store.dart';
+import 'package:lovinity/core/storage/media_cache.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
 import 'package:lovinity/features/chat/data/chat_store.dart';
+
+/// No-op MediaCache that records whether [clear] ran, so the account-switch
+/// tests can prove the decrypted-media wipe is actually wired up. Mirrors
+/// `_FakeMediaCache` in test/features/chat/chat_service_test.dart (test files
+/// can't import each other's private classes, so it's redefined here).
+class _FakeMediaCache implements MediaCache {
+  final Map<String, Uint8List> written = {};
+  bool cleared = false;
+
+  @override
+  Future<String> write(String key, Uint8List bytes) async {
+    written[key] = bytes;
+    return 'fake-cache/$key';
+  }
+
+  @override
+  Future<void> clear() async {
+    cleared = true;
+    written.clear();
+  }
+}
 
 class _FakeRegistrar implements DeviceRegistrar {
   int? registeredDeviceNum;
@@ -259,20 +281,29 @@ void main() {
     final db = SignalDb.memory();
     final vault = KeyVault(InMemorySecureStore());
     final store = ChatStore(db);
-    // Account A owns the device and has chat history.
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-A');
+    final cache = _FakeMediaCache();
+    // Account A owns the device, has chat history, and has decrypted media
+    // sitting in the local attachment cache.
+    await guardAccountSwitch(
+        db: db, vault: vault, cache: cache, selfUserId: 'user-A');
     await store.upsertMessage(id: 'old', senderId: 'A-spouse', body: 'secret',
         createdAt: DateTime(2026), status: 'delivered');
     await vault.savePrivate(
         generateBundle(deviceId: 'd', oneTimePrekeyCount: 1).private);
+    await cache.write('old', Uint8List.fromList([1, 2, 3]));
 
     // A DIFFERENT user signs in on the same device.
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-B');
+    await guardAccountSwitch(
+        db: db, vault: vault, cache: cache, selfUserId: 'user-B');
 
     expect(await store.watchConversation().first, isEmpty,
         reason: 'a different account must not see the previous user\'s chat');
     expect(await vault.hasIdentity(), isFalse,
         reason: 'the previous identity must be wiped too');
+    expect(cache.cleared, isTrue,
+        reason: 'the previous user\'s DECRYPTED photos/videos must be deleted '
+            'too, not left readable on a shared device');
+    expect(cache.written, isEmpty);
     expect(await db.readOwnerUserId(), 'user-B');
   });
 
@@ -281,19 +312,26 @@ void main() {
     final db = SignalDb.memory();
     final vault = KeyVault(InMemorySecureStore());
     final store = ChatStore(db);
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-A');
+    final cache = _FakeMediaCache();
+    await guardAccountSwitch(
+        db: db, vault: vault, cache: cache, selfUserId: 'user-A');
     await store.upsertMessage(id: 'mine', senderId: 'A-spouse', body: 'hi',
         createdAt: DateTime(2026), status: 'delivered');
     await vault.savePrivate(
         generateBundle(deviceId: 'd', oneTimePrekeyCount: 1).private);
+    await cache.write('mine', Uint8List.fromList([1, 2, 3]));
 
     // Same user signs out and back in — sign-out no longer wipes anything.
-    await guardAccountSwitch(db: db, vault: vault, selfUserId: 'user-A');
+    await guardAccountSwitch(
+        db: db, vault: vault, cache: cache, selfUserId: 'user-A');
 
     expect((await store.watchConversation().first).length, 1,
         reason: 'the same user keeps their chat history across re-login');
     expect(await vault.hasIdentity(), isTrue,
         reason: 'the same user keeps their identity/device');
+    expect(cache.cleared, isFalse,
+        reason: 'the same user keeps their own cached media');
+    expect(cache.written, isNotEmpty);
   });
 }
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
 import 'package:lovinity/features/chat/data/chat_store.dart';
@@ -73,5 +75,77 @@ void main() {
     await store.markIncomingRead(me);
     expect(await store.watchUnreadCount(me).first, 0);
     expect(await store.incomingUnreadIds(me), isEmpty);
+  });
+
+  test('upsertAttachmentMessage stores every attachment field, retrievable via messageById',
+      () async {
+    await store.upsertAttachmentMessage(
+      id: 'a1',
+      senderId: 'me',
+      attachmentKind: 'photo',
+      mimeType: 'image/jpeg',
+      sizeBytes: 1234,
+      width: 800,
+      height: 600,
+      storageKey: 'couple-1/a1',
+      encKey: Uint8List.fromList(List.filled(32, 7)),
+      nonce: Uint8List.fromList(List.filled(12, 3)),
+      thumbnailBytes: Uint8List.fromList([1, 2, 3]),
+      caption: 'nice view',
+      createdAt: DateTime(2026),
+      status: 'sent',
+    );
+
+    final row = await store.messageById('a1');
+    expect(row, isNotNull);
+    expect(row!.attachmentKind, 'photo');
+    expect(row.mimeType, 'image/jpeg');
+    expect(row.sizeBytes, 1234);
+    expect(row.width, 800);
+    expect(row.height, 600);
+    expect(row.durationMs, isNull);
+    expect(row.storageKey, 'couple-1/a1');
+    expect(row.encKey, Uint8List.fromList(List.filled(32, 7)));
+    expect(row.nonce, Uint8List.fromList(List.filled(12, 3)));
+    expect(row.thumbnailBytes, [1, 2, 3]);
+    expect(row.body, 'nice view');
+    expect(row.downloadStatus, 'none');
+  });
+
+  test('messageById returns null for an unknown id', () async {
+    expect(await store.messageById('nope'), isNull);
+  });
+
+  test('updateDownloadStatus sets status and localMediaPath', () async {
+    await store.upsertAttachmentMessage(
+      id: 'a2',
+      senderId: 'me',
+      attachmentKind: 'video',
+      mimeType: 'video/mp4',
+      sizeBytes: 999,
+      durationMs: 5000,
+      storageKey: 'couple-1/a2',
+      encKey: Uint8List.fromList(List.filled(32, 1)),
+      nonce: Uint8List.fromList(List.filled(12, 1)),
+      thumbnailBytes: Uint8List.fromList([9]),
+      createdAt: DateTime(2026),
+      status: 'delivered',
+    );
+
+    await store.updateDownloadStatus(
+        id: 'a2', status: 'downloaded', localMediaPath: '/tmp/a2.mp4');
+
+    final row = await store.messageById('a2');
+    expect(row!.downloadStatus, 'downloaded');
+    expect(row.localMediaPath, '/tmp/a2.mp4');
+  });
+
+  test('a plain text message (no attachment fields) has null attachmentKind/downloadStatus',
+      () async {
+    await store.upsertMessage(id: 't1', senderId: 'a', body: 'hi',
+        createdAt: DateTime(2026), status: 'sent');
+    final row = await store.messageById('t1');
+    expect(row!.attachmentKind, isNull);
+    expect(row.downloadStatus, isNull);
   });
 }

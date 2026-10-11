@@ -76,6 +76,20 @@ class ChatMessages extends Table {
   DateTimeColumn get deliveredAt => dateTime().nullable()();
   DateTimeColumn get readAt => dateTime().nullable()();
   TextColumn get status => text()(); // sending|sent|delivered|read|failed
+  // Attachment fields -- all null for a plain text message. attachmentKind
+  // is 'photo' | 'video' | null.
+  TextColumn get attachmentKind => text().nullable()();
+  TextColumn get mimeType => text().nullable()();
+  IntColumn get sizeBytes => integer().nullable()();
+  IntColumn get width => integer().nullable()();
+  IntColumn get height => integer().nullable()();
+  IntColumn get durationMs => integer().nullable()();
+  TextColumn get storageKey => text().nullable()();
+  BlobColumn get encKey => blob().nullable()();
+  BlobColumn get nonce => blob().nullable()();
+  BlobColumn get thumbnailBytes => blob().nullable()();
+  TextColumn get localMediaPath => text().nullable()();
+  TextColumn get downloadStatus => text().nullable()(); // none|downloading|downloaded|failed
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -89,6 +103,34 @@ class ChatReactions extends Table {
   Set<Column> get primaryKey => {messageId, reactorId, emoji};
 }
 
+/// Persisted local activity feed: pairing, prayer check-ins, shared cycle
+/// updates, daily question answers, shared duas, and revealed gratitude
+/// notes (see docs/superpowers/specs/2026-08-01-notification-inbox-v2-design.md).
+/// Deliberately excludes chat messages/reactions -- those already have their
+/// own unread badge on the chat button. Named `AppNotifications`, not
+/// `Notifications` -- Drift would otherwise generate a row class literally
+/// called `Notification`, colliding with `package:flutter/widgets.dart`'s own
+/// `Notification` class wherever this table and Flutter widgets are imported
+/// together.
+///
+/// Uses `seq` as a monotonic insertion sequence number to provide stable
+/// ordering among notifications created in the same second (Drift's
+/// DateTimeColumn maps to second-precision SQL, not millisecond precision) --
+/// see `NotificationStore.insert`/`watchAll` (Task 2) for how it's used.
+class AppNotifications extends Table {
+  TextColumn get id => text()();
+  TextColumn get kind => text()(); // 'pairing'|'prayer'|'cycle'|'question'|'dua'|'gratitude'
+  TextColumn get title => text()();
+  TextColumn get body => text().nullable()();
+  TextColumn get route => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get readAt => dateTime().nullable()();
+  IntColumn get seq => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(tables: [
   SignalSessions,
   SignalPrekeys,
@@ -98,6 +140,7 @@ class ChatReactions extends Table {
   SignalMeta,
   ChatMessages,
   ChatReactions,
+  AppNotifications,
 ])
 class SignalDb extends _$SignalDb {
   SignalDb() : super(driftDatabase(name: 'lovinity_signal'));
@@ -106,7 +149,7 @@ class SignalDb extends _$SignalDb {
   SignalDb.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -117,6 +160,21 @@ class SignalDb extends _$SignalDb {
             await m.createTable(chatMessages);
             await m.createTable(chatReactions);
           }
+          if (from < 4) {
+            await m.addColumn(chatMessages, chatMessages.attachmentKind);
+            await m.addColumn(chatMessages, chatMessages.mimeType);
+            await m.addColumn(chatMessages, chatMessages.sizeBytes);
+            await m.addColumn(chatMessages, chatMessages.width);
+            await m.addColumn(chatMessages, chatMessages.height);
+            await m.addColumn(chatMessages, chatMessages.durationMs);
+            await m.addColumn(chatMessages, chatMessages.storageKey);
+            await m.addColumn(chatMessages, chatMessages.encKey);
+            await m.addColumn(chatMessages, chatMessages.nonce);
+            await m.addColumn(chatMessages, chatMessages.thumbnailBytes);
+            await m.addColumn(chatMessages, chatMessages.localMediaPath);
+            await m.addColumn(chatMessages, chatMessages.downloadStatus);
+          }
+          if (from < 5) await m.createTable(appNotifications);
         },
       );
 
@@ -129,6 +187,7 @@ class SignalDb extends _$SignalDb {
     await transaction(() async {
       await delete(chatMessages).go();
       await delete(chatReactions).go();
+      await delete(appNotifications).go();
       await delete(signalSessions).go();
       await delete(signalPrekeys).go();
       await delete(signalSignedPrekeys).go();

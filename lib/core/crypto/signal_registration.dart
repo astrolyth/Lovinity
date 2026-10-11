@@ -4,6 +4,7 @@ import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart' as sig;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../storage/media_cache.dart';
 import '../storage/signal_db.dart';
 import 'key_counters.dart';
 import 'key_vault.dart';
@@ -118,20 +119,24 @@ String _hex(Uint8List bytes) {
 ///     the signed prekey and one-time prekeys are regenerated fresh, which
 ///     is normal and safe.
 /// Wipe the device-local data if it belongs to a DIFFERENT user, then record
-/// the current owner. The local DB (chat history + Signal state) is
-/// device-global and survives sign-out, so switching accounts on one device
-/// must clear it — otherwise the new user sees the previous user's messages
-/// and reuses their sessions. The SAME user (or a brand-new device, owner
-/// null) keeps everything. Run this before [ensureRegistered].
+/// the current owner. The local DB (chat history + Signal state), the key
+/// vault and the decrypted-attachment cache are all device-global and survive
+/// sign-out, so switching accounts on one device must clear all three —
+/// otherwise the new user sees the previous user's messages, reuses their
+/// sessions, and can open their decrypted photos/videos. The SAME user (or a
+/// brand-new device, owner null) keeps everything. Run this before
+/// [ensureRegistered].
 Future<void> guardAccountSwitch({
   required SignalDb db,
   required KeyVault vault,
+  required MediaCache cache,
   required String selfUserId,
 }) async {
   final owner = await db.readOwnerUserId();
   if (owner != null && owner != selfUserId) {
     await db.wipeAll();
     await vault.wipe();
+    await cache.clear();
   }
   // wipeAll clears signal_meta, so (re)set the owner afterwards.
   await db.setOwnerUserId(selfUserId);

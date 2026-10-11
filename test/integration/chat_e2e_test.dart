@@ -11,6 +11,8 @@
 @Tags(['integration'])
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,6 +21,7 @@ import 'package:lovinity/core/crypto/prekey_bundle_source.dart';
 import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/crypto/signal_registration.dart';
 import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/storage/media_cache.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
 import 'package:lovinity/features/chat/data/chat_repository.dart';
 import 'package:lovinity/features/chat/data/chat_store.dart';
@@ -60,6 +63,20 @@ class _Party {
   late ChatRepository repo;
   late ChatStore store;
   late ChatService chat;
+  late _InMemoryMediaCache cache;
+}
+
+class _InMemoryMediaCache implements MediaCache {
+  final Map<String, Uint8List> written = {};
+
+  @override
+  Future<String> write(String key, Uint8List bytes) async {
+    written[key] = bytes;
+    return 'memory://$key';
+  }
+
+  @override
+  Future<void> clear() async => written.clear();
 }
 
 Future<_Party> _makeParty(
@@ -85,6 +102,8 @@ Future<_Party> _makeParty(
   );
   p.repo = ChatRepository(client);
   p.store = ChatStore(p.db);
+  final coupleId = await client.rpc('current_couple') as String;
+  p.cache = _InMemoryMediaCache();
   p.chat = ChatService(
     session: p.session,
     repo: p.repo,
@@ -92,6 +111,8 @@ Future<_Party> _makeParty(
     selfUserId: userId,
     spouseUserId: spouseId,
     selfDeviceNum: p.deviceNum,
+    coupleId: coupleId,
+    cache: p.cache,
   );
   return p;
 }
@@ -237,5 +258,62 @@ void main() {
     expect(envAfterRedeliver, isEmpty,
         reason: 'the envelope was already spent; redelivery must not '
             'resurrect it');
+  });
+
+  test('attachment: send -> deliver -> download decrypts to the original bytes',
+      () async {
+    final aliceClient = _anonClient();
+    final bobClient = _anonClient();
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final pairing = await _pairCouple(aliceClient, bobClient, stamp);
+
+    final alice = await _makeParty(aliceClient, pairing.userA, pairing.userB);
+    final bob = await _makeParty(bobClient, pairing.userB, pairing.userA);
+
+    final originalBytes = Uint8List.fromList(List.generate(5000, (i) => i % 256));
+    final thumbnail = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+    await alice.chat.sendPhoto(
+      bytes: originalBytes,
+      mimeType: 'image/jpeg',
+      width: 800,
+      height: 600,
+      thumbnailBytes: thumbnail,
+    );
+
+    // Direct select rather than watchInbox: deterministic, no dependence on
+    // realtime delivery timing (same pattern as the text-message test above).
+    final inboxRows = await bobClient
+        .from('message_envelopes')
+        .select()
+        .eq('recipient_id', pairing.userB);
+    expect(inboxRows.length, 1);
+    final envelope = _row(inboxRows.first);
+    final messageId = envelope['message_id'] as String;
+
+    await bob.chat.handleInboxRow(envelope);
+
+    expect(await bob.store.messageExists(messageId), isTrue);
+    final bobRows = await bob.store.watchConversation().first;
+    final bobMsg = bobRows.singleWhere((r) => r.id == messageId);
+    expect(bobMsg.attachmentKind, 'photo');
+    expect(bobMsg.downloadStatus, 'none',
+        reason: 'attachments are tap-to-load, never auto-downloaded');
+
+    await bob.chat.downloadAttachment(messageId);
+
+    final bobRowsAfterDownload = await bob.store.watchConversation().first;
+    final bobMsgAfterDownload =
+        bobRowsAfterDownload.singleWhere((r) => r.id == messageId);
+    expect(bobMsgAfterDownload.downloadStatus, 'downloaded');
+    expect(bob.cache.written[messageId], originalBytes,
+        reason: 'the decrypted bytes must exactly match what Alice sent');
+
+    // Alice's own row ends up locally cached too, so re-opening her own
+    // photo never round-trips through Storage.
+    final aliceRow = await alice.store.messageById(messageId);
+    expect(aliceRow!.status, 'sent');
+    expect(aliceRow.downloadStatus, 'downloaded');
+    expect(alice.cache.written[messageId], originalBytes);
   });
 }

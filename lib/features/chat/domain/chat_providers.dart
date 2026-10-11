@@ -1,12 +1,16 @@
 // lib/features/chat/domain/chat_providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/crypto/crypto_providers.dart';
+import '../../../core/crypto/letter_crypto.dart';
+import '../../../core/crypto/secure_store.dart';
 import '../../../shared/providers/supabase_provider.dart';
+import '../../../core/storage/media_cache.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/chat_repository.dart';
 import '../data/chat_store.dart';
 import '../data/typing_channel.dart';
+import '../presentation/media_picker.dart';
 import 'chat_service.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -16,6 +20,8 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 final chatStoreProvider = Provider<ChatStore>((ref) {
   return ChatStore(ref.watch(signalDbProvider));
 });
+
+final mediaPickerProvider = Provider<MediaPicker>((ref) => DevicePicker());
 
 /// Null until signed in + paired + this device is registered.
 ///
@@ -42,6 +48,15 @@ final chatServiceProvider = FutureProvider<ChatService?>((ref) async {
     selfUserId: selfId,
     spouseUserId: couple.spouseOf(selfId),
     selfDeviceNum: deviceNum,
+    coupleId: couple.id,
+    cache: FileMediaCache(),
+    // Lets the inbox loop persist the couple's future-letter key when the
+    // spouse's device sends it. Constructed here rather than imported from the
+    // letters feature to keep the dependency pointing one way: chat knows how
+    // to store a key it receives, and knows nothing about letters otherwise.
+    letterKeys: LetterKeyService(
+      FlutterSecureStore(ref.read(secureStorageProvider)),
+    ),
   );
 });
 

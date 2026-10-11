@@ -45,4 +45,18 @@ class CycleRepository {
         .map((rows) => [for (final r in rows) CycleRecord.fromRow(Map<String, dynamic>.from(r))]
           ..sort((a, b) => b.startedOn.compareTo(a.startedOn)));
   }
+
+  /// Both this user's own cycle records AND the spouse's `visibility:
+  /// 'shared'` records for [coupleId]. RLS (see
+  /// supabase/migrations/20260715000002_cycle_rls.sql) already restricts
+  /// what this query can return to exactly that set -- a spouse's private
+  /// record is never returned at the database layer.
+  Stream<List<CycleRecord>> watchCoupleShared({required String coupleId}) {
+    return _client
+        .from('cycle_records')
+        .stream(primaryKey: ['id'])
+        .eq('couple_id', coupleId)
+        .map((rows) =>
+            [for (final r in rows) CycleRecord.fromRow(Map<String, dynamic>.from(r))]);
+  }
 }

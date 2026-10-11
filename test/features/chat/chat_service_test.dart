@@ -15,6 +15,8 @@ import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/crypto/signal_keys.dart';
 import 'package:lovinity/core/crypto/signal_registration.dart';
 import 'package:lovinity/core/crypto/signal_session_service.dart';
+import 'package:lovinity/core/crypto/attachment_crypto.dart';
+import 'package:lovinity/core/storage/media_cache.dart';
 import 'package:lovinity/core/storage/signal_db.dart';
 import 'package:lovinity/features/chat/data/chat_repository.dart';
 import 'package:lovinity/features/chat/data/chat_store.dart';
@@ -201,6 +203,39 @@ class _FakeChatRepo extends ChatRepository {
   Future<void> deleteEnvelope(String envelopeId) async {
     deleteEnvelopeCalls.add(envelopeId);
   }
+
+  final Map<String, Uint8List> attachmentBytes = {};
+  final List<({String storageKey, Uint8List ciphertext})> uploadAttachmentCalls = [];
+
+  @override
+  Future<void> uploadAttachment(String storageKey, Uint8List ciphertext) async {
+    uploadAttachmentCalls.add((storageKey: storageKey, ciphertext: ciphertext));
+    attachmentBytes[storageKey] = ciphertext;
+  }
+
+  @override
+  Future<Uint8List> downloadAttachment(String storageKey) async {
+    final bytes = attachmentBytes[storageKey];
+    if (bytes == null) throw Exception('no such attachment: $storageKey');
+    return bytes;
+  }
+}
+
+class _FakeMediaCache implements MediaCache {
+  final Map<String, Uint8List> written = {};
+  bool cleared = false;
+
+  @override
+  Future<String> write(String key, Uint8List bytes) async {
+    written[key] = bytes;
+    return 'fake-cache/$key';
+  }
+
+  @override
+  Future<void> clear() async {
+    cleared = true;
+    written.clear();
+  }
 }
 
 /// Hex-encodes ciphertext the way the real `message_envelopes` bytea column
@@ -238,6 +273,8 @@ void main() {
       selfUserId: selfUserId,
       spouseUserId: spouseUserId,
       selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: _FakeMediaCache(),
     );
   });
 
@@ -581,6 +618,8 @@ void main() {
       selfUserId: selfUserId,
       spouseUserId: spouseUserId,
       selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: _FakeMediaCache(),
     );
 
     Map<String, dynamic> env(String id) => {
@@ -639,6 +678,8 @@ void main() {
       selfUserId: selfUserId,
       spouseUserId: spouseUserId,
       selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: _FakeMediaCache(),
     );
 
     await svc.sendText('hi');
@@ -663,6 +704,8 @@ void main() {
       selfUserId: selfUserId,
       spouseUserId: spouseUserId,
       selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: _FakeMediaCache(),
     );
     final env = {
       'id': 'env-r',
@@ -682,6 +725,214 @@ void main() {
         reason: 'a processed reaction envelope must not be decrypted again '
             '(a spent ratchet would fail)');
     expect((await store.reactionsFor('m1')).length, 1);
+  });
+
+  test('sendPhoto uploads ciphertext, sends an AttachmentPayload envelope, and stores a downloaded local row',
+      () async {
+    final bytes = Uint8List.fromList(List.generate(200, (i) => i % 256));
+    final thumb = Uint8List.fromList([1, 2, 3]);
+
+    await chat.sendPhoto(
+      bytes: bytes,
+      mimeType: 'image/jpeg',
+      width: 800,
+      height: 600,
+      thumbnailBytes: thumb,
+      caption: 'salam',
+    );
+
+    expect(repo.sendEnvelopesCalls, hasLength(1));
+    final call = repo.sendEnvelopesCalls.single;
+    expect(call.messageId, isNotNull);
+
+    final row = await store.messageById(call.messageId!);
+    expect(row, isNotNull);
+    expect(row!.attachmentKind, 'photo');
+    expect(row.mimeType, 'image/jpeg');
+    expect(row.width, 800);
+    expect(row.height, 600);
+    expect(row.body, 'salam');
+    expect(row.status, 'sent');
+    // The sender already had the plaintext -- it's cached immediately, no
+    // download round-trip needed for your own upload.
+    expect(row.downloadStatus, 'downloaded');
+    expect(row.localMediaPath, 'fake-cache/${call.messageId}');
+  });
+
+  test('sendVideo uploads ciphertext and sends an AttachmentPayload envelope with durationMs',
+      () async {
+    final bytes = Uint8List.fromList(List.generate(300, (i) => i % 256));
+    final thumb = Uint8List.fromList([4, 5, 6]);
+
+    await chat.sendVideo(
+      bytes: bytes,
+      mimeType: 'video/mp4',
+      durationMs: 12000,
+      thumbnailBytes: thumb,
+    );
+
+    final call = repo.sendEnvelopesCalls.single;
+    final row = await store.messageById(call.messageId!);
+    expect(row!.attachmentKind, 'video');
+    expect(row.durationMs, 12000);
+    expect(row.mimeType, 'video/mp4');
+  });
+
+  test('sendPhoto marks the message failed when upload throws', () async {
+    final failingRepo = _FakeChatRepo();
+    final db = SignalDb.memory();
+    addTearDown(db.close);
+    final localStore = ChatStore(db);
+    final svc = ChatService(
+      session: self1.service,
+      repo: failingRepo,
+      store: localStore,
+      selfUserId: selfUserId,
+      spouseUserId: spouseUserId,
+      selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: _FakeMediaCache(),
+    );
+    failingRepo.failNextSend = true;
+
+    await svc.sendPhoto(
+      bytes: Uint8List.fromList([1, 2, 3]),
+      mimeType: 'image/jpeg',
+      width: 10,
+      height: 10,
+      thumbnailBytes: Uint8List.fromList([1]),
+    );
+
+    final rows = await localStore.watchConversation().first;
+    expect(rows.single.status, 'failed');
+  });
+
+  test('handleInboxRow on an AttachmentPayload stores a delivered attachment row',
+      () async {
+    final cache = _FakeMediaCache();
+    final svcWithCache = ChatService(
+      session: self1.service,
+      repo: repo,
+      store: store,
+      selfUserId: selfUserId,
+      spouseUserId: spouseUserId,
+      selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: cache,
+    );
+
+    final payload = AttachmentPayload(
+      kind: AttachmentKind.photo,
+      mimeType: 'image/jpeg',
+      sizeBytes: 42,
+      width: 100,
+      height: 100,
+      storageKey: 'couple-1/msg-att-1',
+      encKey: Uint8List.fromList(List.filled(32, 5)),
+      nonce: Uint8List.fromList(List.filled(12, 6)),
+      thumbnailBytes: Uint8List.fromList([7, 7, 7]),
+      caption: 'look',
+    );
+    final copies = await spouse1.service.encryptFor(
+      recipientUserId: selfUserId,
+      plaintext: encodePayload(payload),
+    );
+    final toSelf1 = copies.singleWhere((c) => c.userId == selfUserId && c.deviceNum == 1);
+
+    final envelope = <String, dynamic>{
+      'id': 'env-att-1',
+      'message_id': 'msg-att-1',
+      'sender_id': spouseUserId,
+      'sender_device_num': 1,
+      'recipient_device_num': 1,
+      'ciphertext': _hexEnvelope(toSelf1.ciphertext),
+      'cipher_type': toSelf1.cipherType,
+      'created_at': DateTime.utc(2026, 1, 3).toIso8601String(),
+    };
+
+    await svcWithCache.handleInboxRow(envelope);
+
+    final row = await store.messageById('msg-att-1');
+    expect(row, isNotNull);
+    expect(row!.attachmentKind, 'photo');
+    expect(row.storageKey, 'couple-1/msg-att-1');
+    expect(row.body, 'look');
+    expect(row.status, 'delivered');
+    expect(row.downloadStatus, 'none',
+        reason: 'attachments are tap-to-load -- never auto-downloaded');
+    expect(repo.markDeliveredCalls, contains('msg-att-1'));
+  });
+
+  test('downloadAttachment decrypts, caches, and marks the row downloaded', () async {
+    final cache = _FakeMediaCache();
+    final svcWithCache = ChatService(
+      session: self1.service,
+      repo: repo,
+      store: store,
+      selfUserId: selfUserId,
+      spouseUserId: spouseUserId,
+      selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: cache,
+    );
+
+    final plaintext = Uint8List.fromList([10, 20, 30, 40]);
+    final enc = await encryptAttachment(plaintext);
+    repo.attachmentBytes['couple-1/msg-dl-1'] = enc.ciphertext;
+
+    await store.upsertAttachmentMessage(
+      id: 'msg-dl-1',
+      senderId: spouseUserId,
+      attachmentKind: 'photo',
+      mimeType: 'image/jpeg',
+      sizeBytes: plaintext.length,
+      storageKey: 'couple-1/msg-dl-1',
+      encKey: enc.key,
+      nonce: enc.nonce,
+      thumbnailBytes: Uint8List.fromList([1]),
+      createdAt: DateTime(2026),
+      status: 'delivered',
+    );
+
+    await svcWithCache.downloadAttachment('msg-dl-1');
+
+    final row = await store.messageById('msg-dl-1');
+    expect(row!.downloadStatus, 'downloaded');
+    expect(row.localMediaPath, 'fake-cache/msg-dl-1');
+    expect(cache.written['msg-dl-1'], plaintext);
+  });
+
+  test('downloadAttachment marks the row failed when the repo download throws', () async {
+    final cache = _FakeMediaCache();
+    final svcWithCache = ChatService(
+      session: self1.service,
+      repo: repo,
+      store: store,
+      selfUserId: selfUserId,
+      spouseUserId: spouseUserId,
+      selfDeviceNum: 1,
+      coupleId: 'couple-1',
+      cache: cache,
+    );
+
+    await store.upsertAttachmentMessage(
+      id: 'msg-dl-2',
+      senderId: spouseUserId,
+      attachmentKind: 'photo',
+      mimeType: 'image/jpeg',
+      sizeBytes: 4,
+      storageKey: 'couple-1/does-not-exist',
+      encKey: Uint8List.fromList(List.filled(32, 1)),
+      nonce: Uint8List.fromList(List.filled(12, 1)),
+      thumbnailBytes: Uint8List.fromList([1]),
+      createdAt: DateTime(2026),
+      status: 'delivered',
+    );
+
+    await svcWithCache.downloadAttachment('msg-dl-2');
+
+    final row = await store.messageById('msg-dl-2');
+    expect(row!.downloadStatus, 'failed');
   });
 }
 

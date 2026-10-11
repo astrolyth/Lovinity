@@ -256,6 +256,18 @@ sender_name = "Lovinity"
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# The app's sign-in/reset UX (see AuthRepository.verifyEmailOtp /
+# verifyRecoveryOtp) is code-entry only -- there is no deep link or web
+# callback for the default magic-link/recovery templates' confirmation URL
+# to redirect to, so these overrides show only the {{ .Token }} code.
+[auth.email.template.magic_link]
+subject = "Your Lovinity sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "Your Lovinity password reset code"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
@@ -397,6 +409,15 @@ deno_version = 2
 # callers via a shared dispatch secret (private.push_config.dispatch_secret),
 # not a Supabase user JWT, so JWT verification must stay off.
 [functions.push-dispatch]
+verify_jwt = false
+
+# generate-questions: tops up the daily_questions pool via the Claude API. It
+# authenticates callers with a shared secret (GENERATE_QUESTIONS_SECRET), not a
+# Supabase JWT, so JWT verification must stay off. verify_jwt = true would be
+# worse than useless here: the anon key is itself a JWT signed by the project
+# secret and ships inside the Flutter binary, so every install could trigger a
+# paid generation run.
+[functions.generate-questions]
 verify_jwt = false
 
 [analytics]
