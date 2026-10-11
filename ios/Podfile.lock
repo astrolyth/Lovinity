@@ -1,5 +1,8 @@
 PODS:
   - Flutter (1.0.0)
+  - get_thumbnail_video (0.0.1):
+    - Flutter
+    - libwebp
   - libwebp (1.6.0):
     - libwebp/demux (= 1.6.0)
     - libwebp/mux (= 1.6.0)
@@ -12,13 +15,10 @@ PODS:
   - libwebp/sharpyuv (1.6.0)
   - libwebp/webp (1.6.0):
     - libwebp/sharpyuv
-  - video_thumbnail (0.0.1):
-    - Flutter
-    - libwebp
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - video_thumbnail (from `.symlinks/plugins/video_thumbnail/ios`)
+  - get_thumbnail_video (from `.symlinks/plugins/get_thumbnail_video/ios`)
 
 SPEC REPOS:
   trunk:
@@ -27,13 +27,13 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  video_thumbnail:
-    :path: ".symlinks/plugins/video_thumbnail/ios"
+  get_thumbnail_video:
+    :path: ".symlinks/plugins/get_thumbnail_video/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  get_thumbnail_video: 1a754d46b860dffefcc57b7290a43089cd5d7e58
   libwebp: af5937a13536ef73f3784d69cc342b98961acf33
-  video_thumbnail: b637e0ad5f588ca9945f6e2c927f73a69a661140
 
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
 
