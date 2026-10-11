@@ -17,6 +17,7 @@ import '../../location/domain/location_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../../prayer_log/presentation/prayer_log_card.dart';
 import '../../scoring/presentation/scoreboard_card.dart';
+import '../../wall/presentation/wall_home_tile.dart';
 import '../domain/home_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -158,6 +159,8 @@ class HomeScreen extends ConsumerWidget {
                       const PrayerLogCard(),
                       const SizedBox(height: LovSpace.md),
                       const ScoreboardCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const WallHomeTile(),
                       const SizedBox(height: LovSpace.md),
                       if (isWife) ...[
                         const _CycleTile(),
