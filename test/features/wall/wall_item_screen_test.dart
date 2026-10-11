@@ -23,6 +23,7 @@ Future<StreamController<List<WallItem>>> _pump(
   required FakeWallRepository repo,
   List<WallItem>? items,
   List<WallComment> comments = const [],
+  StreamController<List<WallReaction>>? reactions,
 }) async {
   // Tall surface so the lazy ListView builds the comments below the fold.
   tester.view.physicalSize = const Size(800, 1600);
@@ -33,7 +34,8 @@ Future<StreamController<List<WallItem>>> _pump(
   await tester.pumpWidget(ProviderScope(
     overrides: [
       wallItemsProvider.overrideWith((ref) => itemsCtrl.stream),
-      wallReactionsProvider.overrideWith((ref) => Stream.value(const <WallReaction>[])),
+      wallReactionsProvider.overrideWith((ref) =>
+          reactions?.stream ?? Stream.value(const <WallReaction>[])),
       wallCommentsProvider.overrideWith((ref) => Stream.value(comments)),
       wallSelfIdProvider.overrideWithValue('me'),
       spouseProfileProvider.overrideWith((ref) async => null),
@@ -41,6 +43,7 @@ Future<StreamController<List<WallItem>>> _pump(
     ],
     child: MaterialApp(theme: LovTheme.dark(), home: const WallItemScreen(itemId: 'i1')),
   ));
+  reactions?.add(const <WallReaction>[]);
   itemsCtrl.add(items ?? [_video()]);
   await tester.pump();
   await tester.pump();
@@ -118,5 +121,96 @@ void main() {
     await tester.pump();
     expect(repo.comments, ['deal 🤝']);
     expect(find.text('deal 🤝'), findsNothing);
+  });
+
+  group('reaction toggles', () {
+    const ms200 = Duration(milliseconds: 200);
+    const heart = Key('reaction-heart');
+    WallReaction mine() =>
+        const WallReaction(itemId: 'i1', userId: 'me', kind: WallReactionKind.heart);
+
+    testWidgets('double-tap calls the repository in order, one at a time', (tester) async {
+      final repo = FakeWallRepository()..holdReactions = true;
+      await _pump(tester, repo: repo);
+      await tester.tap(find.byKey(heart));
+      await tester.pump(ms200);
+      await tester.tap(find.byKey(heart));
+      await tester.pump(ms200);
+      expect(find.text('1'), findsNothing, reason: 'UI already shows the second tap');
+      expect(repo.reactionStarts, ['add:heart'],
+          reason: 'remove must wait for the add to finish');
+
+      repo.reactionGates[0].complete();
+      await tester.pump();
+      await tester.pump();
+      expect(repo.reactionStarts, ['add:heart', 'remove:heart']);
+      repo.reactionGates[1].complete();
+      await tester.pump();
+      await tester.pump();
+      expect(repo.reactionCalls, ['add:heart', 'remove:heart']);
+      expect(find.text('1'), findsNothing);
+    });
+
+    testWidgets('a failed earlier tap does not erase a newer tap', (tester) async {
+      final repo = FakeWallRepository()..holdReactions = true;
+      await _pump(tester, repo: repo);
+      // add, remove, add: the UI ends on "mine".
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.byKey(heart));
+        await tester.pump(ms200);
+      }
+      expect(find.text('1'), findsOneWidget);
+
+      repo.reactionGates[0].completeError(Exception('offline'));
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget, reason: 'newer tap still pending');
+      expect(find.text("Couldn't save your reaction"), findsOneWidget);
+
+      repo.reactionGates[1].complete();
+      await tester.pump();
+      await tester.pump();
+      repo.reactionGates[2].complete();
+      await tester.pump();
+      await tester.pump();
+      expect(repo.reactionCalls, ['remove:heart', 'add:heart']);
+      expect(find.text('1'), findsOneWidget);
+    });
+
+    testWidgets('pending clears once the stream confirms', (tester) async {
+      final reactions = StreamController<List<WallReaction>>.broadcast();
+      addTearDown(reactions.close);
+      await _pump(tester, repo: FakeWallRepository(), reactions: reactions);
+      await tester.tap(find.byKey(heart));
+      await tester.pump(ms200);
+      expect(find.text('1'), findsOneWidget);
+
+      reactions.add([mine()]);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget, reason: 'server count, not 2');
+      expect(find.text('2'), findsNothing);
+
+      reactions.add(const <WallReaction>[]); // un-reacted elsewhere
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('1'), findsNothing, reason: 'no stale pending entry');
+    });
+  });
+
+  testWidgets('leaving mid-send does not throw when the send completes', (tester) async {
+    final repo = FakeWallRepository()..commentGate = Completer<void>();
+    await _pump(tester, repo: repo);
+    await tester.enterText(find.widgetWithText(TextField, 'Reply…'), 'hello');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Send'));
+    await tester.pump();
+
+    await tester.pumpWidget(const SizedBox()); // screen disposed mid-send
+    repo.commentGate!.complete();
+    await tester.pump();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(repo.comments, ['hello']);
   });
 }

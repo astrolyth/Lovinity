@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/features/wall/data/link_preview_service.dart';
 import 'package:lovinity/features/wall/data/wall_repository.dart';
@@ -15,6 +17,17 @@ class FakeWallRepository extends Fake implements WallRepository {
   final deleted = <String>[];
   Object? throwOnAdd;
   Object? throwOnReact;
+
+  /// When true, each reaction call waits on a gate in [reactionGates]
+  /// (complete it, or completeError it to make that call fail).
+  bool holdReactions = false;
+  final reactionGates = <Completer<void>>[];
+
+  /// Every reaction call as it starts, in order (before any gate/failure).
+  final reactionStarts = <String>[];
+
+  /// When set, [addComment] waits on it before recording the comment.
+  Completer<void>? commentGate;
 
   @override
   Future<WallItem> addItem({
@@ -48,8 +61,7 @@ class FakeWallRepository extends Fake implements WallRepository {
     required String userId,
     required WallReactionKind kind,
   }) async {
-    if (throwOnReact != null) throw throwOnReact!;
-    reactionCalls.add('add:${kind.key}');
+    await _react('add:${kind.key}');
   }
 
   @override
@@ -58,8 +70,18 @@ class FakeWallRepository extends Fake implements WallRepository {
     required String userId,
     required WallReactionKind kind,
   }) async {
+    await _react('remove:${kind.key}');
+  }
+
+  Future<void> _react(String call) async {
+    reactionStarts.add(call);
+    if (holdReactions) {
+      final gate = Completer<void>();
+      reactionGates.add(gate);
+      await gate.future;
+    }
     if (throwOnReact != null) throw throwOnReact!;
-    reactionCalls.add('remove:${kind.key}');
+    reactionCalls.add(call);
   }
 
   @override
@@ -68,8 +90,10 @@ class FakeWallRepository extends Fake implements WallRepository {
     required String itemId,
     required String userId,
     required String body,
-  }) async =>
-      comments.add(body);
+  }) async {
+    if (commentGate != null) await commentGate!.future;
+    comments.add(body);
+  }
 
   @override
   Future<void> deleteItem(String itemId) async => deleted.add(itemId);

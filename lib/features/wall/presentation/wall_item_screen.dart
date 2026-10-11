@@ -24,6 +24,13 @@ class WallItemScreen extends ConsumerStatefulWidget {
 class _WallItemScreenState extends ConsumerState<WallItemScreen> {
   /// Reaction toggles not yet reflected by the server: kind -> wanted "mine".
   final _pending = <WallReactionKind, bool>{};
+
+  /// Per-kind tail of the repository calls, so toggles of one kind reach the
+  /// server in tap order. Never completes with an error.
+  final _chain = <WallReactionKind, Future<void>>{};
+
+  /// Per-kind toggle counter; only the latest toggle may roll back `_pending`.
+  final _generation = <WallReactionKind, int>{};
   final _comment = TextEditingController();
   bool _sending = false;
 
@@ -39,8 +46,11 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     super.dispose();
   }
 
-  void _snack(String message) => ScaffoldMessenger.maybeOf(context)
-      ?.showSnackBar(SnackBar(content: Text(message)));
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)
+        ?.showSnackBar(SnackBar(content: Text(message)));
+  }
 
   /// Drops pending toggles the server now agrees with.
   void _prunePending() {
@@ -62,18 +72,24 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     if (selfId == null) return;
     final currentlyMine = shown.any((r) => r.kind == kind && r.mine);
     final want = !currentlyMine;
-    setState(() => _pending[kind] = want);
+    final generation = (_generation[kind] ?? 0) + 1;
+    _generation[kind] = generation;
+    setState(() => _pending[kind] = want); // the UI flips instantly
     final repo = ref.read(wallRepositoryProvider);
+    final previous = _chain[kind] ?? Future<void>.value();
+    final call = previous.then((_) => want
+        ? repo.addReaction(
+            coupleId: item.coupleId, itemId: item.id, userId: selfId, kind: kind)
+        : repo.removeReaction(itemId: item.id, userId: selfId, kind: kind));
+    _chain[kind] = call.then<void>((_) {}, onError: (_) {});
     try {
-      if (want) {
-        await repo.addReaction(
-            coupleId: item.coupleId, itemId: item.id, userId: selfId, kind: kind);
-      } else {
-        await repo.removeReaction(itemId: item.id, userId: selfId, kind: kind);
-      }
+      await call;
     } catch (_) {
       if (!mounted) return;
-      setState(() => _pending.remove(kind));
+      // A newer tap on this kind owns the pending entry; don't erase it.
+      if (_generation[kind] == generation) {
+        setState(() => _pending.remove(kind));
+      }
       _snack("Couldn't save your reaction");
     }
   }
@@ -86,6 +102,7 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     try {
       await ref.read(wallRepositoryProvider).addComment(
           coupleId: item.coupleId, itemId: item.id, userId: selfId, body: body);
+      if (!mounted) return;
       _comment.clear();
       HapticFeedback.lightImpact();
     } catch (_) {
@@ -107,14 +124,15 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
         ],
       ),
     );
-    return ok ?? false;
+    return mounted && (ok ?? false);
   }
 
   Future<void> _deleteItem(WallItem item) async {
     if (!await _confirm('Delete from our Wall?', 'This removes it for both of you.')) return;
     try {
       await ref.read(wallRepositoryProvider).deleteItem(item.id);
-      if (mounted) await Navigator.of(context).maybePop();
+      if (!mounted) return;
+      await Navigator.of(context).maybePop();
     } catch (_) {
       _snack("Couldn't delete it");
     }
@@ -154,7 +172,7 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
         ),
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     try {
       await ref.read(wallRepositoryProvider).setCollection(item.id, picked.value);
     } catch (_) {
@@ -165,6 +183,7 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
   Future<void> _togglePin(WallItem item) async {
     try {
       await ref.read(wallRepositoryProvider).setPinned(item.id, !item.isPinned);
+      if (!mounted) return;
       HapticFeedback.selectionClick();
     } catch (_) {
       _snack("Couldn't update the pin");
