@@ -42,6 +42,20 @@ void main() {
       ),
     ]);
     expect(find.text('Your partner · Morning habit'), findsOneWidget);
+    expect(find.text(' · now'), findsOneWidget);
     expect(find.byKey(const Key('wall-unseen-dot')), findsOneWidget);
+  });
+
+  testWidgets('a very long title does not push the shared time out of view', (tester) async {
+    final longTitle = 'A' * 300;
+    await _pump(tester, [
+      WallItem(
+        id: 'i2', coupleId: 'c', addedBy: 'sp', url: 'https://youtu.be/b',
+        title: longTitle, source: WallSource.youtube, isPinned: false,
+        createdAt: DateTime.now(),
+      ),
+    ]);
+    expect(find.text(' · now'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

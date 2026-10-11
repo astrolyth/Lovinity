@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
+import '../domain/wall_logic.dart';
 import '../domain/wall_models.dart';
 import '../domain/wall_providers.dart';
 import 'wall_visuals.dart';
@@ -61,14 +62,30 @@ class WallHomeTile extends ConsumerWidget {
               children: [
                 Text('Our Wall', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 2),
-                Text(
-                  latest == null
-                      ? 'Share your first find together.'
-                      : '${nameFor(latest.addedBy)} · ${latest.displayTitle}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
-                ),
+                if (latest == null)
+                  Text(
+                    'Share your first find together.',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${nameFor(latest.addedBy)} · ${latest.displayTitle}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                      Text(
+                        ' · ${formatWallTime(latest.createdAt)}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
