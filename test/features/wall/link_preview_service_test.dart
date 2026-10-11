@@ -6,6 +6,21 @@ import 'package:http/testing.dart';
 import 'package:lovinity/features/wall/data/link_preview_service.dart';
 import 'package:lovinity/features/wall/domain/wall_models.dart';
 
+/// True when [s] has a UTF-16 surrogate code unit without its partner.
+bool _hasLoneSurrogate(String s) {
+  final u = s.codeUnits;
+  for (var i = 0; i < u.length; i++) {
+    final c = u[i];
+    if (c >= 0xD800 && c <= 0xDBFF) {
+      if (i + 1 >= u.length || u[i + 1] < 0xDC00 || u[i + 1] > 0xDFFF) return true;
+      i++;
+    } else if (c >= 0xDC00 && c <= 0xDFFF) {
+      return true;
+    }
+  }
+  return false;
+}
+
 http.Response _resp(String body,
         {int status = 200, String type = 'text/html; charset=utf-8'}) =>
     http.Response.bytes(utf8.encode(body), status, headers: {'content-type': type});
@@ -112,6 +127,21 @@ void main() {
       final p = parseHtmlPreview('<title>${'a' * 400}</title>',
           baseUrl: Uri.parse('https://x.example'))!;
       expect(p.title!.length, 300);
+    });
+
+    test('caps by code points, never splitting an emoji (surrogate pair)', () {
+      // 299 + the emoji = 300 code points but 301 UTF-16 code units: a
+      // code-unit cut would leave a lone high surrogate.
+      final raw = '${'a' * 299}\u{1F90D} and more';
+      final html = parseHtmlPreview('<title>$raw</title>',
+          baseUrl: Uri.parse('https://x.example'))!;
+      final oembed = parseOEmbed(jsonEncode({'title': raw}))!;
+      for (final t in [html.title!, oembed.title!]) {
+        expect(t, '${'a' * 299}\u{1F90D}');
+        expect(t.runes.length, 300);
+        expect(_hasLoneSurrogate(t), isFalse);
+        expect(jsonDecode(jsonEncode(t)), t);
+      }
     });
 
     test('oembedEndpoint only for YouTube and TikTok', () {

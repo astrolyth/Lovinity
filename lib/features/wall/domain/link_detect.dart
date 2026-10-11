@@ -33,11 +33,16 @@ WallSource classifyUrl(String url) {
 
 /// Splits text shared into the app: a link if there is one (the rest is
 /// dropped — apps prepend titles/marketing copy), otherwise a note capped at
-/// 1000 characters.
+/// 1000 code points (the DB limit; a UTF-16 cut could split an emoji).
 ({String? url, String? note}) parseSharedText(String text) {
   final url = extractFirstUrl(text);
   if (url != null) return (url: url, note: null);
   final note = text.trim();
   if (note.isEmpty) return (url: null, note: null);
-  return (url: null, note: note.length > 1000 ? note.substring(0, 1000) : note);
+  return (
+    url: null,
+    note: note.runes.length > 1000
+        ? String.fromCharCodes(note.runes.take(1000))
+        : note,
+  );
 }

@@ -1,6 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/features/wall/domain/link_detect.dart';
 import 'package:lovinity/features/wall/domain/wall_models.dart';
+
+/// True when [s] has a UTF-16 surrogate code unit without its partner.
+bool _hasLoneSurrogate(String s) {
+  final u = s.codeUnits;
+  for (var i = 0; i < u.length; i++) {
+    final c = u[i];
+    if (c >= 0xD800 && c <= 0xDBFF) {
+      if (i + 1 >= u.length || u[i + 1] < 0xDC00 || u[i + 1] > 0xDFFF) return true;
+      i++;
+    } else if (c >= 0xDC00 && c <= 0xDFFF) {
+      return true;
+    }
+  }
+  return false;
+}
 
 void main() {
   group('extractFirstUrl', () {
@@ -52,6 +69,14 @@ void main() {
       expect(r.url, isNull);
       expect(r.note, 'remind me to call your mum');
       expect(parseSharedText('x' * 1500).note!.length, 1000);
+    });
+    test('the note cap counts code points and never splits an emoji', () {
+      // 999 + the emoji = 1000 code points but 1001 UTF-16 code units.
+      final note = parseSharedText('${'x' * 999}\u{1F90D}${'y' * 50}').note!;
+      expect(note, '${'x' * 999}\u{1F90D}');
+      expect(note.runes.length, 1000);
+      expect(_hasLoneSurrogate(note), isFalse);
+      expect(jsonDecode(jsonEncode(note)), note);
     });
     test('blank text yields nothing', () {
       final r = parseSharedText('   ');

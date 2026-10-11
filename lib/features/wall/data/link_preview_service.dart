@@ -154,7 +154,10 @@ String? _clean(String? s, int max) {
   if (s == null) return null;
   final t = s.replaceAll(RegExp(r'\s+'), ' ').trim();
   if (t.isEmpty) return null;
-  return t.length > max ? t.substring(0, max) : t;
+  // Cap by code points (what Postgres length() counts), never by UTF-16 code
+  // units: cutting through a surrogate pair leaves a lone surrogate that
+  // jsonEncode emits as-is and PostgREST rejects.
+  return t.runes.length > max ? String.fromCharCodes(t.runes.take(max)) : t;
 }
 
 String? _httpUrl(String? raw, Uri? base) {
