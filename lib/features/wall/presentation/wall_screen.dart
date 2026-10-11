@@ -39,12 +39,14 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   /// queues instead of stacking a second sheet.
   bool _sheetOpen = false;
 
+  /// True while a post-frame [_consumePendingShare] is scheduled.
+  bool _consumeScheduled = false;
+
   @override
   void initState() {
     super.initState();
     // Captured now: `ref` must not be used in dispose().
     _lastVisit = ref.read(wallLastVisitProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingShare());
   }
 
   @override
@@ -65,8 +67,14 @@ class _WallScreenState extends ConsumerState<WallScreen> {
     if (mounted) _consumePendingShare();
   }
 
+  /// Opens the add sheet for a pending share, but only while the Wall's own
+  /// route is on top. When something covers it (the item detail, which an
+  /// incoming share's go('/home/wall') is about to remove together with
+  /// anything pushed over it), the share stays pending; [build] re-checks
+  /// once the Wall is current again.
   void _consumePendingShare() {
     if (!mounted || _sheetOpen) return;
+    if (ModalRoute.isCurrentOf(context) != true) return;
     final share = ref.read(pendingShareProvider);
     if (share == null) return;
     ref.read(pendingShareProvider.notifier).clear();
@@ -78,9 +86,20 @@ class _WallScreenState extends ConsumerState<WallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(pendingShareProvider, (_, next) {
-      if (next != null) _consumePendingShare();
-    });
+    // Rebuilds when a share arrives and (via isCurrentOf's dependency) when
+    // the route above the Wall goes away, so a waiting share opens as soon
+    // as the Wall is on top. Consumed after the frame: never navigate
+    // mid-build.
+    final hasPendingShare = ref.watch(pendingShareProvider) != null;
+    if (hasPendingShare &&
+        !_consumeScheduled &&
+        ModalRoute.isCurrentOf(context) == true) {
+      _consumeScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _consumeScheduled = false;
+        _consumePendingShare();
+      });
+    }
     final theme = Theme.of(context);
     final itemsAsync = ref.watch(filteredWallItemsProvider);
     final hasAnyItems = ref.watch(wallItemsProvider).asData?.value.isNotEmpty ?? false;

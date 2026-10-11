@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lovinity/core/crypto/secure_store.dart';
 import 'package:lovinity/core/motion/motion.dart';
 import 'package:lovinity/core/platform/share_intake.dart';
@@ -33,6 +34,7 @@ Future<void> pumpWall(
   SecureStore? store,
   ValueNotifier<bool>? visible,
   Stream<List<WallItem>> Function()? itemsBuilder,
+  GoRouter? router,
 }) async {
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform, (call) async => null);
@@ -55,15 +57,17 @@ Future<void> pumpWall(
       wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
       linkPreviewServiceProvider.overrideWithValue(FakeLinkPreviewService()),
     ],
-    child: MaterialApp(
-      theme: LovTheme.dark(),
-      home: visible == null
-          ? const WallScreen()
-          : ValueListenableBuilder<bool>(
-              valueListenable: visible,
-              builder: (_, show, _) => show ? const WallScreen() : const SizedBox(),
-            ),
-    ),
+    child: router != null
+        ? MaterialApp.router(theme: LovTheme.dark(), routerConfig: router)
+        : MaterialApp(
+            theme: LovTheme.dark(),
+            home: visible == null
+                ? const WallScreen()
+                : ValueListenableBuilder<bool>(
+                    valueListenable: visible,
+                    builder: (_, show, _) => show ? const WallScreen() : const SizedBox(),
+                  ),
+          ),
   ));
 }
 
@@ -203,6 +207,76 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AddToWallSheet), findsOneWidget, reason: 'queued share opens next');
     expect(find.text('https://youtu.be/second'), findsOneWidget);
+    expect(container.read(pendingShareProvider), isNull);
+  });
+
+  GoRouter wallRouter(String initialLocation) => GoRouter(
+        initialLocation: initialLocation,
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (_, _) => const Scaffold(body: Text('home')),
+            routes: [
+              GoRoute(
+                path: 'wall',
+                builder: (_, _) => const WallScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, state) =>
+                        Scaffold(body: Text('detail ${state.pathParameters['id']}')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+
+  testWidgets('a share pending before the Wall opens is consumed when it opens',
+      (tester) async {
+    final router = wallRouter('/home');
+    addTearDown(router.dispose);
+    await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(tester.element(find.text('home')));
+    container.read(pendingShareProvider.notifier)
+        .set(const SharedPayload(text: 'https://youtu.be/cold'));
+
+    router.go('/home/wall');
+    await tester.pumpAndSettle();
+    expect(find.byType(AddToWallSheet), findsOneWidget);
+    expect(find.text('https://youtu.be/cold'), findsOneWidget);
+    expect(container.read(pendingShareProvider), isNull);
+  });
+
+  testWidgets('a share arriving while an item is open survives going back to the Wall',
+      (tester) async {
+    // Mirrors the app: the item detail is a child route of the Wall, and an
+    // incoming share routes with go('/home/wall') (see _routeShare in app.dart).
+    final router = wallRouter('/home/wall');
+    addTearDown(router.dispose);
+    await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
+    await tester.pumpAndSettle();
+
+    unawaited(router.push('/home/wall/a'));
+    await tester.pumpAndSettle();
+    expect(find.text('detail a'), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(WallScreen, skipOffstage: false)));
+    container.read(pendingShareProvider.notifier)
+        .set(const SharedPayload(text: 'look https://youtu.be/shared'));
+    await tester.pump();
+    expect(find.byType(AddToWallSheet), findsNothing,
+        reason: 'the Wall is covered; the share waits');
+    expect(container.read(pendingShareProvider), isNotNull);
+
+    router.go('/home/wall');
+    await tester.pumpAndSettle();
+    expect(find.text('detail a'), findsNothing);
+    expect(find.byType(AddToWallSheet), findsOneWidget);
+    expect(find.text('https://youtu.be/shared'), findsOneWidget);
     expect(container.read(pendingShareProvider), isNull);
   });
 }
