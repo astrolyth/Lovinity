@@ -8,19 +8,18 @@
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
-		3140206F242D12579C3659EF /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9369B8A37872B0652225876 /* ShareViewController.swift */; };
+		26B6C8B2E659EC2810BDB11E /* LovinityShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BF0352DF99A20BD08880559B /* LovinityShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		45D94E75F6CA7EEE89A20BB7 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFD00FE96DA3686F57064E12 /* Pods_Runner.framework */; };
 		4815529CF0CD732C24A2B4A1 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384AEFBEB4E5F1DFD18035B9 /* Pods_RunnerTests.framework */; };
-		4A362B5AC7055C24AC9C1E15 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F68EF0909B5CDA6A03D09960 /* Foundation.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
-		7ED3010F53DFA64B3FC61622 /* LovinityShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9BDD1444355E071837586FBC /* LovinityShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		BE1998A91ABC0DEF1C65E598 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F09D6586B379E676E5075A6 /* ShareViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,23 +30,23 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
-		BDF48FF30714027BB2032D11 /* PBXContainerItemProxy */ = {
+		5126DD1757BD78F759996DEB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C482407EAC428EFDB48844F3;
+			remoteGlobalIDString = 1A4358B7271704F22C7145F8;
 			remoteInfo = LovinityShare;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		1C7ADA10E9F211BA0E242FB7 /* Embed Foundation Extensions */ = {
+		37F76E9D22C9CE9FDD34C74D /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				7ED3010F53DFA64B3FC61622 /* LovinityShare.appex in Embed Foundation Extensions */,
+				26B6C8B2E659EC2810BDB11E /* LovinityShare.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -66,13 +65,14 @@
 
 /* Begin PBXFileReference section */
 		04D06638E1E19CC9CCD3817A /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		0F09D6586B379E676E5075A6 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		1101298608AADE17239E4A45 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
-		1EAC91C5A16488A28AA74B3B /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		384AEFBEB4E5F1DFD18035B9 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		392B897A23242EFA6CF4617F /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -80,7 +80,6 @@
 		7884E8681EC3CC0400C636F3 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
-		8073C2AF334C59170AFF5E6D /* LovinityShare.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = LovinityShare.entitlements; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,22 +87,20 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		9BDD1444355E071837586FBC /* LovinityShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LovinityShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		A9369B8A37872B0652225876 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		B9EAF59E6EE179E3C4083BD7 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		BF0352DF99A20BD08880559B /* LovinityShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LovinityShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDE1411A3FA3D75AD0F0E761 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		DC3E9DA8A6C940CBF6117050 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		DFD00FE96DA3686F57064E12 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED10ACCDB1283D27043BE149 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
-		F68EF0909B5CDA6A03D09960 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		FEAA2494DA3FB557392BC28E /* LovinityShare.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = LovinityShare.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		08209B09C546816728823A43 /* Frameworks */ = {
+		8E4B6F4E624F91F396727551 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4A362B5AC7055C24AC9C1E15 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,6 +132,17 @@
 			path = RunnerTests;
 			sourceTree = "<group>";
 		};
+		547D066531C5599E67703B78 /* LovinityShare */ = {
+			isa = PBXGroup;
+			children = (
+				0F09D6586B379E676E5075A6 /* ShareViewController.swift */,
+				392B897A23242EFA6CF4617F /* Info.plist */,
+				FEAA2494DA3FB557392BC28E /* LovinityShare.entitlements */,
+			);
+			name = LovinityShare;
+			path = LovinityShare;
+			sourceTree = "<group>";
+		};
 		9740EEB11CF90186004384FC /* Flutter */ = {
 			isa = PBXGroup;
 			children = (
@@ -156,7 +164,7 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				C4B189E00E5B92CEAAF58122 /* Pods */,
 				9D5314D7268908B5F60E8B79 /* Frameworks */,
-				F298D0A0200423C35A835D46 /* LovinityShare */,
+				547D066531C5599E67703B78 /* LovinityShare */,
 			);
 			sourceTree = "<group>";
 		};
@@ -165,7 +173,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
-				9BDD1444355E071837586FBC /* LovinityShare.appex */,
+				BF0352DF99A20BD08880559B /* LovinityShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -192,7 +200,7 @@
 			children = (
 				DFD00FE96DA3686F57064E12 /* Pods_Runner.framework */,
 				384AEFBEB4E5F1DFD18035B9 /* Pods_RunnerTests.framework */,
-				C8186563928D65F139392F6B /* iOS */,
+				FFC1693334BA948D180CED09 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -211,28 +219,33 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		C8186563928D65F139392F6B /* iOS */ = {
+		FFC1693334BA948D180CED09 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				F68EF0909B5CDA6A03D09960 /* Foundation.framework */,
 			);
 			name = iOS;
-			sourceTree = "<group>";
-		};
-		F298D0A0200423C35A835D46 /* LovinityShare */ = {
-			isa = PBXGroup;
-			children = (
-				A9369B8A37872B0652225876 /* ShareViewController.swift */,
-				1EAC91C5A16488A28AA74B3B /* Info.plist */,
-				8073C2AF334C59170AFF5E6D /* LovinityShare.entitlements */,
-			);
-			name = LovinityShare;
-			path = LovinityShare;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1A4358B7271704F22C7145F8 /* LovinityShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D936A3B539EBB015465C6E6F /* Build configuration list for PBXNativeTarget "LovinityShare" */;
+			buildPhases = (
+				045ED823D24DB223B71CA6F2 /* Sources */,
+				8E4B6F4E624F91F396727551 /* Frameworks */,
+				D17CDD34C510A629F9314BC1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LovinityShare;
+			productName = LovinityShare;
+			productReference = BF0352DF99A20BD08880559B /* LovinityShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		331C8080294A63A400263BE5 /* RunnerTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */;
@@ -262,14 +275,14 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
-				1C7ADA10E9F211BA0E242FB7 /* Embed Foundation Extensions */,
+				37F76E9D22C9CE9FDD34C74D /* Embed Foundation Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				DFF67DE0590FEB172ABFFDB6 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				95273BFB2D8B6D8B30B412BB /* PBXTargetDependency */,
+				0336635C577F070B83F82D10 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -278,23 +291,6 @@
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
-		};
-		C482407EAC428EFDB48844F3 /* LovinityShare */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 84A563FD4A059A562DAA3304 /* Build configuration list for PBXNativeTarget "LovinityShare" */;
-			buildPhases = (
-				1D24C8331EC6F3DD94818232 /* Sources */,
-				08209B09C546816728823A43 /* Frameworks */,
-				623AE8A68680C7FDD48CCE27 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = LovinityShare;
-			productName = LovinityShare;
-			productReference = 9BDD1444355E071837586FBC /* LovinityShare.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -334,20 +330,13 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
-				C482407EAC428EFDB48844F3 /* LovinityShare */,
+				1A4358B7271704F22C7145F8 /* LovinityShare */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		331C807F294A63A400263BE5 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		623AE8A68680C7FDD48CCE27 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -362,6 +351,13 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D17CDD34C510A629F9314BC1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,11 +459,11 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1D24C8331EC6F3DD94818232 /* Sources */ = {
+		045ED823D24DB223B71CA6F2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3140206F242D12579C3659EF /* ShareViewController.swift in Sources */,
+				BE1998A91ABC0DEF1C65E598 /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -492,16 +488,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		0336635C577F070B83F82D10 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = LovinityShare;
+			target = 1A4358B7271704F22C7145F8 /* LovinityShare */;
+			targetProxy = 5126DD1757BD78F759996DEB /* PBXContainerItemProxy */;
+		};
 		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
-		};
-		95273BFB2D8B6D8B30B412BB /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = LovinityShare;
-			target = C482407EAC428EFDB48844F3 /* LovinityShare */;
-			targetProxy = BDF48FF30714027BB2032D11 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -649,7 +645,7 @@
 			};
 			name = Profile;
 		};
-		4E1D012A591B8812A6554617 /* Release */ = {
+		3DFE29E94E4C0F17CD2C0CDD /* Profile */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
 			buildSettings = {
@@ -671,9 +667,9 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
-			name = Release;
+			name = Profile;
 		};
-		9033B2DC66FA1AD3C6661A95 /* Debug */ = {
+		533720C25133DDA895172EFC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
 			buildSettings = {
@@ -697,7 +693,7 @@
 			};
 			name = Debug;
 		};
-		9671D441BD22709C5EDF9EF3 /* Profile */ = {
+		9034ECDC2A3EE218E452F6F1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
 			buildSettings = {
@@ -719,7 +715,7 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
-			name = Profile;
+			name = Release;
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -890,16 +886,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		84A563FD4A059A562DAA3304 /* Build configuration list for PBXNativeTarget "LovinityShare" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				4E1D012A591B8812A6554617 /* Release */,
-				9033B2DC66FA1AD3C6661A95 /* Debug */,
-				9671D441BD22709C5EDF9EF3 /* Profile */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		97C146E91CF9000F007C117D /* Build configuration list for PBXProject "Runner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -916,6 +902,16 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D936A3B539EBB015465C6E6F /* Build configuration list for PBXNativeTarget "LovinityShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9034ECDC2A3EE218E452F6F1 /* Release */,
+				533720C25133DDA895172EFC /* Debug */,
+				3DFE29E94E4C0F17CD2C0CDD /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

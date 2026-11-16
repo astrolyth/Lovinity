@@ -32,6 +32,10 @@ ext.build_configurations.each do |c|
   s['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone' if c.name == 'Debug'
 end
 
+# Foundation links implicitly; new_target hard-codes an SDK-versioned path.
+ext.frameworks_build_phase.files.dup.each(&:remove_from_project)
+proj.files.select { |f| f.path.to_s.end_with?('Foundation.framework') }.each(&:remove_from_project)
+
 runner.add_dependency(ext)
 embed = runner.new_copy_files_build_phase('Embed Foundation Extensions')
 embed.symbol_dst_subfolder_spec = :plug_ins

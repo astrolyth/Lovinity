@@ -10,6 +10,9 @@ class SceneDelegate: FlutterSceneDelegate {
   private static let pendingKey = "pending_share"
 
   private var channel: FlutterMethodChannel?
+  // The first foreground is the cold start: Dart pulls that share itself, and a
+  // push now could fire before its onShare handler exists.
+  private var skipNextForeground = true
 
   override func scene(
     _ scene: UIScene,
@@ -36,9 +39,24 @@ class SceneDelegate: FlutterSceneDelegate {
     super.scene(scene, openURLContexts: URLContexts)
     for context in URLContexts
     where context.url.scheme == "lovinity" && context.url.host == "share" {
-      if let payload = Self.takePendingShare() {
-        channel?.invokeMethod("onShare", arguments: payload)
-      }
+      deliverPendingShare()
+    }
+  }
+
+  // Fallback if the extension's URL open silently did nothing (iOS 18+): the
+  // share is delivered when the user switches to the app.
+  override func sceneWillEnterForeground(_ scene: UIScene) {
+    super.sceneWillEnterForeground(scene)
+    if skipNextForeground {
+      skipNextForeground = false
+      return
+    }
+    deliverPendingShare()
+  }
+
+  private func deliverPendingShare() {
+    if let payload = Self.takePendingShare() {
+      channel?.invokeMethod("onShare", arguments: payload)
     }
   }
 

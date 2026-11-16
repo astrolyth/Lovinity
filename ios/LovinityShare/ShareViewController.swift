@@ -34,16 +34,30 @@ final class ShareViewController: UIViewController {
         let providers = items.flatMap { $0.attachments ?? [] }
         let urlId = UTType.url.identifier
         let textId = UTType.plainText.identifier
+        let textProvider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(textId) })
+        let loadText = {
+            guard let p = textProvider else { return done(nil, nil) }
+            p.loadItem(forTypeIdentifier: textId, options: nil) { item, _ in
+                let text: String?
+                switch item {
+                case let s as String: text = s
+                case let s as NSAttributedString: text = s.string
+                case let d as Data: text = String(data: d, encoding: .utf8)
+                default: text = nil
+                }
+                done(text, subject)
+            }
+        }
         if let p = providers.first(where: { $0.hasItemConformingToTypeIdentifier(urlId) }) {
             p.loadItem(forTypeIdentifier: urlId, options: nil) { item, _ in
-                done((item as? URL)?.absoluteString, subject)
-            }
-        } else if let p = providers.first(where: { $0.hasItemConformingToTypeIdentifier(textId) }) {
-            p.loadItem(forTypeIdentifier: textId, options: nil) { item, _ in
-                done(item as? String, subject)
+                if let url = (item as? URL)?.absoluteString {
+                    done(url, subject)
+                } else {
+                    loadText()
+                }
             }
         } else {
-            done(nil, nil)
+            loadText()
         }
     }
 
