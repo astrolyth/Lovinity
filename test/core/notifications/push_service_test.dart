@@ -1,4 +1,6 @@
 // test/core/notifications/push_service_test.dart
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -98,6 +100,21 @@ void main() {
       verify(() => tokenApi.unregister('fcm-token-2')).called(1);
       verify(() => messaging.deleteToken()).called(1);
       verifyZeroInteractions(client);
+    });
+
+    test('stops re-registering refreshed tokens after sign-out', () async {
+      final refreshes = StreamController<String>.broadcast();
+      addTearDown(refreshes.close);
+      when(() => messaging.onTokenRefresh).thenAnswer((_) => refreshes.stream);
+      when(() => messaging.getToken()).thenAnswer((_) async => 'fcm-token-3');
+      when(() => tokenApi.register(any(), any())).thenAnswer((_) async {});
+
+      await service.registerToken(client);
+      await service.unregisterToken(client);
+      refreshes.add('minted-after-sign-out');
+      await Future<void>.delayed(Duration.zero);
+
+      verifyNever(() => tokenApi.register('minted-after-sign-out', any()));
     });
 
     test(

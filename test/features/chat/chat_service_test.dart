@@ -194,9 +194,13 @@ class _FakeChatRepo extends ChatRepository {
     markDeliveredCalls.add(messageId);
   }
 
+  /// Message ids whose markRead throws (offline), to exercise the retry path.
+  final Set<String> failMarkRead = {};
+
   @override
   Future<void> markRead(String messageId) async {
     markReadCalls.add(messageId);
+    if (failMarkRead.contains(messageId)) throw Exception('offline');
   }
 
   @override
@@ -657,6 +661,23 @@ void main() {
     // Idempotent: nothing left unread, so no further server calls.
     await chat.markConversationRead();
     expect(repo.markReadCalls.length, 2);
+  });
+
+  test('markConversationRead keeps a message unread when its receipt fails, '
+      'so the next open retries it', () async {
+    await store.upsertMessage(id: 'in1', senderId: spouseUserId, body: 'a',
+        createdAt: DateTime(2026, 1, 1), status: 'delivered');
+    await store.upsertMessage(id: 'in2', senderId: spouseUserId, body: 'b',
+        createdAt: DateTime(2026, 1, 2), status: 'delivered');
+    repo.failMarkRead.add('in2');
+
+    await chat.markConversationRead();
+    expect(await store.incomingUnreadIds(selfUserId), ['in2']);
+
+    repo.failMarkRead.clear();
+    await chat.markConversationRead();
+    expect(await store.incomingUnreadIds(selfUserId), isEmpty);
+    expect(repo.markReadCalls.where((id) => id == 'in2').length, 2);
   });
 
   test('sendText marks the message failed when encryptFor throws (no recipient device)',

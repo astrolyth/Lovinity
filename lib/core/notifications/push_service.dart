@@ -280,7 +280,14 @@ class PushService {
       if (token != null) await api.register(token, platform);
 
       _onTokenRefreshSub ??= _messaging.onTokenRefresh.listen((newToken) {
-        unawaited(api.register(newToken, platform));
+        unawaited(api.register(newToken, platform).catchError(
+              (Object e, StackTrace st) => developer.log(
+                'PushService: re-registering a refreshed token failed',
+                name: 'PushService',
+                error: e,
+                stackTrace: st,
+              ),
+            ));
       });
     } catch (e, st) {
       developer.log(
@@ -297,6 +304,10 @@ class PushService {
   /// sign-out on a shared device). No-op when unavailable.
   Future<void> unregisterToken(SupabaseClient client) async {
     if (!_available) return;
+    // Stop re-registering first: deleteToken below mints a refresh that,
+    // while signed out, would otherwise be registered with no session.
+    await _onTokenRefreshSub?.cancel();
+    _onTokenRefreshSub = null;
     try {
       final api = _pushTokenApi ?? SupabasePushTokenApi(client);
 

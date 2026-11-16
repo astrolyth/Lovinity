@@ -132,29 +132,31 @@ void main() {
           reason: 'husband must not be able to read the wife\'s private '
               'cycle_records row via normal RLS-gated select');
 
-      // --- (2) Fairness: RPC (called as the husband) returns the wife's
-      // exemption-applied score, not a naive one.
-      final rpcRes = await husbandClient
-          .rpc('get_couple_scoreboard', params: {'p_window_days': windowDays});
-      final rows = (rpcRes as List)
-          .map((r) => Map<String, dynamic>.from(r as Map))
-          .toList();
+      Future<Map<String, dynamic>> wifeRowAs(SupabaseClient client) async {
+        final res = await client
+            .rpc('get_couple_scoreboard', params: {'p_window_days': windowDays});
+        final rows =
+            (res as List).map((r) => Map<String, dynamic>.from(r as Map)).toList();
+        expect(rows.length, 2);
+        return rows.firstWhere((r) => r['member_id'] == wifeId);
+      }
 
-      expect(rows.length, 2);
-      final wifeRow = rows.firstWhere((r) => r['member_id'] == wifeId);
+      // --- (2) Her own view applies her PRIVATE exemption: 3 non-exempt
+      // days in the 5-day window, all fully prayed.
+      final own = await wifeRowAs(wifeClient);
+      expect(own['due'], 3 * 5);
+      expect(own['prayed'], 15);
+      expect(own['current_streak'], 3);
+      expect(own['longest_streak'], 3);
 
-      // Non-exempt days in the 5-day window: 3 (three/four/five days ago).
-      // due = 3 * 5 = 15. If the exemption were ignored, due would count
-      // all 5 window days => 25 — the two values must differ, and the
-      // returned due must be the exemption-applied (lower) one.
-      const naiveDueIfExemptionIgnored = windowDays * 5; // 25
-      const expectedDue = 3 * 5; // 15
-      expect(expectedDue, isNot(equals(naiveDueIfExemptionIgnored)));
-
-      expect(wifeRow['due'], expectedDue);
-      expect(wifeRow['prayed'], 15); // full 5/5 on all 3 non-exempt days
-      expect(wifeRow['current_streak'], 3);
-      expect(wifeRow['longest_streak'], 3);
+      // --- (3) Privacy: the husband's view must NOT apply a private
+      // exemption. Any exempt-adjusted number he sees would reveal which days
+      // were exempt (vary p_window_days and diff `due`). So all 5 days count.
+      final spouseView = await wifeRowAs(husbandClient);
+      expect(spouseView['due'], windowDays * 5);
+      expect(spouseView['prayed'], 15);
+      expect(spouseView['current_streak'], 0); // yesterday: 0 logged
+      expect(spouseView['longest_streak'], 3);
     },
   );
 }

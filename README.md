@@ -8,7 +8,7 @@ A private, two-person Flutter app helping a Muslim husband and wife grow closer 
 
 Design docs live in [`docs/superpowers/specs/`](docs/superpowers/specs/).
 
-> **Platforms:** iOS, Android, and macOS. **Web is not supported** — the local database (Drift/`sqlite3`) uses `dart:ffi`, which the web compiler forbids. **Windows/Linux desktop builds aren't a supported target** — untested, and one dependency (`mobile_scanner`, currently unused in-app) has no desktop-Windows implementation. A **Windows PC works fine as a dev machine** targeting an Android emulator/device; see [Windows setup](#windows-setup-dev-machine--android-target).
+> **Platforms:** iOS, Android, and macOS. **Web is not supported** — the local database (Drift/`sqlite3`) uses `dart:ffi`, which the web compiler forbids. **Windows/Linux desktop builds aren't a supported target** — they are untested. A **Windows PC works fine as a dev machine** targeting an Android emulator/device; see [Windows setup](#windows-setup-dev-machine--android-target).
 
 ---
 
@@ -48,7 +48,7 @@ Run `flutter doctor` after installing and resolve anything it flags before conti
 
 ## Windows setup (dev machine → Android target)
 
-This repo doesn't have a working Windows **desktop** build — it's untested, and `mobile_scanner` (a declared dependency, currently unused in-app) has no Windows implementation, so `flutter run -d windows` isn't guaranteed to build. A Windows PC is a fully supported **development machine** for building and running the app on **Android** though; these steps get you there. (macOS/Linux developers can skip to [Installation from scratch](#installation-from-scratch).)
+This repo doesn't have a working Windows **desktop** build — it's untested, so `flutter run -d windows` isn't guaranteed to build. A Windows PC is a fully supported **development machine** for building and running the app on **Android** though; these steps get you there. (macOS/Linux developers can skip to [Installation from scratch](#installation-from-scratch).)
 
 1. **Flutter** — [install for Windows](https://docs.flutter.dev/get-started/install/windows), add `flutter\bin` to `PATH`, then run `flutter doctor`.
 2. **Android Studio** — install it, then in *SDK Manager* install **Android SDK 34+**, and in *Device Manager* create at least one virtual device (emulator). `flutter doctor` should show the Android toolchain as ✅.

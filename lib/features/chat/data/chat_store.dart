@@ -96,19 +96,25 @@ class ChatStore {
         .write(ChatMessagesCompanion(status: Value(status)));
   }
 
-  Future<void> applyReceipt({
+  /// Returns the number of rows changed. Writes nothing (and so wakes no
+  /// watchers) when the row already has this status: the receipt stream
+  /// re-sends every message on each change, so most calls are repeats.
+  Future<int> applyReceipt({
     required String id,
     DateTime? deliveredAt,
     DateTime? readAt,
   }) async {
-    final status = readAt != null
-        ? 'read'
-        : (deliveredAt != null ? 'delivered' : null);
-    await (_db.update(_db.chatMessages)..where((t) => t.id.equals(id))).write(
+    if (readAt == null && deliveredAt == null) return 0;
+    final alreadyDone =
+        readAt != null ? const ['read'] : const ['delivered', 'read'];
+    final status = readAt != null ? 'read' : 'delivered';
+    return (_db.update(_db.chatMessages)
+          ..where((t) => t.id.equals(id) & t.status.isNotIn(alreadyDone)))
+        .write(
       ChatMessagesCompanion(
         deliveredAt: deliveredAt != null ? Value(deliveredAt) : const Value.absent(),
         readAt: readAt != null ? Value(readAt) : const Value.absent(),
-        status: status != null ? Value(status) : const Value.absent(),
+        status: Value(status),
       ),
     );
   }
@@ -182,11 +188,10 @@ class ChatStore {
     return [for (final r in rows) r.id];
   }
 
-  /// Locally mark every unread incoming message read (clears the unread count).
-  Future<void> markIncomingRead(String selfUserId) async {
+  /// Locally mark these messages read (clears them from the unread count).
+  Future<void> markRead(List<String> ids) async {
     await (_db.update(_db.chatMessages)
-          ..where((t) =>
-              t.senderId.isNotValue(selfUserId) & t.readAt.isNull()))
+          ..where((t) => t.id.isIn(ids) & t.readAt.isNull()))
         .write(ChatMessagesCompanion(readAt: Value(DateTime.now())));
   }
 }

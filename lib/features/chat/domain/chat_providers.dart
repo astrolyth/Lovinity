@@ -107,6 +107,7 @@ final receiptPumpProvider = Provider<void>((ref) {
       ref.read(chatRepositoryProvider).watchMyMessages(couple.id).listen((rows) async {
     for (final r in rows) {
       if (r['sender_id'] != selfId) continue; // only our own sent messages
+      if (r['delivered_at'] == null && r['read_at'] == null) continue;
       await store.applyReceipt(
         id: r['id'] as String,
         deliveredAt: r['delivered_at'] == null

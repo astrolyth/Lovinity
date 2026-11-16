@@ -306,14 +306,14 @@ class ChatService {
   Future<void> markConversationRead() async {
     final ids = await store.incomingUnreadIds(selfUserId);
     if (ids.isEmpty) return;
-    await store.markIncomingRead(selfUserId);
-    for (final id in ids) {
-      try {
-        await repo.markRead(id);
-      } catch (_) {
-        // best-effort; retried next time the chat is opened
-      }
-    }
+    // Mark locally only what the server accepted: a failed receipt stays
+    // unread here, so the next chat open retries it instead of losing it.
+    final done = <String>[];
+    await Future.wait([
+      for (final id in ids)
+        repo.markRead(id).then((_) => done.add(id), onError: (Object _) {}),
+    ]);
+    if (done.isNotEmpty) await store.markRead(done);
   }
 
   Future<void> _inboxLock = Future<void>.value();

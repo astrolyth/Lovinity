@@ -63,6 +63,10 @@ class ChatRepository {
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('couple_id', coupleId)
+        // shortcut: receipts only track the newest 500 messages; older ones
+        // keep their last status. Raise if couples reply to very old messages.
+        .order('created_at')
+        .limit(500)
         .map((rows) => [for (final r in rows) Map<String, dynamic>.from(r)]);
   }
 

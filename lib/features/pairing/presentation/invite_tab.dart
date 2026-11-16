@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../../core/motion/motion.dart';
@@ -318,57 +317,6 @@ class _ActiveInvite extends StatelessWidget {
         ),
 
         const SizedBox(height: LovSpace.xxl),
-        LovEnter(
-          delay: const Duration(milliseconds: 400),
-          child: LovCard(
-            variant: LovCardVariant.outlined,
-            padding: const EdgeInsets.all(LovSpace.xl),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(LovSpace.md),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(LovRadius.md),
-                  ),
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 800),
-                    curve: LovMotion.enter,
-                    builder: (context, t, child) => Opacity(
-                      opacity: t,
-                      child: Transform.scale(
-                        scale: 0.8 + 0.2 * t,
-                        child: child,
-                      ),
-                    ),
-                    child: QrImageView(
-                      data: 'lovinity://pair?code=${invite.code}',
-                      size: 180,
-                      eyeStyle: const QrEyeStyle(
-                        eyeShape: QrEyeShape.circle,
-                        color: Colors.black,
-                      ),
-                      dataModuleStyle: const QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.circle,
-                        color: Colors.black,
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: LovSpace.md),
-                Text(
-                  'Scan from their device',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: LovSpace.lg),
         LovEnter(
           delay: const Duration(milliseconds: 480),
           child: Row(

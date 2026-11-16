@@ -21,6 +21,7 @@ import {
   buildOAuthJwtClaims,
   isDeadTokenError,
   parseDispatchBody,
+  reusableToken,
   timingSafeEqual,
 } from "./logic.ts";
 
@@ -280,4 +281,20 @@ Deno.test("timingSafeEqual: false for different strings, including different len
   assert(!timingSafeEqual("Bearer abc123", "Bearer abc124"));
   assert(!timingSafeEqual("Bearer abc123", "Bearer abc12"));
   assert(!timingSafeEqual("", "Bearer abc123"));
+});
+
+// ---------------------------------------------------------------------------
+// reusableToken
+// ---------------------------------------------------------------------------
+
+Deno.test("reusableToken: reuses a fresh token for the same account", () => {
+  const cache = { value: "tok", clientEmail: "a@x", expiresAt: 1000 };
+  assertEquals(reusableToken(cache, "a@x", 900), "tok");
+});
+
+Deno.test("reusableToken: refetches within 60s of expiry, for another account, or with no cache", () => {
+  const cache = { value: "tok", clientEmail: "a@x", expiresAt: 1000 };
+  assertEquals(reusableToken(cache, "a@x", 940), null);
+  assertEquals(reusableToken(cache, "b@x", 900), null);
+  assertEquals(reusableToken(null, "a@x", 900), null);
 });

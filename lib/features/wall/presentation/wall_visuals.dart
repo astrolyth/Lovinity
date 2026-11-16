@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -74,12 +73,17 @@ class WallThumbnail extends StatelessWidget {
                     ),
             ),
             if (url != null)
-              CachedNetworkImage(
-                imageUrl: url,
+              Image.network(
+                url,
                 fit: BoxFit.cover,
-                fadeInDuration: LovMotion.standard,
-                placeholder: (_, _) => const SizedBox.shrink(),
-                errorWidget: (_, _, _) => const SizedBox.shrink(),
+                frameBuilder: (_, child, frame, wasSync) => wasSync
+                    ? child
+                    : AnimatedOpacity(
+                        opacity: frame == null ? 0 : 1,
+                        duration: LovMotion.standard,
+                        child: child,
+                      ),
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             if (play)
               Center(

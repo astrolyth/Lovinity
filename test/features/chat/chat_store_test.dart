@@ -53,7 +53,20 @@ void main() {
     expect(await store.messageExists('ghost'), isFalse);
   });
 
-  test('watchUnreadCount counts only incoming unread; markIncomingRead clears',
+  test('applyReceipt writes nothing when the status is already applied', () async {
+    await store.upsertMessage(id: 'm1', senderId: 'me', body: 'hi',
+        createdAt: DateTime(2026), status: 'sent');
+    expect(await store.applyReceipt(id: 'm1', deliveredAt: DateTime(2026, 1, 2)), 1);
+    expect(await store.applyReceipt(id: 'm1', deliveredAt: DateTime(2026, 1, 2)), 0);
+    expect(await store.applyReceipt(id: 'm1', readAt: DateTime(2026, 1, 3)), 1);
+    expect(await store.applyReceipt(
+        id: 'm1', deliveredAt: DateTime(2026, 1, 2), readAt: DateTime(2026, 1, 3)), 0);
+    // A late "delivered" must not downgrade a read message.
+    expect(await store.applyReceipt(id: 'm1', deliveredAt: DateTime(2026, 1, 4)), 0);
+    expect((await store.watchConversation().first).single.status, 'read');
+  });
+
+  test('watchUnreadCount counts only incoming unread; markRead clears',
       () async {
     const me = 'me';
     // Incoming (from spouse), unread.
@@ -72,7 +85,7 @@ void main() {
     expect(await store.watchUnreadCount(me).first, 2);
     expect((await store.incomingUnreadIds(me)).toSet(), {'in1', 'in2'});
 
-    await store.markIncomingRead(me);
+    await store.markRead(['in1', 'in2']);
     expect(await store.watchUnreadCount(me).first, 0);
     expect(await store.incomingUnreadIds(me), isEmpty);
   });
