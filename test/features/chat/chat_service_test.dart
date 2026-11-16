@@ -198,9 +198,9 @@ class _FakeChatRepo extends ChatRepository {
   final Set<String> failMarkRead = {};
 
   @override
-  Future<void> markRead(String messageId) async {
-    markReadCalls.add(messageId);
-    if (failMarkRead.contains(messageId)) throw Exception('offline');
+  Future<void> markRead(List<String> messageIds) async {
+    markReadCalls.addAll(messageIds);
+    if (messageIds.any(failMarkRead.contains)) throw Exception('offline');
   }
 
   @override
@@ -663,8 +663,8 @@ void main() {
     expect(repo.markReadCalls.length, 2);
   });
 
-  test('markConversationRead keeps a message unread when its receipt fails, '
-      'so the next open retries it', () async {
+  test('markConversationRead keeps messages unread when the receipt call fails, '
+      'so the next open retries them', () async {
     await store.upsertMessage(id: 'in1', senderId: spouseUserId, body: 'a',
         createdAt: DateTime(2026, 1, 1), status: 'delivered');
     await store.upsertMessage(id: 'in2', senderId: spouseUserId, body: 'b',
@@ -672,7 +672,7 @@ void main() {
     repo.failMarkRead.add('in2');
 
     await chat.markConversationRead();
-    expect(await store.incomingUnreadIds(selfUserId), ['in2']);
+    expect((await store.incomingUnreadIds(selfUserId)).toSet(), {'in1', 'in2'});
 
     repo.failMarkRead.clear();
     await chat.markConversationRead();

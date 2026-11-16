@@ -301,19 +301,18 @@ class ChatService {
   }
 
   /// Mark every unread incoming message read: locally (clears the unread badge)
-  /// and on the server (so the spouse's sent messages flip to "read"). Server
-  /// calls are best-effort — a failure doesn't block the local badge clearing.
+  /// and on the server (so the spouse's sent messages flip to "read"), in one
+  /// request. If the server call fails (offline), nothing is marked locally,
+  /// so the next chat open retries instead of losing the receipts.
   Future<void> markConversationRead() async {
     final ids = await store.incomingUnreadIds(selfUserId);
     if (ids.isEmpty) return;
-    // Mark locally only what the server accepted: a failed receipt stays
-    // unread here, so the next chat open retries it instead of losing it.
-    final done = <String>[];
-    await Future.wait([
-      for (final id in ids)
-        repo.markRead(id).then((_) => done.add(id), onError: (Object _) {}),
-    ]);
-    if (done.isNotEmpty) await store.markRead(done);
+    try {
+      await repo.markRead(ids);
+    } catch (_) {
+      return;
+    }
+    await store.markRead(ids);
   }
 
   Future<void> _inboxLock = Future<void>.value();

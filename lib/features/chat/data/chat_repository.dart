@@ -76,8 +76,8 @@ class ChatRepository {
   Future<void> markDelivered(String messageId) =>
       _client.rpc('mark_delivered', params: {'p_message_id': messageId});
 
-  Future<void> markRead(String messageId) =>
-      _client.rpc('mark_read', params: {'p_message_id': messageId});
+  Future<void> markRead(List<String> messageIds) =>
+      _client.rpc('mark_read_many', params: {'p_message_ids': messageIds});
 
   static const _attachmentBucket = 'chat-media';
 
