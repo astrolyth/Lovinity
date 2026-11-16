@@ -1,10 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:uuid/uuid.dart';
 
 import '../domain/wall_models.dart';
 
 /// Supabase access for Our Wall. Rows are protected by RLS (couple members
 /// only; authors alone may delete). Streams are realtime and re-emit the
 /// full list on every change.
+const _bucket = 'wall-media';
+
 class WallRepository {
   WallRepository(this._client);
 
@@ -70,8 +76,72 @@ class WallRepository {
     return WallItem.fromRow(row);
   }
 
-  Future<void> deleteItem(String itemId) =>
-      _client.from('feed_items').delete().eq('id', itemId);
+  /// One medium per post. Uploads first, then inserts; a failed insert removes
+  /// the uploaded files again.
+  Future<WallItem> addMediaItem({
+    required String coupleId,
+    required String userId,
+    required Uint8List bytes,
+    required String mimeType,
+    Uint8List? thumbnailBytes,
+    WallCollection? collection,
+    String? note,
+  }) async {
+    final isVideo = mimeType.startsWith('video/');
+    final id = const Uuid().v4();
+    final dir = '$coupleId/$id';
+    final mediaPath = '$dir/media.${isVideo ? 'mp4' : 'jpg'}';
+    final thumbPath = '$dir/thumb.jpg';
+    final bucket = _client.storage.from(_bucket);
+    final uploaded = <String>[];
+    try {
+      await bucket.uploadBinary(mediaPath, bytes,
+          fileOptions: FileOptions(contentType: mimeType, upsert: false));
+      uploaded.add(mediaPath);
+      if (isVideo && thumbnailBytes != null) {
+        await bucket.uploadBinary(thumbPath, thumbnailBytes,
+            fileOptions:
+                const FileOptions(contentType: 'image/jpeg', upsert: false));
+        uploaded.add(thumbPath);
+      }
+      final row = await _client
+          .from('feed_items')
+          .insert({
+            'id': id,
+            'couple_id': coupleId,
+            'added_by': userId,
+            'source': isVideo ? WallSource.video.key : WallSource.photo.key,
+            'media_url': mediaPath,
+            'media_mime': mimeType,
+            'collection': collection?.key,
+            'note': note,
+          })
+          .select()
+          .single();
+      return WallItem.fromRow(row);
+    } catch (_) {
+      if (uploaded.isNotEmpty) {
+        try {
+          await bucket.remove(uploaded);
+        } catch (_) {}
+      }
+      rethrow;
+    }
+  }
+
+  Future<String> signedUrl(String path) =>
+      _client.storage.from(_bucket).createSignedUrl(path, 3600);
+
+  /// Only the author can delete (RLS). Row first, then files, best effort.
+  Future<void> deleteItem(WallItem item) async {
+    await _client.from('feed_items').delete().eq('id', item.id);
+    if (!item.hasMedia) return;
+    try {
+      await _client.storage.from(_bucket).remove([item.mediaPath!, ?item.thumbPath]);
+    } catch (_) {
+      // shortcut: a failed file delete leaves an orphan in storage; add a cleanup job if storage cost matters.
+    }
+  }
 
   Future<void> setPinned(String itemId, bool pinned) =>
       _client.from('feed_items').update({'is_pinned': pinned}).eq('id', itemId);

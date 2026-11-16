@@ -16,6 +16,7 @@ LinearGradient wallSourceGradient(WallSource source) {
     WallSource.tiktok => const [Color(0xFF0F1A24), Color(0xFF2D6E7E), Color(0xFF8FD3D9)],
     WallSource.article => const [Color(0xFF10243A), Color(0xFF2F5D8A), Color(0xFF8FB7D9)],
     WallSource.note => const [Color(0xFF241A3A), Color(0xFF5A4A9A), Color(0xFFB8A8F0)],
+    WallSource.photo || WallSource.video => const [Color(0xFF2A1A1A), Color(0xFF8A4A3A), Color(0xFFE0B09F)],
   };
   return LinearGradient(
     begin: Alignment.topLeft,
@@ -31,6 +32,8 @@ IconData wallSourceIcon(WallSource source) => switch (source) {
       WallSource.tiktok => Icons.music_note_rounded,
       WallSource.article => Icons.article_rounded,
       WallSource.note => Icons.sticky_note_2_rounded,
+      WallSource.photo => Icons.photo_rounded,
+      WallSource.video => Icons.videocam_rounded,
     };
 
 class WallThumbnail extends StatelessWidget {

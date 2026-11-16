@@ -3,7 +3,10 @@
 // test/features/scoring/scoreboard_repository_test.dart: real users are
 // signed up and paired through the app's own RPCs so RLS is exercised for
 // real (mocktail can't stub the postgrest builder chain).
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lovinity/features/wall/data/wall_repository.dart';
 import 'package:lovinity/features/wall/domain/wall_models.dart';
@@ -87,14 +90,14 @@ void main() {
         coupleId: coupleId, userId: userA, source: WallSource.note, note: 'pin me');
     await repoB.setPinned(item.id, true);
     await repoB.setCollection(item.id, WallCollection.home);
-    await repoB.deleteItem(item.id); // RLS: silently affects 0 rows
+    await repoB.deleteItem(item); // RLS: silently affects 0 rows
 
     final after = (await repoA.watchItems(coupleId).first)
         .firstWhere((i) => i.id == item.id);
     expect(after.isPinned, isTrue);
     expect(after.collection, WallCollection.home);
 
-    await repoA.deleteItem(item.id);
+    await repoA.deleteItem(item);
     final gone = await repoA.watchItems(coupleId).first;
     expect(gone.any((i) => i.id == item.id), isFalse);
   });
@@ -157,5 +160,86 @@ void main() {
           coupleId: coupleId, userId: userA, url: 'ftp://x.example', source: WallSource.article),
       throwsA(isA<PostgrestException>()),
     );
+  });
+
+  group('media', () {
+    final bytes = Uint8List.fromList(List.generate(64, (i) => i));
+
+    Future<List<FileObject>> listDir(String dir) =>
+        clientA.storage.from('wall-media').list(path: dir);
+
+    test('photo: uploads, signed URL downloads, spouse reads, outsider cannot',
+        () async {
+      final item = await repoA.addMediaItem(
+          coupleId: coupleId,
+          userId: userA,
+          bytes: bytes,
+          mimeType: 'image/jpeg',
+          note: 'us');
+      expect(item.hasMedia, isTrue);
+      expect(item.source, WallSource.photo);
+      expect(item.mediaMime, 'image/jpeg');
+      expect(item.mediaPath, '$coupleId/${item.id}/media.jpg');
+      expect(item.thumbPath, item.mediaPath);
+
+      for (final repo in [repoA, repoB]) {
+        final res = await http.get(Uri.parse(await repo.signedUrl(item.thumbPath!)));
+        expect(res.statusCode, 200);
+        expect(res.bodyBytes, isNotEmpty);
+      }
+      await expectLater(repoC.signedUrl(item.mediaPath!), throwsA(anything));
+    });
+
+    test('video: mov mime stores mp4 path and uploads the thumbnail', () async {
+      final item = await repoA.addMediaItem(
+          coupleId: coupleId,
+          userId: userA,
+          bytes: bytes,
+          mimeType: 'video/quicktime',
+          thumbnailBytes: bytes);
+      expect(item.source, WallSource.video);
+      expect(item.mediaMime, 'video/quicktime');
+      expect(item.mediaPath, '$coupleId/${item.id}/media.mp4');
+      expect(item.thumbPath, '$coupleId/${item.id}/thumb.jpg');
+      final res = await http.get(Uri.parse(await repoB.signedUrl(item.thumbPath!)));
+      expect(res.statusCode, 200);
+      expect(res.bodyBytes, isNotEmpty);
+    });
+
+    test('failed insert leaves no object behind', () async {
+      const badCouple = '00000000-0000-0000-0000-000000000000';
+      // Storage RLS rejects the upload itself for a foreign couple, so the
+      // insert-failure path is exercised with a valid folder but a spoofed author.
+      await expectLater(
+        repoA.addMediaItem(
+            coupleId: coupleId, userId: userB, bytes: bytes, mimeType: 'image/jpeg'),
+        throwsA(isA<PostgrestException>()),
+      );
+      await expectLater(
+        repoA.addMediaItem(
+            coupleId: badCouple, userId: userA, bytes: bytes, mimeType: 'image/jpeg'),
+        throwsA(anything),
+      );
+      expect(await listDir(badCouple), isEmpty);
+      final dirs = await listDir(coupleId);
+      final items = (await repoA.watchItems(coupleId).first).map((i) => i.id).toSet();
+      expect(dirs.where((d) => !items.contains(d.name)), isEmpty);
+    });
+
+    test('deleteItem removes the row and both objects via the Storage API',
+        () async {
+      final item = await repoA.addMediaItem(
+          coupleId: coupleId,
+          userId: userA,
+          bytes: bytes,
+          mimeType: 'video/mp4',
+          thumbnailBytes: bytes);
+      final dir = '$coupleId/${item.id}';
+      expect(await listDir(dir), hasLength(2));
+      await repoA.deleteItem(item);
+      expect(await listDir(dir), isEmpty);
+      final gone = await repoA.watchItems(coupleId).first;
+      expect(gone.any((i) => i.id == item.id), isFalse);
+    });
   });
 }

@@ -26,7 +26,9 @@ enum WallSource {
   instagram('Instagram', isVideo: true),
   tiktok('TikTok', isVideo: true),
   article('Article'),
-  note('Note');
+  note('Note'),
+  photo('Photo'),
+  video('Video', isVideo: true);
 
   const WallSource(this.label, {this.isVideo = false});
   final String label;
@@ -84,6 +86,8 @@ class WallItem {
     this.imageUrl,
     this.collection,
     this.note,
+    this.mediaPath,
+    this.mediaMime,
   });
 
   final String id;
@@ -96,6 +100,8 @@ class WallItem {
   final WallSource source;
   final WallCollection? collection;
   final String? note;
+  final String? mediaPath;
+  final String? mediaMime;
   final bool isPinned;
   final DateTime createdAt;
 
@@ -113,9 +119,21 @@ class WallItem {
           (url == null ? WallSource.note : WallSource.article),
       collection: WallCollection.fromKey(row['collection'] as String?),
       note: row['note'] as String?,
+      mediaPath: row['media_url'] as String?,
+      mediaMime: row['media_mime'] as String?,
       isPinned: row['is_pinned'] as bool? ?? false,
       createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
     );
+  }
+
+  bool get hasMedia => mediaPath != null;
+
+  /// Storage path of the preview image: the poster for videos, the file itself for photos.
+  String? get thumbPath {
+    final p = mediaPath;
+    if (p == null) return null;
+    if (source != WallSource.video) return p;
+    return '${p.substring(0, p.lastIndexOf('/'))}/thumb.jpg';
   }
 
   /// e.g. `youtube.com`; null for notes.

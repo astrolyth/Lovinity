@@ -90,4 +90,22 @@ void main() {
     expect(domainOf('https://m.youtube.com/watch'), 'm.youtube.com');
     expect(domainOf('not a url'), isNull);
   });
+
+  test('media thumbPath: video -> thumb.jpg sibling, photo -> the file', () {
+    Map<String, dynamic> row(String source, String path) => {
+          'id': 'i1',
+          'couple_id': 'c1',
+          'added_by': 'u1',
+          'source': source,
+          'media_url': path,
+          'media_mime': 'x/y',
+          'created_at': '2026-10-08T10:00:00+00:00',
+        };
+    final v = WallItem.fromRow(row('video', 'c/i/media.mp4'));
+    expect(v.hasMedia, isTrue);
+    expect(v.thumbPath, 'c/i/thumb.jpg');
+    expect(v.source.isVideo, isTrue);
+    final p = WallItem.fromRow(row('photo', 'c/i/media.jpg'));
+    expect(p.thumbPath, p.mediaPath);
+  });
 }

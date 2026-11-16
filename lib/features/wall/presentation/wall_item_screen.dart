@@ -130,7 +130,7 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
   Future<void> _deleteItem(WallItem item) async {
     if (!await _confirm('Delete from our Wall?', 'This removes it for both of you.')) return;
     try {
-      await ref.read(wallRepositoryProvider).deleteItem(item.id);
+      await ref.read(wallRepositoryProvider).deleteItem(item);
       if (!mounted) return;
       await Navigator.of(context).maybePop();
     } catch (_) {

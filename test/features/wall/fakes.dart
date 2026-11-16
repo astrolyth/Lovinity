@@ -96,7 +96,7 @@ class FakeWallRepository extends Fake implements WallRepository {
   }
 
   @override
-  Future<void> deleteItem(String itemId) async => deleted.add(itemId);
+  Future<void> deleteItem(WallItem item) async => deleted.add(item.id);
 
   @override
   Future<void> setPinned(String itemId, bool pinned) async {}
