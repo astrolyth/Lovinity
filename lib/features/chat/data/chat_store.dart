@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:drift/drift.dart';
 import '../../../core/storage/signal_db.dart';
 
@@ -31,6 +33,64 @@ class ChatStore {
         );
   }
 
+  Future<void> upsertAttachmentMessage({
+    required String id,
+    required String senderId,
+    required String attachmentKind, // 'photo' | 'video'
+    required String mimeType,
+    required int sizeBytes,
+    int? width,
+    int? height,
+    int? durationMs,
+    required String storageKey,
+    required Uint8List encKey,
+    required Uint8List nonce,
+    required Uint8List thumbnailBytes,
+    String? caption,
+    String? replyToMessageId,
+    required DateTime createdAt,
+    required String status,
+    String? localMediaPath,
+    String downloadStatus = 'none',
+  }) {
+    return _db.into(_db.chatMessages).insertOnConflictUpdate(
+          ChatMessagesCompanion.insert(
+            id: id,
+            senderId: senderId,
+            body: Value(caption),
+            replyToMessageId: Value(replyToMessageId),
+            createdAt: createdAt,
+            status: status,
+            attachmentKind: Value(attachmentKind),
+            mimeType: Value(mimeType),
+            sizeBytes: Value(sizeBytes),
+            width: Value(width),
+            height: Value(height),
+            durationMs: Value(durationMs),
+            storageKey: Value(storageKey),
+            encKey: Value(encKey),
+            nonce: Value(nonce),
+            thumbnailBytes: Value(thumbnailBytes),
+            localMediaPath: Value(localMediaPath),
+            downloadStatus: Value(downloadStatus),
+          ),
+        );
+  }
+
+  Future<void> updateDownloadStatus({
+    required String id,
+    required String status,
+    String? localMediaPath,
+  }) {
+    return (_db.update(_db.chatMessages)..where((t) => t.id.equals(id))).write(
+      ChatMessagesCompanion(
+        downloadStatus: Value(status),
+        localMediaPath:
+            localMediaPath != null ? Value(localMediaPath) : const Value.absent(),
+      ),
+    );
+  }
+
   Future<void> setStatus(String id, String status) {
     return (_db.update(_db.chatMessages)..where((t) => t.id.equals(id)))
         .write(ChatMessagesCompanion(status: Value(status)));
@@ -58,6 +118,11 @@ class ChatStore {
           ..where((t) => t.id.equals(id)))
         .getSingleOrNull();
     return row != null;
+  }
+
+  Future<ChatMessageRow?> messageById(String id) {
+    return (_db.select(_db.chatMessages)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
   }
 
   Future<void> applyReaction({

@@ -4,5 +4,18 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<!--
+	  Shared container for the home-screen widget. The widget extension is a
+	  separate process with its own container, so this App Group is the only way
+	  the snapshot written by the app becomes readable by the widget.
+
+	  Must stay identical to ios/LovinityWidget/LovinityWidget.entitlements and
+	  to kWidgetAppGroupId in lib/features/widget/domain/widget_providers.dart.
+	  A mismatch is silent: everything builds, and the widget reads nothing.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.lovinity.lovinity</string>
+	</array>
 </dict>
 </plist>

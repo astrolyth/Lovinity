@@ -36,22 +36,33 @@ class HijriDate extends StatelessWidget {
       return Text(hijriFirst ? hijriLabel : gregLabel, style: effectiveStyle);
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          hijriFirst ? hijriLabel : gregLabel,
-          style: effectiveStyle,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: LovSpace.sm),
-          child: Text('/', style: effectiveStyle),
-        ),
-        Text(
-          hijriFirst ? gregLabel : hijriLabel,
-          style: effectiveStyle,
-        ),
-      ],
+    // Both labels are intrinsically sized, so on a narrow screen the pair can
+    // be wider than the row allows -- a long Hijri month beside a long weekday
+    // ("12 Rabi al-Thani 1448 AH / Sunday, 12 October") overflowed the home
+    // header on an iPhone. Scale the whole line down to fit rather than
+    // ellipsizing it: a half-truncated date reads as a bug, and shrinking
+    // keeps both calendars legible. `scaleDown` only ever shrinks, so the
+    // common case (room to spare) still renders at the normal size.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: AlignmentDirectional.centerStart,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            hijriFirst ? hijriLabel : gregLabel,
+            style: effectiveStyle,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: LovSpace.sm),
+            child: Text('/', style: effectiveStyle),
+          ),
+          Text(
+            hijriFirst ? gregLabel : hijriLabel,
+            style: effectiveStyle,
+          ),
+        ],
+      ),
     );
   }
 }

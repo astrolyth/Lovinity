@@ -25,16 +25,36 @@ class PrayerLogCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final summary = ref.watch(prayerDaySummaryProvider);
+    final view = ref.watch(prayerDayViewProvider);
+    final offset = ref.watch(prayerLogDayOffsetProvider);
 
     final ownCount = summary.ownCount;
     final spouseCount = summary.spouseCount;
-    final together = summary.togetherWindowSeconds;
 
-    String togethernessLabel() {
-      if (together == null) return '';
-      if (together < 60 * 15) return 'together';
-      if (together < 60 * 60) return 'within an hour';
-      return 'today';
+    // Only ever claims shared time when the check-ins really were close. A
+    // couple ten hours apart matches on completion but never on the clock, and
+    // the old copy called that "together".
+    String summaryLine() {
+      if (spouseCount == 0) {
+        // "Your spouse hasn't logged yet" is a true statement that reads as a
+        // false one when her day started twenty minutes ago. Say which it is.
+        final progress = view == null
+            ? ''
+            : spouseDayProgressLabel(view: view, offset: offset);
+        return progress.isEmpty
+            ? "You're first. Your spouse hasn't logged yet."
+            : "You're first — $progress.";
+      }
+      if (summary.sharedInTime) {
+        final gap = summary.closestGap!;
+        final closeness =
+            gap.inMinutes < 15 ? 'together' : 'within an hour of you';
+        return '${summary.matchedCount} prayed $closeness.';
+      }
+      if (summary.matchedCount > 0) {
+        return '${summary.matchedCount} of 5 matched with your spouse.';
+      }
+      return '$spouseCount from your spouse.';
     }
 
     return LovCard(
@@ -79,18 +99,19 @@ class PrayerLogCard extends ConsumerWidget {
           Row(
             children: [
               Icon(
-                Icons.favorite_outline_rounded,
+                // Fills on completion parity — both having prayed the same
+                // prayer, each within their own day. Reachable regardless of
+                // how far apart they are, unlike a clock-proximity test.
+                summary.matchedCount > 0
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_outline_rounded,
                 size: 14,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
               ),
               const SizedBox(width: LovSpace.xs),
               Expanded(
                 child: Text(
-                  spouseCount == 0
-                      ? "You're first. Your spouse hasn't logged yet."
-                      : together != null
-                          ? '$spouseCount together ${togethernessLabel()}.'
-                          : '$spouseCount from your spouse today.',
+                  summaryLine(),
                   style: theme.textTheme.bodySmall,
                 ),
               ),

@@ -7,7 +7,6 @@ import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
-import '../domain/daily_content_providers.dart';
 import '../domain/question_providers.dart';
 
 class QuestionCard extends ConsumerWidget {
@@ -16,14 +15,24 @@ class QuestionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final content = ref.watch(dailyContentProvider).asData?.value;
+    // The queue question, not the calendar one: `questionAnswersProvider`
+    // below is scoped to the queue, so reading the question from anywhere
+    // else would badge this card with answers to a different question.
+    // `asData?.value`: the question screen's "Next question" invalidate
+    // refreshes seamlessly (the state stays AsyncData carrying the previous
+    // value), so this card doesn't blank mid-refetch either way. The two
+    // accessors diverge on a dependency-driven reload or an error carrying a
+    // previous value, where `.value` would leave a stale question sitting on
+    // the home feed -- hiding the card via the null check below is honest.
+    final q = ref.watch(currentQuestionProvider).asData?.value;
     final session = ref.watch(authSessionProvider).asData?.value;
     final ownName = ref.watch(ownProfileProvider).asData?.value?.displayName;
     final spouseName =
         ref.watch(spouseProfileProvider).asData?.value?.displayName;
     final answers = ref.watch(questionAnswersProvider).asData?.value ?? const [];
 
-    final q = content?.question;
+    // Covers both "not loaded yet" and "queue exhausted": the card just
+    // disappears from home rather than showing an empty state of its own.
     if (q == null) return const SizedBox.shrink();
 
     final myId = session?.user.id;

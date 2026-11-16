@@ -1,4 +1,6 @@
 // lib/features/chat/data/chat_repository.dart
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/crypto/signal_session_service.dart';
 
@@ -72,4 +74,20 @@ class ChatRepository {
 
   Future<void> markRead(String messageId) =>
       _client.rpc('mark_read', params: {'p_message_id': messageId});
+
+  static const _attachmentBucket = 'chat-media';
+
+  /// Uploads opaque AES-GCM ciphertext. The explicit content-type matters:
+  /// without it Supabase Storage defaults the object to
+  /// `text/plain;charset=UTF-8`, which is wrong for random binary and invites
+  /// transcoding/sniffing on the way back down.
+  Future<void> uploadAttachment(String storageKey, Uint8List ciphertext) =>
+      _client.storage.from(_attachmentBucket).uploadBinary(
+            storageKey,
+            ciphertext,
+            fileOptions: const FileOptions(contentType: 'application/octet-stream'),
+          );
+
+  Future<Uint8List> downloadAttachment(String storageKey) =>
+      _client.storage.from(_attachmentBucket).download(storageKey);
 }

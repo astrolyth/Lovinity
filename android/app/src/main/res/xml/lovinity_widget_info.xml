@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget metadata.
+
+  `updatePeriodMillis` is 0 on purpose. The system clamps it to 30 minutes
+  minimum anyway, and the app already pushes an update the moment anything
+  changes (see widgetPublisherProvider). Setting a period would wake the
+  provider on the system's schedule to redraw data that has not moved, spending
+  battery for nothing.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/lovinity_widget"
+    android:previewLayout="@layout/lovinity_widget"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:description="@string/lovinity_widget_description" />

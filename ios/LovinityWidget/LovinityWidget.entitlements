@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  The App Group is the ONLY channel between the Flutter app and this
+	  extension: they are separate processes with separate containers, and the
+	  snapshot is written to a UserDefaults suite backed by this group.
+
+	  The identical group must also be enabled on the Runner target. If it is
+	  present on only one side, both build and run cleanly and the widget simply
+	  reads nothing forever — there is no error to follow.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.lovinity.lovinity</string>
+	</array>
+</dict>
+</plist>

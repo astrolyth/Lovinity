@@ -1,7 +1,10 @@
 // lib/features/chat/domain/chat_service.dart
 import 'dart:typed_data';
 import 'package:uuid/uuid.dart';
+import '../../../core/crypto/attachment_crypto.dart';
+import '../../../core/crypto/letter_crypto.dart';
 import '../../../core/crypto/signal_session_service.dart';
+import '../../../core/storage/media_cache.dart';
 import '../data/chat_repository.dart';
 import '../data/chat_store.dart';
 import 'chat_payload.dart';
@@ -14,6 +17,9 @@ class ChatService {
     required this.selfUserId,
     required this.spouseUserId,
     required this.selfDeviceNum,
+    required this.coupleId,
+    required this.cache,
+    this.letterKeys,
   });
 
   final SignalSessionService session;
@@ -22,6 +28,14 @@ class ChatService {
   final String selfUserId;
   final String spouseUserId;
   final int selfDeviceNum;
+  final String coupleId;
+  final MediaCache cache;
+
+  /// Persists the couple's future-letter key when the spouse's device sends
+  /// it. Optional so existing ChatService construction sites (and tests that
+  /// only exercise messaging) need no change; a null store simply drops the
+  /// control message, and the sender re-delivers on the next request.
+  final LetterKeyService? letterKeys;
 
   /// Bounded retry for envelopes that fail to decrypt (e.g. corrupt
   /// ciphertext, or a session we can never rebuild). Counted in-memory only:
@@ -70,6 +84,193 @@ class ChatService {
         // The optimistic write itself may have failed, so there's no row to
         // mark 'failed' against. Nothing more we can do here.
       }
+    }
+  }
+
+  /// Delivers the couple's future-letter key to the spouse's devices.
+  ///
+  /// Unlike [sendText] this writes no local message row: it is a control
+  /// message, and a letter key appearing in the chat thread would be both
+  /// confusing and a disclosure of the surprise it protects.
+  ///
+  /// Returns whether delivery succeeded so the caller can decide whether it is
+  /// safe to seal a letter yet — writing one the spouse can never open is
+  /// worse than refusing to write it.
+  Future<bool> sendLetterKey(Uint8List letterKey) async {
+    try {
+      final copies = await session.encryptFor(
+        recipientUserId: spouseUserId,
+        plaintext: encodePayload(
+          LetterKeyPayload(coupleId: coupleId, letterKey: letterKey),
+        ),
+      );
+      await repo.sendEnvelopes(
+        senderDeviceNum: selfDeviceNum,
+        copies: copies,
+        messageId: const Uuid().v4(),
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> sendPhoto({
+    required Uint8List bytes,
+    required String mimeType,
+    required int width,
+    required int height,
+    required Uint8List thumbnailBytes,
+    String? caption,
+    String? replyToMessageId,
+  }) {
+    return _sendAttachment(
+      kind: AttachmentKind.photo,
+      bytes: bytes,
+      mimeType: mimeType,
+      width: width,
+      height: height,
+      durationMs: null,
+      thumbnailBytes: thumbnailBytes,
+      caption: caption,
+      replyToMessageId: replyToMessageId,
+    );
+  }
+
+  Future<void> sendVideo({
+    required Uint8List bytes,
+    required String mimeType,
+    required int durationMs,
+    required Uint8List thumbnailBytes,
+    String? caption,
+    String? replyToMessageId,
+  }) {
+    return _sendAttachment(
+      kind: AttachmentKind.video,
+      bytes: bytes,
+      mimeType: mimeType,
+      width: null,
+      height: null,
+      durationMs: durationMs,
+      thumbnailBytes: thumbnailBytes,
+      caption: caption,
+      replyToMessageId: replyToMessageId,
+    );
+  }
+
+  Future<void> _sendAttachment({
+    required AttachmentKind kind,
+    required Uint8List bytes,
+    required String mimeType,
+    required int? width,
+    required int? height,
+    required int? durationMs,
+    required Uint8List thumbnailBytes,
+    required String? caption,
+    required String? replyToMessageId,
+  }) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+    try {
+      final storageKey = '$coupleId/$id';
+
+      // Mint the per-attachment key/nonce BEFORE encrypting. Generating key
+      // material never touches the attachment bytes, so it's instant even for
+      // a 200MB video -- only `encryptAttachment` itself is expensive. Having
+      // it up front lets the optimistic row (with its thumbnail) land in the
+      // conversation immediately, the same way sendText's row does, instead of
+      // the UI looking frozen until encryption finishes.
+      final keyMaterial = await generateAttachmentKey();
+
+      await store.upsertAttachmentMessage(
+        id: id,
+        senderId: selfUserId,
+        attachmentKind: kind.name,
+        mimeType: mimeType,
+        sizeBytes: bytes.length,
+        width: width,
+        height: height,
+        durationMs: durationMs,
+        storageKey: storageKey,
+        encKey: keyMaterial.key,
+        nonce: keyMaterial.nonce,
+        thumbnailBytes: thumbnailBytes,
+        caption: caption,
+        replyToMessageId: replyToMessageId,
+        createdAt: now,
+        status: 'sending',
+        // Not 'downloaded' yet: there is no localMediaPath to point at until
+        // the cache write below succeeds, so don't claim a local copy exists.
+        downloadStatus: 'none',
+      );
+
+      // The expensive part. Same key/nonce as the row just written and as the
+      // payload built below -- they must all agree or the spouse's download
+      // can never decrypt.
+      final enc = await encryptAttachment(bytes, keyMaterial: keyMaterial);
+
+      // The sender already holds the plaintext -- cache it locally so opening
+      // your own just-sent photo/video never re-downloads it from Storage.
+      final localPath = await cache.write(id, bytes);
+
+      await repo.uploadAttachment(storageKey, enc.ciphertext);
+
+      // Ciphertext is uploaded and the plaintext is cached: the sender's own
+      // copy is ready, no download round-trip needed.
+      await store.updateDownloadStatus(
+          id: id, status: 'downloaded', localMediaPath: localPath);
+
+      final payload = AttachmentPayload(
+        kind: kind,
+        mimeType: mimeType,
+        sizeBytes: bytes.length,
+        width: width,
+        height: height,
+        durationMs: durationMs,
+        storageKey: storageKey,
+        encKey: enc.key,
+        nonce: enc.nonce,
+        thumbnailBytes: thumbnailBytes,
+        caption: caption,
+        replyToMessageId: replyToMessageId,
+      );
+      final copies = await session.encryptFor(
+        recipientUserId: spouseUserId,
+        plaintext: encodePayload(payload),
+      );
+      await repo.sendEnvelopes(
+          senderDeviceNum: selfDeviceNum, copies: copies, messageId: id);
+      await store.setStatus(id, 'sent');
+    } catch (_) {
+      try {
+        await store.setStatus(id, 'failed');
+      } catch (_) {
+        // The optimistic write itself may have failed; nothing more to do.
+      }
+    }
+  }
+
+  /// Downloads and decrypts the attachment for [messageId] (a local row
+  /// previously stored by `_handleInboxRow`'s AttachmentPayload case), caches
+  /// the plaintext locally, and updates the row's download state. No-op if
+  /// [messageId] isn't a known attachment row.
+  Future<void> downloadAttachment(String messageId) async {
+    final row = await store.messageById(messageId);
+    final storageKey = row?.storageKey;
+    final encKey = row?.encKey;
+    final nonce = row?.nonce;
+    if (storageKey == null || encKey == null || nonce == null) return;
+
+    await store.updateDownloadStatus(id: messageId, status: 'downloading');
+    try {
+      final ciphertext = await repo.downloadAttachment(storageKey);
+      final plaintext =
+          await decryptAttachment(ciphertext: ciphertext, key: encKey, nonce: nonce);
+      final path = await cache.write(messageId, plaintext);
+      await store.updateDownloadStatus(
+          id: messageId, status: 'downloaded', localMediaPath: path);
+    } catch (_) {
+      await store.updateDownloadStatus(id: messageId, status: 'failed');
     }
   }
 
@@ -194,6 +395,26 @@ class ChatService {
           status: senderId == selfUserId ? 'sent' : 'delivered',
         );
         if (senderId != selfUserId) await repo.markDelivered(messageId);
+      case AttachmentPayload():
+        await store.upsertAttachmentMessage(
+          id: messageId,
+          senderId: senderId,
+          attachmentKind: payload.kind.name,
+          mimeType: payload.mimeType,
+          sizeBytes: payload.sizeBytes,
+          width: payload.width,
+          height: payload.height,
+          durationMs: payload.durationMs,
+          storageKey: payload.storageKey,
+          encKey: payload.encKey,
+          nonce: payload.nonce,
+          thumbnailBytes: payload.thumbnailBytes,
+          caption: payload.caption,
+          replyToMessageId: payload.replyToMessageId,
+          createdAt: DateTime.parse(env['created_at'] as String),
+          status: senderId == selfUserId ? 'sent' : 'delivered',
+        );
+        if (senderId != selfUserId) await repo.markDelivered(messageId);
       case ReactionPayload():
         await store.applyReaction(
           messageId: payload.targetMessageId,
@@ -201,6 +422,19 @@ class ChatService {
           emoji: payload.emoji,
           add: payload.add,
         );
+      case LetterKeyPayload():
+        // A control message, never a conversation turn: it is deliberately NOT
+        // written to the message store, so it cannot surface in the chat
+        // thread as an empty or garbled bubble.
+        //
+        // Only accepted from the spouse. Ignoring the own-device sync copy
+        // matters: this device generated the key and already holds it, and
+        // re-writing it would be a no-op at best and, if the two devices ever
+        // raced on generation, could overwrite the key the spouse actually
+        // received with a losing one.
+        if (senderId != selfUserId && payload.coupleId == coupleId) {
+          await letterKeys?.write(coupleId, payload.letterKey);
+        }
       case UnsupportedPayload():
         break; // skip, still delete the envelope below
     }

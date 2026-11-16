@@ -63,6 +63,13 @@ dependencies:
   html: ^0.15.7
   cached_network_image: ^3.4.1
   url_launcher: ^6.3.3
+  image_picker: ^1.2.3
+  flutter_image_compress: ^2.5.1
+  video_player: ^2.13.0
+  cryptography: ^2.9.0
+  emoji_picker_flutter: ^4.5.3
+  get_thumbnail_video: ^0.7.3
+  home_widget: ^0.9.3
 
 dev_dependencies:
   flutter_test:
