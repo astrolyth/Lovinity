@@ -3,7 +3,20 @@ require 'xcodeproj'
 
 proj_path = File.expand_path('../Runner.xcodeproj', __dir__)
 proj = Xcodeproj::Project.open(proj_path)
-exit 0 if proj.targets.any? { |t| t.name == 'LovinityShare' }
+# Idempotent: adds PrivacyInfo.xcprivacy to a target's Resources phase.
+add_privacy = lambda do |group_path, target|
+  next if target.resources_build_phase.files.any? { |f| f.file_ref&.path == 'PrivacyInfo.xcprivacy' }
+  group = proj.main_group.find_subpath(group_path, false) || proj.main_group.new_group(group_path, group_path)
+  ref = group.files.find { |f| f.path == 'PrivacyInfo.xcprivacy' } || group.new_file('PrivacyInfo.xcprivacy')
+  target.add_resources([ref])
+end
+
+if (existing = proj.targets.find { |t| t.name == 'LovinityShare' })
+  add_privacy.call('Runner', proj.targets.find { |t| t.name == 'Runner' })
+  add_privacy.call('LovinityShare', existing)
+  proj.save
+  exit 0
+end
 
 runner = proj.targets.find { |t| t.name == 'Runner' }
 ext = proj.new_target(:app_extension, 'LovinityShare', :ios, '15.0')
@@ -47,4 +60,6 @@ phases = runner.build_phases
 phases.delete(embed)
 phases.insert(phases.index { |p| p.respond_to?(:name) && p.name == 'Thin Binary' }, embed)
 
+add_privacy.call('Runner', runner)
+add_privacy.call('LovinityShare', ext)
 proj.save
