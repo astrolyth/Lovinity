@@ -64,6 +64,7 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
 
   bool _submitting = false;
   String? _error;
+  bool _postFailed = false; // only post failures relabel the button
 
   // One medium per post; replaces the link field.
   Uint8List? _mediaBytes;
@@ -152,6 +153,10 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
         final v = await picker.pickVideo(source, thumbnailMaxWidth: 800);
         if (!mounted || v == null) return;
         // A video card without a thumbnail would 404, so refuse it up front.
+        if (v.durationMs > 60000) {
+          setState(() => _error = 'Videos can be up to 60 seconds');
+          return;
+        }
         if (v.thumbnailBytes.isEmpty) throw StateError('no thumbnail');
         _setMedia(
           v.bytes,
@@ -165,7 +170,10 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = "Couldn't read that ${video ? 'video' : 'photo'} — try another.");
+      setState(() {
+        _postFailed = false;
+        _error = "Couldn't read that ${video ? 'video' : 'photo'} — try another.";
+      });
     }
   }
 
@@ -290,6 +298,7 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
       if (!mounted) return;
       setState(() {
         _submitting = false;
+        _postFailed = true;
         _error = "Couldn't share — check your connection and try again.";
       });
     }
@@ -472,7 +481,7 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      _error != null
+                      _postFailed
                           ? 'Try again'
                           : 'Share with ${spouse ?? 'your partner'}',
                     ),

@@ -261,6 +261,21 @@ void main() {
     expect(repo.added, isEmpty);
   });
 
+  testWidgets('a 61 s video is rejected with an inline error and not posted',
+      (tester) async {
+    final repo = FakeWallRepository();
+    final picker = _FakePicker()
+      ..video = PickedVideo(
+          bytes: Uint8List.fromList([4]), mimeType: 'video/mp4',
+          durationMs: 61000, thumbnailBytes: Uint8List.fromList([7]));
+    await _open(tester, repo: repo, picker: picker);
+    await pickFrom(tester, 'Video Library');
+    expect(find.text('Videos can be up to 60 seconds'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Try again'), findsNothing);
+    expect(find.byTooltip('Remove photo or video'), findsNothing);
+    expect(repo.added, isEmpty);
+  });
+
   testWidgets('a failed media upload keeps the sheet open with a retry', (tester) async {
     final repo = FakeWallRepository()..throwOnAdd = Exception('offline');
     await _open(tester, repo: repo, picker: _FakePicker()..photo = _photo);
