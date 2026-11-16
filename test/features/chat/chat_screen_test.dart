@@ -25,7 +25,7 @@ class _FakeMediaPicker implements MediaPicker {
   Future<PickedPhoto?> pickPhoto(MediaSource source) async => nextPhoto;
 
   @override
-  Future<PickedVideo?> pickVideo(MediaSource source) async => null;
+  Future<PickedVideo?> pickVideo(MediaSource source, {int thumbnailMaxWidth = 200}) async => null;
 }
 
 class _NoopBundles implements PreKeyBundleSource {

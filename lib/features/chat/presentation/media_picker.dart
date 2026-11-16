@@ -62,7 +62,10 @@ abstract class MediaPicker {
 
   /// Returns null if the user cancelled the picker. Videos are capped at 60
   /// seconds at the picker level (no client-side re-encode).
-  Future<PickedVideo?> pickVideo(MediaSource source);
+  Future<PickedVideo?> pickVideo(
+    MediaSource source, {
+    int thumbnailMaxWidth = 200,
+  });
 }
 
 class DevicePicker implements MediaPicker {
@@ -71,7 +74,9 @@ class DevicePicker implements MediaPicker {
   @override
   Future<PickedPhoto?> pickPhoto(MediaSource source) async {
     final xfile = await _picker.pickImage(
-      source: source == MediaSource.camera ? ImageSource.camera : ImageSource.gallery,
+      source: source == MediaSource.camera
+          ? ImageSource.camera
+          : ImageSource.gallery,
     );
     if (xfile == null) return null;
 
@@ -102,9 +107,14 @@ class DevicePicker implements MediaPicker {
   }
 
   @override
-  Future<PickedVideo?> pickVideo(MediaSource source) async {
+  Future<PickedVideo?> pickVideo(
+    MediaSource source, {
+    int thumbnailMaxWidth = 200,
+  }) async {
     final xfile = await _picker.pickVideo(
-      source: source == MediaSource.camera ? ImageSource.camera : ImageSource.gallery,
+      source: source == MediaSource.camera
+          ? ImageSource.camera
+          : ImageSource.gallery,
       maxDuration: const Duration(seconds: 60),
     );
     if (xfile == null) return null;
@@ -120,7 +130,7 @@ class DevicePicker implements MediaPicker {
       thumbBytes = await VideoThumbnail.thumbnailData(
         video: xfile.path,
         imageFormat: ImageFormat.JPEG,
-        maxWidth: 200,
+        maxWidth: thumbnailMaxWidth,
         quality: 60,
       );
     } catch (_) {

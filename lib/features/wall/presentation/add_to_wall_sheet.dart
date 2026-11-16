@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/motion/motion.dart';
 import '../../../core/theme/tokens.dart';
+import '../../chat/domain/chat_providers.dart';
+import '../../chat/presentation/media_picker.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/link_preview_service.dart';
 import '../domain/link_detect.dart';
@@ -27,7 +29,8 @@ Future<void> showAddToWallSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(LovRadius.xl)),
     ),
-    builder: (_) => AddToWallSheet(initialUrl: initialUrl, initialNote: initialNote),
+    builder: (_) =>
+        AddToWallSheet(initialUrl: initialUrl, initialNote: initialNote),
   );
 }
 
@@ -42,10 +45,12 @@ class AddToWallSheet extends ConsumerStatefulWidget {
 }
 
 class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
-  late final TextEditingController _url =
-      TextEditingController(text: widget.initialUrl ?? '');
-  late final TextEditingController _note =
-      TextEditingController(text: widget.initialNote ?? '');
+  late final TextEditingController _url = TextEditingController(
+    text: widget.initialUrl ?? '',
+  );
+  late final TextEditingController _note = TextEditingController(
+    text: widget.initialNote ?? '',
+  );
 
   WallCollection? _collection;
   bool _clipboardHasText = false;
@@ -59,6 +64,11 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
 
   bool _submitting = false;
   String? _error;
+
+  // One medium per post; replaces the link field.
+  Uint8List? _mediaBytes;
+  Uint8List? _mediaThumb; // preview; for video also the uploaded thumbnail
+  String? _mediaMime;
 
   @override
   void initState() {
@@ -83,10 +93,89 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
 
   String? get _validUrl => extractFirstUrl(_url.text);
   bool get _urlTextInvalid => _url.text.trim().isNotEmpty && _validUrl == null;
+  bool get _isVideo => _mediaMime?.startsWith('video/') ?? false;
   bool get _canSubmit =>
       !_submitting &&
-      !_urlTextInvalid &&
-      (_validUrl != null || _note.text.trim().isNotEmpty);
+      (_mediaBytes != null ||
+          !_urlTextInvalid &&
+              (_validUrl != null || _note.text.trim().isNotEmpty));
+
+  static const _videoMimes = {'video/mp4', 'video/quicktime'};
+
+  Future<void> _chooseMedia() async {
+    final choice = await showModalBottomSheet<(bool, MediaSource)>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (label, icon, video, source) in [
+              (
+                'Take Photo',
+                Icons.photo_camera_outlined,
+                false,
+                MediaSource.camera,
+              ),
+              (
+                'Photo Library',
+                Icons.photo_library_outlined,
+                false,
+                MediaSource.gallery,
+              ),
+              (
+                'Record Video',
+                Icons.videocam_outlined,
+                true,
+                MediaSource.camera,
+              ),
+              (
+                'Video Library',
+                Icons.video_library_outlined,
+                true,
+                MediaSource.gallery,
+              ),
+            ])
+              ListTile(
+                leading: Icon(icon),
+                title: Text(label),
+                onTap: () => Navigator.of(ctx).pop((video, source)),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    final (video, source) = choice;
+    try {
+      final picker = ref.read(mediaPickerProvider);
+      if (video) {
+        final v = await picker.pickVideo(source, thumbnailMaxWidth: 800);
+        if (!mounted || v == null) return;
+        // A video card without a thumbnail would 404, so refuse it up front.
+        if (v.thumbnailBytes.isEmpty) throw StateError('no thumbnail');
+        _setMedia(
+          v.bytes,
+          v.thumbnailBytes,
+          _videoMimes.contains(v.mimeType) ? v.mimeType : 'video/mp4',
+        );
+      } else {
+        final p = await picker.pickPhoto(source);
+        if (!mounted || p == null) return;
+        _setMedia(p.bytes, p.bytes, 'image/jpeg'); // picker compresses to JPEG
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = "Couldn't read that ${video ? 'video' : 'photo'} — try another.");
+    }
+  }
+
+  void _setMedia(Uint8List? bytes, Uint8List? thumb, String? mime) =>
+      setState(() {
+        _mediaBytes = bytes;
+        _mediaThumb = thumb;
+        _mediaMime = mime;
+        _error = null;
+      });
 
   /// Only asks WHETHER there is text — never reads it until the user taps,
   /// so no "pasted from…" banner/toast.
@@ -161,12 +250,30 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
       _error = null;
     });
     try {
+      if (_mediaBytes != null) {
+        await ref
+            .read(wallRepositoryProvider)
+            .addMediaItem(
+              coupleId: couple.id,
+              userId: selfId,
+              bytes: _mediaBytes!,
+              mimeType: _mediaMime!,
+              thumbnailBytes: _isVideo ? _mediaThumb : null,
+              collection: _collection,
+              note: note.isEmpty ? null : note,
+            );
+        HapticFeedback.lightImpact();
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
       LinkPreview? preview;
       if (url != null) {
         if (url != _previewFor) _loadPreview();
         preview = await (_previewFuture ?? Future<LinkPreview?>.value(null));
       }
-      await ref.read(wallRepositoryProvider).addItem(
+      await ref
+          .read(wallRepositoryProvider)
+          .addItem(
             coupleId: couple.id,
             userId: selfId,
             url: url,
@@ -188,12 +295,17 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
     }
   }
 
-  InputDecoration _decoration(String hint, IconData icon, {String? error, Widget? suffix}) {
+  InputDecoration _decoration(
+    String hint,
+    IconData icon, {
+    String? error,
+    Widget? suffix,
+  }) {
     final scheme = Theme.of(context).colorScheme;
     OutlineInputBorder border(Color c) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(LovRadius.md),
-          borderSide: BorderSide(color: c),
-        );
+      borderRadius: BorderRadius.circular(LovRadius.md),
+      borderSide: BorderSide(color: c),
+    );
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(icon, size: 20),
@@ -221,55 +333,97 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(LovSpace.lg, 0, LovSpace.lg, LovSpace.lg),
+        padding: const EdgeInsets.fromLTRB(
+          LovSpace.lg,
+          0,
+          LovSpace.lg,
+          LovSpace.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Add to our Wall', style: theme.textTheme.titleLarge),
             const SizedBox(height: LovSpace.md),
-            TextField(
-              controller: _url,
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              decoration: _decoration(
-                'Paste a link',
-                Icons.link_rounded,
-                error: _urlTextInvalid ? "That doesn't look like a link" : null,
-                suffix: url != null
-                    ? Icon(Icons.check_circle_rounded, color: scheme.primary, size: 20)
-                    : null,
-              ),
-            ),
-            if (_clipboardHasText && _url.text.isEmpty)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: LovSpace.sm),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.content_paste_rounded, size: 16),
-                    label: const Text('Paste copied link'),
-                    onPressed: _pasteFromClipboard,
-                  ),
+            if (_mediaBytes != null)
+              _MediaRow(
+                thumb: _mediaThumb!,
+                isVideo: _isVideo,
+                onRemove: () => _setMedia(null, null, null),
+              )
+            else ...[
+              TextField(
+                controller: _url,
+                keyboardType: TextInputType.url,
+                autocorrect: false,
+                decoration: _decoration(
+                  'Paste a link',
+                  Icons.link_rounded,
+                  error: _urlTextInvalid
+                      ? "That doesn't look like a link"
+                      : null,
+                  suffix: url != null
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          color: scheme.primary,
+                          size: 20,
+                        )
+                      : null,
                 ),
               ),
-            AnimatedSize(
-              duration: LovDuration.standard,
-              curve: LovCurves.standard,
-              child: url == null
-                  ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      padding: const EdgeInsets.only(top: LovSpace.md),
-                      child: _PreviewRow(url: url, preview: _preview, loading: _loadingPreview),
+              if (_clipboardHasText && _url.text.isEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: LovSpace.sm),
+                    child: ActionChip(
+                      avatar: const Icon(Icons.content_paste_rounded, size: 16),
+                      label: const Text('Paste copied link'),
+                      onPressed: _pasteFromClipboard,
                     ),
-            ),
+                  ),
+                ),
+              AnimatedSize(
+                duration: LovDuration.standard,
+                curve: LovCurves.standard,
+                child: url == null
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
+                        padding: const EdgeInsets.only(top: LovSpace.md),
+                        child: _PreviewRow(
+                          url: url,
+                          preview: _preview,
+                          loading: _loadingPreview,
+                        ),
+                      ),
+              ),
+              if (url == null && _url.text.isEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: LovSpace.sm),
+                    child: ActionChip(
+                      avatar: const Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 16,
+                      ),
+                      label: const Text('Photo / Video'),
+                      tooltip: 'Add a photo or video',
+                      onPressed: _chooseMedia,
+                    ),
+                  ),
+                ),
+            ],
             const SizedBox(height: LovSpace.md),
             TextField(
               controller: _note,
               minLines: 1,
               maxLines: 4,
               inputFormatters: [LengthLimitingTextInputFormatter(1000)],
-              decoration: _decoration('Add a note… (optional)', Icons.edit_note_rounded),
+              decoration: _decoration(
+                'Add a note… (optional)',
+                Icons.edit_note_rounded,
+              ),
             ),
             const SizedBox(height: LovSpace.md),
             Text(
@@ -289,13 +443,18 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
                   WallPill(
                     label: c.label,
                     selected: _collection == c,
-                    onTap: () => setState(() => _collection = _collection == c ? null : c),
+                    onTap: () => setState(
+                      () => _collection = _collection == c ? null : c,
+                    ),
                   ),
               ],
             ),
             if (_error != null) ...[
               const SizedBox(height: LovSpace.md),
-              Text(_error!, style: theme.textTheme.bodySmall?.copyWith(color: scheme.error)),
+              Text(
+                _error!,
+                style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
+              ),
             ],
             const SizedBox(height: LovSpace.lg),
             FilledButton(
@@ -303,12 +462,20 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(LovRadius.md)),
+                  borderRadius: BorderRadius.circular(LovRadius.md),
+                ),
               ),
               child: _submitting
                   ? const SizedBox(
-                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_error != null ? 'Try again' : 'Share with ${spouse ?? 'your partner'}'),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      _error != null
+                          ? 'Try again'
+                          : 'Share with ${spouse ?? 'your partner'}',
+                    ),
             ),
           ],
         ),
@@ -318,7 +485,11 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
 }
 
 class _PreviewRow extends StatelessWidget {
-  const _PreviewRow({required this.url, required this.preview, required this.loading});
+  const _PreviewRow({
+    required this.url,
+    required this.preview,
+    required this.loading,
+  });
 
   final String url;
   final LinkPreview? preview;
@@ -341,7 +512,11 @@ class _PreviewRow extends StatelessWidget {
             width: 56,
             height: 56,
             child: loading
-                ? const LovShimmerBox(width: 56, height: 56, radius: LovRadius.sm)
+                ? const LovShimmerBox(
+                    width: 56,
+                    height: 56,
+                    radius: LovRadius.sm,
+                  )
                 : WallThumbnail(
                     source: classifyUrl(url),
                     imageUrl: preview?.imageUrl,
@@ -381,6 +556,56 @@ class _PreviewRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MediaRow extends StatelessWidget {
+  const _MediaRow({
+    required this.thumb,
+    required this.isVideo,
+    required this.onRemove,
+  });
+
+  final Uint8List thumb;
+  final bool isVideo;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(LovRadius.md),
+          child: Image.memory(
+            thumb,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox(
+              height: 180,
+              child: Center(child: Icon(Icons.broken_image_outlined)),
+            ),
+            semanticLabel: isVideo ? 'Selected video' : 'Selected photo',
+          ),
+        ),
+        if (isVideo)
+          const Icon(
+            Icons.play_circle_fill_rounded,
+            size: 48,
+            color: Colors.white70,
+          ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: IconButton.filledTonal(
+            tooltip: 'Remove photo or video',
+            icon: const Icon(Icons.close_rounded),
+            onPressed: onRemove,
+          ),
+        ),
+      ],
     );
   }
 }

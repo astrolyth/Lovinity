@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/features/wall/data/link_preview_service.dart';
@@ -50,6 +51,30 @@ class FakeWallRepository extends Fake implements WallRepository {
     return WallItem(
       id: 'new', coupleId: coupleId, addedBy: userId, url: url, title: title,
       source: source, collection: collection, note: note, isPinned: false,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  @override
+  Future<WallItem> addMediaItem({
+    required String coupleId,
+    required String userId,
+    required Uint8List bytes,
+    required String mimeType,
+    Uint8List? thumbnailBytes,
+    WallCollection? collection,
+    String? note,
+  }) async {
+    if (throwOnAdd != null) throw throwOnAdd!;
+    added.add(AddItemCall({
+      'coupleId': coupleId, 'userId': userId, 'bytes': bytes,
+      'mimeType': mimeType, 'thumbnailBytes': thumbnailBytes,
+      'collection': collection, 'note': note,
+    }));
+    return WallItem(
+      id: 'new', coupleId: coupleId, addedBy: userId,
+      source: mimeType.startsWith('video/') ? WallSource.video : WallSource.photo,
+      collection: collection, note: note, isPinned: false,
       createdAt: DateTime.now(),
     );
   }

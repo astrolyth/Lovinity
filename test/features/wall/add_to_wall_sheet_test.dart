@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/core/theme/theme.dart';
+import 'package:lovinity/features/chat/domain/chat_providers.dart';
+import 'package:lovinity/features/chat/presentation/media_picker.dart';
 import 'package:lovinity/features/home/domain/home_providers.dart';
 import 'package:lovinity/features/pairing/domain/pairing_providers.dart';
 import 'package:lovinity/features/wall/data/link_preview_service.dart';
@@ -18,6 +20,25 @@ import 'fakes.dart';
 const _couple = Couple(
     id: 'c1', memberA: 'me', memberB: 'sp', status: 'active', longDistance: false);
 
+class _FakePicker implements MediaPicker {
+  PickedPhoto? photo;
+  PickedVideo? video;
+  int? videoThumbWidth;
+
+  @override
+  Future<PickedPhoto?> pickPhoto(MediaSource source) async => photo;
+
+  @override
+  Future<PickedVideo?> pickVideo(MediaSource source, {int thumbnailMaxWidth = 200}) async {
+    videoThumbWidth = thumbnailMaxWidth;
+    return video;
+  }
+}
+
+final _photo = PickedPhoto(
+    bytes: Uint8List.fromList([1, 2, 3]), mimeType: 'image/jpeg',
+    width: 1, height: 1, thumbnailBytes: Uint8List.fromList([9]));
+
 Future<void> _open(
   WidgetTester tester, {
   required FakeWallRepository repo,
@@ -25,6 +46,7 @@ Future<void> _open(
   String? initialUrl,
   bool clipboardHasText = false,
   String clipboardText = '',
+  MediaPicker? picker,
 }) async {
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
     SystemChannels.platform,
@@ -42,6 +64,7 @@ Future<void> _open(
       wallRepositoryProvider.overrideWithValue(repo),
       linkPreviewServiceProvider.overrideWithValue(previews ?? FakeLinkPreviewService()),
       wallSelfIdProvider.overrideWithValue('me'),
+      if (picker != null) mediaPickerProvider.overrideWithValue(picker),
       currentCoupleProvider.overrideWith((ref) => Stream.value(_couple)),
       spouseProfileProvider.overrideWith((ref) async => null),
     ],
@@ -177,5 +200,79 @@ void main() {
     expect(find.textContaining("Couldn't share"), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Try again'), findsOneWidget);
     expect(find.text('keep me'), findsOneWidget);
+  });
+
+  Future<void> pickFrom(WidgetTester tester, String choice) async {
+    await tester.tap(find.text('Photo / Video'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(choice));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a picked photo hides the link field and posts as image/jpeg',
+      (tester) async {
+    final repo = FakeWallRepository();
+    await _open(tester, repo: repo, picker: _FakePicker()..photo = _photo);
+    await pickFrom(tester, 'Photo Library');
+    expect(find.widgetWithText(TextField, 'Paste a link'), findsNothing);
+    expect(find.byTooltip('Remove photo or video'), findsOneWidget);
+    await tester.tap(_shareButton);
+    await tester.pumpAndSettle();
+    final args = repo.added.single.args;
+    expect(args['mimeType'], 'image/jpeg');
+    expect(args['thumbnailBytes'], isNull);
+    expect(find.byType(AddToWallSheet), findsNothing);
+  });
+
+  testWidgets('removing the media brings the link field back', (tester) async {
+    await _open(tester, repo: FakeWallRepository(), picker: _FakePicker()..photo = _photo);
+    await pickFrom(tester, 'Photo Library');
+    await tester.tap(find.byTooltip('Remove photo or video'));
+    await tester.pump();
+    expect(find.widgetWithText(TextField, 'Paste a link'), findsOneWidget);
+  });
+
+  testWidgets('a video posts with its 800px thumbnail', (tester) async {
+    final repo = FakeWallRepository();
+    final picker = _FakePicker()
+      ..video = PickedVideo(
+          bytes: Uint8List.fromList([4]), mimeType: 'video/quicktime',
+          durationMs: 1000, thumbnailBytes: Uint8List.fromList([7, 7]));
+    await _open(tester, repo: repo, picker: picker);
+    await pickFrom(tester, 'Video Library');
+    expect(picker.videoThumbWidth, 800);
+    await tester.tap(_shareButton);
+    await tester.pumpAndSettle();
+    final args = repo.added.single.args;
+    expect(args['mimeType'], 'video/quicktime');
+    expect(args['thumbnailBytes'], Uint8List.fromList([7, 7]));
+  });
+
+  testWidgets('a video with no thumbnail is rejected, not posted', (tester) async {
+    final repo = FakeWallRepository();
+    final picker = _FakePicker()
+      ..video = PickedVideo(
+          bytes: Uint8List.fromList([4]), mimeType: 'video/mp4',
+          durationMs: 1000, thumbnailBytes: Uint8List(0));
+    await _open(tester, repo: repo, picker: picker);
+    await pickFrom(tester, 'Video Library');
+    expect(find.textContaining("Couldn't read that video"), findsOneWidget);
+    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNull);
+    expect(repo.added, isEmpty);
+  });
+
+  testWidgets('a failed media upload keeps the sheet open with a retry', (tester) async {
+    final repo = FakeWallRepository()..throwOnAdd = Exception('offline');
+    await _open(tester, repo: repo, picker: _FakePicker()..photo = _photo);
+    await pickFrom(tester, 'Photo Library');
+    await tester.tap(_shareButton);
+    await tester.pumpAndSettle();
+    expect(find.byType(AddToWallSheet), findsOneWidget);
+    expect(find.textContaining("Couldn't share"), findsOneWidget);
+    repo.throwOnAdd = null;
+    await tester.tap(find.widgetWithText(FilledButton, 'Try again'));
+    await tester.pumpAndSettle();
+    expect(repo.added, hasLength(1));
+    expect(find.byType(AddToWallSheet), findsNothing);
   });
 }
