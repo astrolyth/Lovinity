@@ -34,6 +34,9 @@ Future<void> showAddToWallSheet(
   );
 }
 
+/// Mirrors the wall-media bucket's 50 MiB file limit.
+const maxWallVideoBytes = 50 * 1024 * 1024;
+
 class AddToWallSheet extends ConsumerStatefulWidget {
   const AddToWallSheet({super.key, this.initialUrl, this.initialNote});
 
@@ -154,7 +157,17 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
         if (!mounted || v == null) return;
         // A video card without a thumbnail would 404, so refuse it up front.
         if (v.durationMs > 60000) {
-          setState(() => _error = 'Videos can be up to 60 seconds');
+          setState(() {
+            _postFailed = false;
+            _error = 'Videos can be up to 60 seconds';
+          });
+          return;
+        }
+        if (v.bytes.lengthInBytes > maxWallVideoBytes) {
+          setState(() {
+            _postFailed = false;
+            _error = 'That video is too large (max 50 MB) — try a shorter one';
+          });
           return;
         }
         if (v.thumbnailBytes.isEmpty) throw StateError('no thumbnail');
@@ -172,7 +185,8 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
       if (!mounted) return;
       setState(() {
         _postFailed = false;
-        _error = "Couldn't read that ${video ? 'video' : 'photo'} — try another.";
+        _error =
+            "Couldn't read that ${video ? 'video' : 'photo'} — try another.";
       });
     }
   }

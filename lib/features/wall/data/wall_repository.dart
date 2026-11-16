@@ -6,11 +6,11 @@ import 'package:uuid/uuid.dart';
 
 import '../domain/wall_models.dart';
 
+const _bucket = 'wall-media';
+
 /// Supabase access for Our Wall. Rows are protected by RLS (couple members
 /// only; authors alone may delete). Streams are realtime and re-emit the
 /// full list on every change.
-const _bucket = 'wall-media';
-
 class WallRepository {
   WallRepository(this._client);
 
@@ -21,9 +21,12 @@ class WallRepository {
         .from('feed_items')
         .stream(primaryKey: ['id'])
         .eq('couple_id', coupleId)
-        .map((rows) => [
-              for (final r in rows) WallItem.fromRow(Map<String, dynamic>.from(r)),
-            ]..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+        .map(
+          (rows) => [
+            for (final r in rows)
+              WallItem.fromRow(Map<String, dynamic>.from(r)),
+          ]..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Stream<List<WallReaction>> watchReactions(String coupleId) {
@@ -31,10 +34,12 @@ class WallRepository {
         .from('feed_reactions')
         .stream(primaryKey: ['item_id', 'user_id', 'reaction'])
         .eq('couple_id', coupleId)
-        .map((rows) => [
-              for (final r in rows)
-                ?WallReaction.tryFromRow(Map<String, dynamic>.from(r)),
-            ]);
+        .map(
+          (rows) => [
+            for (final r in rows)
+              ?WallReaction.tryFromRow(Map<String, dynamic>.from(r)),
+          ],
+        );
   }
 
   Stream<List<WallComment>> watchComments(String coupleId) {
@@ -42,9 +47,12 @@ class WallRepository {
         .from('feed_comments')
         .stream(primaryKey: ['id'])
         .eq('couple_id', coupleId)
-        .map((rows) => [
-              for (final r in rows) WallComment.fromRow(Map<String, dynamic>.from(r)),
-            ]..sort((a, b) => a.createdAt.compareTo(b.createdAt)));
+        .map(
+          (rows) => [
+            for (final r in rows)
+              WallComment.fromRow(Map<String, dynamic>.from(r)),
+          ]..sort((a, b) => a.createdAt.compareTo(b.createdAt)),
+        );
   }
 
   Future<WallItem> addItem({
@@ -94,16 +102,26 @@ class WallRepository {
     final thumbPath = '$dir/thumb.jpg';
     final bucket = _client.storage.from(_bucket);
     final uploaded = <String>[];
+    var insertSent = false;
     try {
-      await bucket.uploadBinary(mediaPath, bytes,
-          fileOptions: FileOptions(contentType: mimeType, upsert: false));
+      await bucket.uploadBinary(
+        mediaPath,
+        bytes,
+        fileOptions: FileOptions(contentType: mimeType, upsert: false),
+      );
       uploaded.add(mediaPath);
       if (isVideo && thumbnailBytes != null) {
-        await bucket.uploadBinary(thumbPath, thumbnailBytes,
-            fileOptions:
-                const FileOptions(contentType: 'image/jpeg', upsert: false));
+        await bucket.uploadBinary(
+          thumbPath,
+          thumbnailBytes,
+          fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+            upsert: false,
+          ),
+        );
         uploaded.add(thumbPath);
       }
+      insertSent = true;
       final row = await _client
           .from('feed_items')
           .insert({
@@ -119,7 +137,18 @@ class WallRepository {
           .select()
           .single();
       return WallItem.fromRow(row);
-    } catch (_) {
+    } catch (e) {
+      if (insertSent && e is! PostgrestException) {
+        // The response may have been lost after the row committed; keep its files.
+        try {
+          final saved = await _client
+              .from('feed_items')
+              .select()
+              .eq('id', id)
+              .maybeSingle();
+          if (saved != null) return WallItem.fromRow(saved);
+        } catch (_) {}
+      }
       if (uploaded.isNotEmpty) {
         try {
           await bucket.remove(uploaded);
@@ -137,7 +166,10 @@ class WallRepository {
     await _client.from('feed_items').delete().eq('id', item.id);
     if (!item.hasMedia) return;
     try {
-      await _client.storage.from(_bucket).remove([item.mediaPath!, ?item.thumbPath]);
+      await _client.storage.from(_bucket).remove([
+        item.mediaPath!,
+        ?item.thumbPath,
+      ]);
     } catch (_) {
       // shortcut: a failed file delete leaves an orphan in storage; add a cleanup job if storage cost matters.
     }
@@ -146,9 +178,11 @@ class WallRepository {
   Future<void> setPinned(String itemId, bool pinned) =>
       _client.from('feed_items').update({'is_pinned': pinned}).eq('id', itemId);
 
-  Future<void> setCollection(String itemId, WallCollection? collection) => _client
-      .from('feed_items')
-      .update({'collection': collection?.key}).eq('id', itemId);
+  Future<void> setCollection(String itemId, WallCollection? collection) =>
+      _client
+          .from('feed_items')
+          .update({'collection': collection?.key})
+          .eq('id', itemId);
 
   /// Idempotent: a double tap must not fail on the primary key.
   Future<void> addReaction({
@@ -156,8 +190,9 @@ class WallRepository {
     required String itemId,
     required String userId,
     required WallReactionKind kind,
-  }) =>
-      _client.from('feed_reactions').upsert(
+  }) => _client
+      .from('feed_reactions')
+      .upsert(
         {
           'item_id': itemId,
           'user_id': userId,
@@ -172,26 +207,24 @@ class WallRepository {
     required String itemId,
     required String userId,
     required WallReactionKind kind,
-  }) =>
-      _client
-          .from('feed_reactions')
-          .delete()
-          .eq('item_id', itemId)
-          .eq('user_id', userId)
-          .eq('reaction', kind.key);
+  }) => _client
+      .from('feed_reactions')
+      .delete()
+      .eq('item_id', itemId)
+      .eq('user_id', userId)
+      .eq('reaction', kind.key);
 
   Future<void> addComment({
     required String coupleId,
     required String itemId,
     required String userId,
     required String body,
-  }) =>
-      _client.from('feed_comments').insert({
-        'item_id': itemId,
-        'couple_id': coupleId,
-        'author_id': userId,
-        'body': body,
-      });
+  }) => _client.from('feed_comments').insert({
+    'item_id': itemId,
+    'couple_id': coupleId,
+    'author_id': userId,
+    'body': body,
+  });
 
   Future<void> deleteComment(String commentId) =>
       _client.from('feed_comments').delete().eq('id', commentId);
