@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/tokens.dart';
 import '../domain/wall_models.dart';
-import 'wall_visuals.dart';
+import 'wall_item_thumbnail.dart';
 
 /// Horizontal row of pinned items, shown above the collection filters.
 class WallPinnedRow extends StatelessWidget {
@@ -73,9 +73,8 @@ class _PinnedCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                WallThumbnail(
-                  source: item.source,
-                  imageUrl: item.imageUrl,
+                WallItemThumbnail(
+                  item: item,
                   showSourcePill: false,
                   showPlay: false,
                 ),

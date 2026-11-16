@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/tokens.dart';
 import '../domain/wall_logic.dart';
 import '../domain/wall_models.dart';
+import 'wall_item_thumbnail.dart';
 import 'wall_visuals.dart';
 
 /// Story card: big preview (tap → open link), title + domain, the sharer's
@@ -33,6 +34,7 @@ class WallItemCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final hasLink = item.url != null;
+    final hasPreview = hasLink || item.hasMedia;
     final note = item.note?.trim();
     final hasNote = note != null && note.isNotEmpty;
 
@@ -48,14 +50,14 @@ class WallItemCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (hasLink)
+            if (hasPreview)
               GestureDetector(
-                onTap: onOpenLink,
+                // Media has no outside link: its preview opens the item.
+                onTap: item.hasMedia ? onOpen : onOpenLink,
                 child: Hero(
                   tag: wallHeroTag(item.id),
-                  child: WallThumbnail(
-                    source: item.source,
-                    imageUrl: item.imageUrl,
+                  child: WallItemThumbnail(
+                    item: item,
                     height: 168,
                   ),
                 ),
@@ -87,11 +89,11 @@ class WallItemCard extends StatelessWidget {
                     ],
                   ],
                   if (hasNote) ...[
-                    if (hasLink) const SizedBox(height: 8),
+                    if (hasPreview) const SizedBox(height: 8),
                     WallNoteQuote(
                       text: note,
-                      maxLines: hasLink ? 4 : 6,
-                      large: !hasLink,
+                      maxLines: hasPreview ? 4 : 6,
+                      large: !hasPreview,
                     ),
                   ],
                   const SizedBox(height: 10),

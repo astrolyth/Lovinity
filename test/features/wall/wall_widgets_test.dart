@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/core/theme/theme.dart';
 import 'package:lovinity/features/wall/domain/wall_models.dart';
+import 'package:lovinity/features/wall/domain/wall_providers.dart';
 import 'package:lovinity/features/wall/presentation/wall_item_card.dart';
 import 'package:lovinity/features/wall/presentation/wall_pinned_row.dart';
 import 'package:lovinity/features/wall/presentation/wall_reaction_bar.dart';
@@ -132,5 +134,51 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200)); // bounce timer
     expect(toggled, [WallReactionKind.fire]);
     expect(find.text('1'), findsOneWidget); // dua count
+  });
+
+  group('media items', () {
+    WallItem media(WallSource source, String path) => WallItem(
+          id: 'm1', coupleId: 'c', addedBy: 'sp', source: source,
+          mediaPath: path, mediaMime: source == WallSource.video ? 'video/mp4' : 'image/jpeg',
+          isPinned: false, createdAt: DateTime.now(),
+        );
+
+    Future<List<String>> pumpCard(WidgetTester tester, WallItem item, VoidCallback onOpen,
+        VoidCallback onOpenLink) async {
+      final requested = <String>[];
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          wallSignedUrlProvider.overrideWith((ref, path) {
+            requested.add(path);
+            return 'http://localhost/fake';
+          }),
+        ],
+        child: _host(WallItemCard(
+          item: item, sharerName: 'Aisha', reactions: const [], commentCount: 0,
+          isUnseen: false, onOpen: onOpen, onOpenLink: onOpenLink,
+        )),
+      ));
+      await tester.pump();
+      return requested;
+    }
+
+    testWidgets('video card shows pill, play glyph and requests the poster',
+        (tester) async {
+      var opened = 0, linked = 0;
+      final requested = await pumpCard(
+          tester, media(WallSource.video, 'c/m1/video.mp4'), () => opened++, () => linked++);
+      expect(requested, ['c/m1/thumb.jpg']);
+      expect(find.text('Video'), findsOneWidget);
+      expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+      await tester.tap(find.byType(WallThumbnail));
+      expect([opened, linked], [1, 0]);
+    });
+
+    testWidgets('photo card requests the photo itself', (tester) async {
+      final requested =
+          await pumpCard(tester, media(WallSource.photo, 'c/m1/media.jpg'), () {}, () {});
+      expect(requested, ['c/m1/media.jpg']);
+      expect(find.text('Photo'), findsOneWidget);
+    });
   });
 }

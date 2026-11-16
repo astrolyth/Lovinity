@@ -213,4 +213,44 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(repo.comments, ['hello']);
   });
+
+  for (final isVideo in [false, true]) {
+    testWidgets('${isVideo ? 'video' : 'photo'} detail has no "Open in" and signs the media path',
+        (tester) async {
+      final requested = <String>[];
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final item = WallItem(
+        id: 'i1', coupleId: 'c1', addedBy: 'sp',
+        source: isVideo ? WallSource.video : WallSource.photo,
+        mediaPath: isVideo ? 'c1/i1/video.mp4' : 'c1/i1/media.jpg',
+        mediaMime: isVideo ? 'video/mp4' : 'image/jpeg',
+        isPinned: false, createdAt: DateTime.now(),
+      );
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          wallItemsProvider.overrideWith((ref) => Stream.value([item])),
+          wallReactionsProvider.overrideWith((ref) => Stream.value(const <WallReaction>[])),
+          wallCommentsProvider.overrideWith((ref) => Stream.value(const <WallComment>[])),
+          wallSelfIdProvider.overrideWithValue('me'),
+          spouseProfileProvider.overrideWith((ref) async => null),
+          wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
+          wallSignedUrlProvider.overrideWith((ref, path) {
+            requested.add(path);
+            // Photo: a failing URL degrades to the placeholder, not a crash.
+            // Video: a good URL the (test) platform can't play.
+            if (!isVideo) throw Exception('expired');
+            return 'http://localhost/fake.mp4';
+          }),
+        ],
+        child: MaterialApp(theme: LovTheme.dark(), home: const WallItemScreen(itemId: 'i1')),
+      ));
+      await tester.pump();
+      await tester.pump();
+      expect(requested, [item.mediaPath]);
+      expect(find.textContaining('Open in'), findsNothing);
+      expect(find.text("Can't play this video"), isVideo ? findsOneWidget : findsNothing);
+    });
+  }
 }

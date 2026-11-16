@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../core/theme/tokens.dart';
 import '../domain/wall_logic.dart';
 import '../domain/wall_models.dart';
 import '../domain/wall_providers.dart';
 import 'wall_reaction_bar.dart';
+import 'wall_item_thumbnail.dart';
 import 'wall_visuals.dart';
 
 enum _ItemAction { collection, delete }
@@ -259,14 +261,20 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
               padding: const EdgeInsets.fromLTRB(
                   LovSpace.lg, LovSpace.sm, LovSpace.lg, LovSpace.lg),
               children: [
-                if (item.url != null)
+                if (item.hasMedia)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(LovRadius.lg),
+                    child: item.source == WallSource.video
+                        ? _WallVideo(item: item)
+                        : _WallPhoto(item: item),
+                  )
+                else if (item.url != null)
                   GestureDetector(
                     onTap: () => openWallLink(context, item.url!),
                     child: Hero(
                       tag: wallHeroTag(item.id),
-                      child: WallThumbnail(
-                        source: item.source,
-                        imageUrl: item.imageUrl,
+                      child: WallItemThumbnail(
+                        item: item,
                         height: 220,
                         borderRadius: LovRadius.lg,
                       ),
@@ -278,9 +286,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
                 Text(meta, style: theme.textTheme.bodySmall),
                 if (note != null && note.isNotEmpty) ...[
                   const SizedBox(height: LovSpace.md),
-                  WallNoteQuote(text: note, large: item.url == null),
+                  WallNoteQuote(text: note, large: item.url == null && !item.hasMedia),
                 ],
-                if (item.url != null) ...[
+                if (item.url != null && !item.hasMedia) ...[
                   const SizedBox(height: LovSpace.md),
                   OutlinedButton.icon(
                     onPressed: () => openWallLink(context, item.url!),
@@ -431,6 +439,117 @@ class _Gone extends StatelessWidget {
               onPressed: () => context.go('/home/wall'),
               child: const Text('Back to the Wall'),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WallPhoto extends ConsumerWidget {
+  const _WallPhoto({required this.item});
+  final WallItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final url = ref.watch(wallSignedUrlProvider(item.mediaPath!));
+    return SizedBox(
+      height: 360,
+      child: url.when(
+        data: (u) => InteractiveViewer(
+          child: Image.network(
+            u,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => WallThumbnail(source: item.source),
+          ),
+        ),
+        loading: () => WallThumbnail(source: item.source),
+        error: (_, _) => WallThumbnail(source: item.source),
+      ),
+    );
+  }
+}
+
+class _WallVideo extends ConsumerWidget {
+  const _WallVideo({required this.item});
+  final WallItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final url = ref.watch(wallSignedUrlProvider(item.mediaPath!));
+    return SizedBox(
+      height: 360,
+      child: url.when(
+        data: (u) => _VideoPlayer(url: u),
+        loading: () => WallThumbnail(source: item.source, showPlay: false),
+        error: (_, _) => WallThumbnail(source: item.source, showPlay: false),
+      ),
+    );
+  }
+}
+
+class _CantPlay extends StatelessWidget {
+  const _CantPlay();
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: Text("Can't play this video",
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.white70)),
+        ),
+      );
+}
+
+class _VideoPlayer extends StatefulWidget {
+  const _VideoPlayer({required this.url});
+  final String url;
+
+  @override
+  State<_VideoPlayer> createState() => _VideoPlayerState();
+}
+
+class _VideoPlayerState extends State<_VideoPlayer> {
+  late final VideoPlayerController _c;
+  var _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..addListener(() {
+        if (_c.value.hasError && !_failed && mounted) setState(() => _failed = true);
+      })
+      ..initialize().then((_) {
+        if (mounted) setState(() {});
+      }).catchError((_) {
+        if (mounted) setState(() => _failed = true);
+      });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_failed) return const _CantPlay();
+    if (!_c.value.isInitialized) return const ColoredBox(color: Colors.black);
+    return GestureDetector(
+      onTap: () => setState(() => _c.value.isPlaying ? _c.pause() : _c.play()),
+      child: ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AspectRatio(aspectRatio: _c.value.aspectRatio, child: VideoPlayer(_c)),
+            if (!_c.value.isPlaying)
+              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 64),
           ],
         ),
       ),

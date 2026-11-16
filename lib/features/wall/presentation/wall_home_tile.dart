@@ -7,6 +7,7 @@ import '../../../core/widgets/widgets.dart';
 import '../domain/wall_logic.dart';
 import '../domain/wall_models.dart';
 import '../domain/wall_providers.dart';
+import 'wall_item_thumbnail.dart';
 import 'wall_visuals.dart';
 
 /// Home-screen entry to Our Wall: the latest item and an unseen dot.
@@ -43,9 +44,8 @@ class WallHomeTile extends ConsumerWidget {
                           child: Icon(Icons.auto_awesome_rounded,
                               size: 20, color: scheme.primary),
                         )
-                      : WallThumbnail(
-                          source: latest.source,
-                          imageUrl: latest.imageUrl,
+                      : WallItemThumbnail(
+                          item: latest,
                           borderRadius: LovRadius.md,
                           showSourcePill: false,
                           showPlay: false,

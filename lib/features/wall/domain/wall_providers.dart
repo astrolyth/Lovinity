@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/supabase_provider.dart';
@@ -11,6 +13,16 @@ import 'wall_models.dart';
 
 final wallRepositoryProvider = Provider<WallRepository>((ref) {
   return WallRepository(ref.read(supabaseClientProvider));
+});
+
+/// Signed URL for a storage path. Kept alive 50 min so it is refreshed before
+/// the 1-hour expiry, without re-signing on every rebuild.
+final wallSignedUrlProvider =
+    FutureProvider.autoDispose.family<String, String>((ref, path) {
+  final link = ref.keepAlive();
+  final timer = Timer(const Duration(minutes: 50), link.close);
+  ref.onDispose(timer.cancel);
+  return ref.read(wallRepositoryProvider).signedUrl(path);
 });
 
 final linkPreviewServiceProvider = Provider<LinkPreviewService>((ref) {
