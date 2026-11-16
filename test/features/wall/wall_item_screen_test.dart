@@ -253,4 +253,34 @@ void main() {
       expect(find.text("Can't play this video"), isVideo ? findsOneWidget : findsNothing);
     });
   }
+
+  testWidgets('photo detail is labelled for screen readers', (tester) async {
+    final item = WallItem(
+      id: 'i1', coupleId: 'c1', addedBy: 'sp', source: WallSource.photo,
+      mediaPath: 'c1/i1/media.jpg', mediaMime: 'image/jpeg',
+      isPinned: false, createdAt: DateTime.now(),
+    );
+    final semantics = tester.ensureSemantics();
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        wallItemsProvider.overrideWith((ref) => Stream.value([item])),
+        wallReactionsProvider.overrideWith((ref) => Stream.value(const <WallReaction>[])),
+        wallCommentsProvider.overrideWith((ref) => Stream.value(const <WallComment>[])),
+        wallSelfIdProvider.overrideWithValue('me'),
+        spouseProfileProvider.overrideWith((ref) async => null),
+        wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
+        wallSignedUrlProvider.overrideWith((ref, path) => 'http://localhost/fake'),
+      ],
+      child: MaterialApp(theme: LovTheme.dark(), home: const WallItemScreen(itemId: 'i1')),
+    ));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    expect(find.bySemanticsLabel(RegExp('Photo')), findsOneWidget);
+    semantics.dispose();
+  });
 }

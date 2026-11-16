@@ -18,11 +18,15 @@ final wallRepositoryProvider = Provider<WallRepository>((ref) {
 /// Signed URL for a storage path. Kept alive 50 min so it is refreshed before
 /// the 1-hour expiry, without re-signing on every rebuild.
 final wallSignedUrlProvider =
-    FutureProvider.autoDispose.family<String, String>((ref, path) {
-  final link = ref.keepAlive();
-  final timer = Timer(const Duration(minutes: 50), link.close);
-  ref.onDispose(timer.cancel);
-  return ref.read(wallRepositoryProvider).signedUrl(path);
+    FutureProvider.autoDispose.family<String, String>((ref, path) async {
+  final url = await ref.read(wallRepositoryProvider).signedUrl(path);
+  // Keep-alive only after success, so a failed signing retries on next load.
+  if (ref.mounted) {
+    final link = ref.keepAlive();
+    final timer = Timer(const Duration(minutes: 50), link.close);
+    ref.onDispose(timer.cancel);
+  }
+  return url;
 });
 
 final linkPreviewServiceProvider = Provider<LinkPreviewService>((ref) {

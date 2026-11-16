@@ -11,6 +11,8 @@ import 'package:lovinity/features/wall/domain/wall_models.dart';
 import 'package:lovinity/features/wall/domain/wall_providers.dart';
 import 'package:lovinity/shared/models/couple.dart';
 
+import 'fakes.dart';
+
 WallItem _item(String id, {String by = 'sp', bool pinned = false,
         WallCollection? collection, DateTime? at}) =>
     WallItem(
@@ -266,4 +268,28 @@ void main() {
     theirs.listen(wallLastVisitProvider, (_, _) {});
     expect(await theirs.read(wallLastVisitProvider.future), isNull);
   });
+
+  test('signed URL: a failure is not cached, the next listen retries', () async {
+    var calls = 0;
+    final c = ProviderContainer(retry: (_, _) => null, overrides: [
+      wallRepositoryProvider.overrideWithValue(_SigningRepo((p) async {
+        if (++calls == 1) throw Exception('boom');
+        return 'https://signed/$p';
+      })),
+    ]);
+    addTearDown(c.dispose);
+    final first = c.listen(wallSignedUrlProvider('a'), (_, _) {});
+    await expectLater(c.read(wallSignedUrlProvider('a').future), throwsException);
+    first.close();
+    await Future<void>.delayed(Duration.zero); // autoDispose
+    expect(await c.read(wallSignedUrlProvider('a').future), 'https://signed/a');
+    expect(calls, 2);
+  });
+}
+
+class _SigningRepo extends FakeWallRepository {
+  _SigningRepo(this._sign);
+  final Future<String> Function(String) _sign;
+  @override
+  Future<String> signedUrl(String path) => _sign(path);
 }

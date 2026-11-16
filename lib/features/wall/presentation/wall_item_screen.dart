@@ -456,11 +456,15 @@ class _WallPhoto extends ConsumerWidget {
     return SizedBox(
       height: 360,
       child: url.when(
-        data: (u) => InteractiveViewer(
-          child: Image.network(
-            u,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => WallThumbnail(source: item.source),
+        data: (u) => Semantics(
+          image: true,
+          label: 'Photo',
+          child: InteractiveViewer(
+            child: Image.network(
+              u,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => WallThumbnail(source: item.source),
+            ),
           ),
         ),
         loading: () => WallThumbnail(source: item.source),
@@ -540,7 +544,10 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   Widget build(BuildContext context) {
     if (_failed) return const _CantPlay();
     if (!_c.value.isInitialized) return const ColoredBox(color: Colors.black);
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: _c.value.isPlaying ? 'Pause video' : 'Play video',
+      child: GestureDetector(
       onTap: () => setState(() => _c.value.isPlaying ? _c.pause() : _c.play()),
       child: ColoredBox(
         color: Colors.black,
@@ -553,6 +560,6 @@ class _VideoPlayerState extends State<_VideoPlayer> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
