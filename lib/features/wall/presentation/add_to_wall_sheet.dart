@@ -481,7 +481,7 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      _postFailed
+                      _postFailed && _error != null
                           ? 'Try again'
                           : 'Share with ${spouse ?? 'your partner'}',
                     ),
