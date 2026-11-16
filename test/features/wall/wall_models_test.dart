@@ -30,8 +30,11 @@ void main() {
 
   test('WallItem.fromRow infers source and tolerates nulls', () {
     final note = WallItem.fromRow({
-      'id': 'i2', 'couple_id': 'c1', 'added_by': 'u1',
-      'note': 'call your mum Friday', 'created_at': '2026-10-08T10:00:00Z',
+      'id': 'i2',
+      'couple_id': 'c1',
+      'added_by': 'u1',
+      'note': 'call your mum Friday',
+      'created_at': '2026-10-08T10:00:00Z',
     });
     expect(note.source, WallSource.note);
     expect(note.isPinned, isFalse);
@@ -39,8 +42,11 @@ void main() {
     expect(note.displayTitle, 'call your mum Friday');
 
     final article = WallItem.fromRow({
-      'id': 'i3', 'couple_id': 'c1', 'added_by': 'u1',
-      'url': 'https://example.com/a', 'source': 'unknown-value',
+      'id': 'i3',
+      'couple_id': 'c1',
+      'added_by': 'u1',
+      'url': 'https://example.com/a',
+      'source': 'unknown-value',
       'created_at': '2026-10-08T10:00:00Z',
     });
     expect(article.source, WallSource.article);
@@ -64,20 +70,29 @@ void main() {
 
   test('WallReaction.tryFromRow skips unknown reaction kinds', () {
     expect(
-      WallReaction.tryFromRow(
-          {'item_id': 'i1', 'user_id': 'u1', 'reaction': 'heart'})?.kind,
+      WallReaction.tryFromRow({
+        'item_id': 'i1',
+        'user_id': 'u1',
+        'reaction': 'heart',
+      })?.kind,
       WallReactionKind.heart,
     );
     expect(
-      WallReaction.tryFromRow(
-          {'item_id': 'i1', 'user_id': 'u1', 'reaction': 'thumbs'}),
+      WallReaction.tryFromRow({
+        'item_id': 'i1',
+        'user_id': 'u1',
+        'reaction': 'thumbs',
+      }),
       isNull,
     );
   });
 
   test('WallComment.fromRow maps columns', () {
     final c = WallComment.fromRow({
-      'id': 'm1', 'item_id': 'i1', 'author_id': 'u2', 'body': 'deal',
+      'id': 'm1',
+      'item_id': 'i1',
+      'author_id': 'u2',
+      'body': 'deal',
       'created_at': '2026-10-08T10:00:00Z',
     });
     expect(c.itemId, 'i1');
@@ -93,14 +108,14 @@ void main() {
 
   test('media thumbPath: video -> thumb.jpg sibling, photo -> the file', () {
     Map<String, dynamic> row(String source, String path) => {
-          'id': 'i1',
-          'couple_id': 'c1',
-          'added_by': 'u1',
-          'source': source,
-          'media_url': path,
-          'media_mime': 'x/y',
-          'created_at': '2026-10-08T10:00:00+00:00',
-        };
+      'id': 'i1',
+      'couple_id': 'c1',
+      'added_by': 'u1',
+      'source': source,
+      'media_url': path,
+      'media_mime': 'x/y',
+      'created_at': '2026-10-08T10:00:00+00:00',
+    };
     final v = WallItem.fromRow(row('video', 'c/i/media.mp4'));
     expect(v.hasMedia, isTrue);
     expect(v.thumbPath, 'c/i/thumb.jpg');

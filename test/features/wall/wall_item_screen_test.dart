@@ -12,11 +12,16 @@ import 'package:lovinity/features/wall/presentation/wall_item_screen.dart';
 import 'fakes.dart';
 
 WallItem _video({String by = 'sp'}) => WallItem(
-      id: 'i1', coupleId: 'c1', addedBy: by, url: 'https://youtu.be/abc',
-      title: 'The 10-minute habit', source: WallSource.youtube,
-      note: 'after Fajr?', isPinned: false,
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    );
+  id: 'i1',
+  coupleId: 'c1',
+  addedBy: by,
+  url: 'https://youtu.be/abc',
+  title: 'The 10-minute habit',
+  source: WallSource.youtube,
+  note: 'after Fajr?',
+  isPinned: false,
+  createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+);
 
 Future<StreamController<List<WallItem>>> _pump(
   WidgetTester tester, {
@@ -31,18 +36,24 @@ Future<StreamController<List<WallItem>>> _pump(
   addTearDown(tester.view.reset);
   final itemsCtrl = StreamController<List<WallItem>>.broadcast();
   addTearDown(itemsCtrl.close);
-  await tester.pumpWidget(ProviderScope(
-    overrides: [
-      wallItemsProvider.overrideWith((ref) => itemsCtrl.stream),
-      wallReactionsProvider.overrideWith((ref) =>
-          reactions?.stream ?? Stream.value(const <WallReaction>[])),
-      wallCommentsProvider.overrideWith((ref) => Stream.value(comments)),
-      wallSelfIdProvider.overrideWithValue('me'),
-      spouseProfileProvider.overrideWith((ref) async => null),
-      wallRepositoryProvider.overrideWithValue(repo),
-    ],
-    child: MaterialApp(theme: LovTheme.dark(), home: const WallItemScreen(itemId: 'i1')),
-  ));
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        wallItemsProvider.overrideWith((ref) => itemsCtrl.stream),
+        wallReactionsProvider.overrideWith(
+          (ref) => reactions?.stream ?? Stream.value(const <WallReaction>[]),
+        ),
+        wallCommentsProvider.overrideWith((ref) => Stream.value(comments)),
+        wallSelfIdProvider.overrideWithValue('me'),
+        spouseProfileProvider.overrideWith((ref) async => null),
+        wallRepositoryProvider.overrideWithValue(repo),
+      ],
+      child: MaterialApp(
+        theme: LovTheme.dark(),
+        home: const WallItemScreen(itemId: 'i1'),
+      ),
+    ),
+  );
   reactions?.add(const <WallReaction>[]);
   itemsCtrl.add(items ?? [_video()]);
   await tester.pump();
@@ -51,11 +62,22 @@ Future<StreamController<List<WallItem>>> _pump(
 }
 
 void main() {
-  testWidgets('renders the item, open button, reactions and comments', (tester) async {
-    await _pump(tester, repo: FakeWallRepository(), comments: [
-      WallComment(id: 'm1', itemId: 'i1', authorId: 'sp', body: 'starting tomorrow',
-          createdAt: DateTime.now()),
-    ]);
+  testWidgets('renders the item, open button, reactions and comments', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      repo: FakeWallRepository(),
+      comments: [
+        WallComment(
+          id: 'm1',
+          itemId: 'i1',
+          authorId: 'sp',
+          body: 'starting tomorrow',
+          createdAt: DateTime.now(),
+        ),
+      ],
+    );
     expect(find.text('The 10-minute habit'), findsOneWidget);
     expect(find.text('after Fajr?'), findsOneWidget);
     expect(find.text('Open in YouTube'), findsOneWidget);
@@ -63,16 +85,24 @@ void main() {
     expect(find.text('starting tomorrow'), findsOneWidget);
   });
 
-  testWidgets('reaction toggles optimistically and calls the repository', (tester) async {
+  testWidgets('reaction toggles optimistically and calls the repository', (
+    tester,
+  ) async {
     final repo = FakeWallRepository();
     await _pump(tester, repo: repo);
     await tester.tap(find.byKey(const Key('reaction-heart')));
     await tester.pump(const Duration(milliseconds: 200));
     expect(repo.reactionCalls, ['add:heart']);
-    expect(find.text('1'), findsOneWidget, reason: 'count shows before the stream confirms');
+    expect(
+      find.text('1'),
+      findsOneWidget,
+      reason: 'count shows before the stream confirms',
+    );
   });
 
-  testWidgets('a failed reaction rolls back and tells the user', (tester) async {
+  testWidgets('a failed reaction rolls back and tells the user', (
+    tester,
+  ) async {
     final repo = FakeWallRepository()..throwOnReact = Exception('offline');
     await _pump(tester, repo: repo);
     await tester.tap(find.byKey(const Key('reaction-fire')));
@@ -92,7 +122,11 @@ void main() {
 
   testWidgets('author can delete after confirming', (tester) async {
     final repo = FakeWallRepository();
-    await _pump(tester, repo: repo, items: [_video(by: 'me')]);
+    await _pump(
+      tester,
+      repo: repo,
+      items: [_video(by: 'me')],
+    );
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
@@ -112,7 +146,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('sending a comment calls the repository and clears the field', (tester) async {
+  testWidgets('sending a comment calls the repository and clears the field', (
+    tester,
+  ) async {
     final repo = FakeWallRepository();
     await _pump(tester, repo: repo);
     await tester.enterText(find.widgetWithText(TextField, 'Reply…'), 'deal 🤝');
@@ -126,19 +162,29 @@ void main() {
   group('reaction toggles', () {
     const ms200 = Duration(milliseconds: 200);
     const heart = Key('reaction-heart');
-    WallReaction mine() =>
-        const WallReaction(itemId: 'i1', userId: 'me', kind: WallReactionKind.heart);
+    WallReaction mine() => const WallReaction(
+      itemId: 'i1',
+      userId: 'me',
+      kind: WallReactionKind.heart,
+    );
 
-    testWidgets('double-tap calls the repository in order, one at a time', (tester) async {
+    testWidgets('double-tap calls the repository in order, one at a time', (
+      tester,
+    ) async {
       final repo = FakeWallRepository()..holdReactions = true;
       await _pump(tester, repo: repo);
       await tester.tap(find.byKey(heart));
       await tester.pump(ms200);
       await tester.tap(find.byKey(heart));
       await tester.pump(ms200);
-      expect(find.text('1'), findsNothing, reason: 'UI already shows the second tap');
-      expect(repo.reactionStarts, ['add:heart'],
-          reason: 'remove must wait for the add to finish');
+      expect(
+        find.text('1'),
+        findsNothing,
+        reason: 'UI already shows the second tap',
+      );
+      expect(repo.reactionStarts, [
+        'add:heart',
+      ], reason: 'remove must wait for the add to finish');
 
       repo.reactionGates[0].complete();
       await tester.pump();
@@ -151,7 +197,9 @@ void main() {
       expect(find.text('1'), findsNothing);
     });
 
-    testWidgets('a failed earlier tap does not erase a newer tap', (tester) async {
+    testWidgets('a failed earlier tap does not erase a newer tap', (
+      tester,
+    ) async {
       final repo = FakeWallRepository()..holdReactions = true;
       await _pump(tester, repo: repo);
       // add, remove, add: the UI ends on "mine".
@@ -198,7 +246,9 @@ void main() {
     });
   });
 
-  testWidgets('leaving mid-send does not throw when the send completes', (tester) async {
+  testWidgets('leaving mid-send does not throw when the send completes', (
+    tester,
+  ) async {
     final repo = FakeWallRepository()..commentGate = Completer<void>();
     await _pump(tester, repo: repo);
     await tester.enterText(find.widgetWithText(TextField, 'Reply…'), 'hello');
@@ -215,67 +265,100 @@ void main() {
   });
 
   for (final isVideo in [false, true]) {
-    testWidgets('${isVideo ? 'video' : 'photo'} detail has no "Open in" and signs the media path',
-        (tester) async {
-      final requested = <String>[];
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      final item = WallItem(
-        id: 'i1', coupleId: 'c1', addedBy: 'sp',
-        source: isVideo ? WallSource.video : WallSource.photo,
-        mediaPath: isVideo ? 'c1/i1/video.mp4' : 'c1/i1/media.jpg',
-        mediaMime: isVideo ? 'video/mp4' : 'image/jpeg',
-        isPinned: false, createdAt: DateTime.now(),
-      );
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          wallItemsProvider.overrideWith((ref) => Stream.value([item])),
-          wallReactionsProvider.overrideWith((ref) => Stream.value(const <WallReaction>[])),
-          wallCommentsProvider.overrideWith((ref) => Stream.value(const <WallComment>[])),
-          wallSelfIdProvider.overrideWithValue('me'),
-          spouseProfileProvider.overrideWith((ref) async => null),
-          wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
-          wallSignedUrlProvider.overrideWith((ref, path) {
-            requested.add(path);
-            // Photo: a failing URL degrades to the placeholder, not a crash.
-            // Video: a good URL the (test) platform can't play.
-            if (!isVideo) throw Exception('expired');
-            return 'http://localhost/fake.mp4';
-          }),
-        ],
-        child: MaterialApp(theme: LovTheme.dark(), home: const WallItemScreen(itemId: 'i1')),
-      ));
-      await tester.pump();
-      await tester.pump();
-      expect(requested, [item.mediaPath]);
-      expect(find.textContaining('Open in'), findsNothing);
-      expect(find.text("Can't play this video"), isVideo ? findsOneWidget : findsNothing);
-    });
+    testWidgets(
+      '${isVideo ? 'video' : 'photo'} detail has no "Open in" and signs the media path',
+      (tester) async {
+        final requested = <String>[];
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final item = WallItem(
+          id: 'i1',
+          coupleId: 'c1',
+          addedBy: 'sp',
+          source: isVideo ? WallSource.video : WallSource.photo,
+          mediaPath: isVideo ? 'c1/i1/video.mp4' : 'c1/i1/media.jpg',
+          mediaMime: isVideo ? 'video/mp4' : 'image/jpeg',
+          isPinned: false,
+          createdAt: DateTime.now(),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              wallItemsProvider.overrideWith((ref) => Stream.value([item])),
+              wallReactionsProvider.overrideWith(
+                (ref) => Stream.value(const <WallReaction>[]),
+              ),
+              wallCommentsProvider.overrideWith(
+                (ref) => Stream.value(const <WallComment>[]),
+              ),
+              wallSelfIdProvider.overrideWithValue('me'),
+              spouseProfileProvider.overrideWith((ref) async => null),
+              wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
+              wallSignedUrlProvider.overrideWith((ref, path) {
+                requested.add(path);
+                // Photo: a failing URL degrades to the placeholder, not a crash.
+                // Video: a good URL the (test) platform can't play.
+                if (!isVideo) throw Exception('expired');
+                return 'http://localhost/fake.mp4';
+              }),
+            ],
+            child: MaterialApp(
+              theme: LovTheme.dark(),
+              home: const WallItemScreen(itemId: 'i1'),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(requested, [item.mediaPath]);
+        expect(find.textContaining('Open in'), findsNothing);
+        expect(
+          find.text("Can't play this video"),
+          isVideo ? findsOneWidget : findsNothing,
+        );
+      },
+    );
   }
 
   testWidgets('photo detail is labelled for screen readers', (tester) async {
     final item = WallItem(
-      id: 'i1', coupleId: 'c1', addedBy: 'sp', source: WallSource.photo,
-      mediaPath: 'c1/i1/media.jpg', mediaMime: 'image/jpeg',
-      isPinned: false, createdAt: DateTime.now(),
+      id: 'i1',
+      coupleId: 'c1',
+      addedBy: 'sp',
+      source: WallSource.photo,
+      mediaPath: 'c1/i1/media.jpg',
+      mediaMime: 'image/jpeg',
+      isPinned: false,
+      createdAt: DateTime.now(),
     );
     final semantics = tester.ensureSemantics();
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        wallItemsProvider.overrideWith((ref) => Stream.value([item])),
-        wallReactionsProvider.overrideWith((ref) => Stream.value(const <WallReaction>[])),
-        wallCommentsProvider.overrideWith((ref) => Stream.value(const <WallComment>[])),
-        wallSelfIdProvider.overrideWithValue('me'),
-        spouseProfileProvider.overrideWith((ref) async => null),
-        wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
-        wallSignedUrlProvider.overrideWith((ref, path) => 'http://localhost/fake'),
-      ],
-      child: MaterialApp(theme: LovTheme.dark(), home: const WallItemScreen(itemId: 'i1')),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          wallItemsProvider.overrideWith((ref) => Stream.value([item])),
+          wallReactionsProvider.overrideWith(
+            (ref) => Stream.value(const <WallReaction>[]),
+          ),
+          wallCommentsProvider.overrideWith(
+            (ref) => Stream.value(const <WallComment>[]),
+          ),
+          wallSelfIdProvider.overrideWithValue('me'),
+          spouseProfileProvider.overrideWith((ref) async => null),
+          wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
+          wallSignedUrlProvider.overrideWith(
+            (ref, path) => 'http://localhost/fake',
+          ),
+        ],
+        child: MaterialApp(
+          theme: LovTheme.dark(),
+          home: const WallItemScreen(itemId: 'i1'),
+        ),
+      ),
+    );
     await tester.pump();
     await tester.pump();
     await tester.pump();

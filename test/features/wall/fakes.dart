@@ -43,14 +43,29 @@ class FakeWallRepository extends Fake implements WallRepository {
     String? note,
   }) async {
     if (throwOnAdd != null) throw throwOnAdd!;
-    added.add(AddItemCall({
-      'coupleId': coupleId, 'userId': userId, 'url': url, 'title': title,
-      'description': description, 'imageUrl': imageUrl, 'source': source,
-      'collection': collection, 'note': note,
-    }));
+    added.add(
+      AddItemCall({
+        'coupleId': coupleId,
+        'userId': userId,
+        'url': url,
+        'title': title,
+        'description': description,
+        'imageUrl': imageUrl,
+        'source': source,
+        'collection': collection,
+        'note': note,
+      }),
+    );
     return WallItem(
-      id: 'new', coupleId: coupleId, addedBy: userId, url: url, title: title,
-      source: source, collection: collection, note: note, isPinned: false,
+      id: 'new',
+      coupleId: coupleId,
+      addedBy: userId,
+      url: url,
+      title: title,
+      source: source,
+      collection: collection,
+      note: note,
+      isPinned: false,
       createdAt: DateTime.now(),
     );
   }
@@ -66,15 +81,27 @@ class FakeWallRepository extends Fake implements WallRepository {
     String? note,
   }) async {
     if (throwOnAdd != null) throw throwOnAdd!;
-    added.add(AddItemCall({
-      'coupleId': coupleId, 'userId': userId, 'bytes': bytes,
-      'mimeType': mimeType, 'thumbnailBytes': thumbnailBytes,
-      'collection': collection, 'note': note,
-    }));
+    added.add(
+      AddItemCall({
+        'coupleId': coupleId,
+        'userId': userId,
+        'bytes': bytes,
+        'mimeType': mimeType,
+        'thumbnailBytes': thumbnailBytes,
+        'collection': collection,
+        'note': note,
+      }),
+    );
     return WallItem(
-      id: 'new', coupleId: coupleId, addedBy: userId,
-      source: mimeType.startsWith('video/') ? WallSource.video : WallSource.photo,
-      collection: collection, note: note, isPinned: false,
+      id: 'new',
+      coupleId: coupleId,
+      addedBy: userId,
+      source: mimeType.startsWith('video/')
+          ? WallSource.video
+          : WallSource.photo,
+      collection: collection,
+      note: note,
+      isPinned: false,
       createdAt: DateTime.now(),
     );
   }

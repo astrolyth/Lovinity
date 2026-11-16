@@ -20,13 +20,23 @@ import 'package:lovinity/shared/models/couple.dart';
 
 import 'fakes.dart';
 
-WallItem _item(String id, String title,
-        {WallCollection? collection, bool pinned = false, String by = 'sp'}) =>
-    WallItem(
-      id: id, coupleId: 'c1', addedBy: by, url: 'https://example.com/$id',
-      title: title, source: WallSource.article, collection: collection,
-      isPinned: pinned, createdAt: DateTime.now(),
-    );
+WallItem _item(
+  String id,
+  String title, {
+  WallCollection? collection,
+  bool pinned = false,
+  String by = 'sp',
+}) => WallItem(
+  id: id,
+  coupleId: 'c1',
+  addedBy: by,
+  url: 'https://example.com/$id',
+  title: title,
+  source: WallSource.article,
+  collection: collection,
+  isPinned: pinned,
+  createdAt: DateTime.now(),
+);
 
 Future<void> pumpWall(
   WidgetTester tester,
@@ -37,38 +47,60 @@ Future<void> pumpWall(
   GoRouter? router,
 }) async {
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform, (call) async => null);
-  addTearDown(() => tester.binding.defaultBinaryMessenger
-      .setMockMethodCallHandler(SystemChannels.platform, null));
-  await tester.pumpWidget(ProviderScope(
-    // No automatic retry: the error state must be observable and the retry
-    // button is what reloads.
-    retry: (_, _) => null,
-    overrides: [
-      wallItemsProvider.overrideWith((ref) => itemsBuilder?.call() ?? items),
-      wallReactionsProvider.overrideWith((ref) => Stream.value(const <WallReaction>[])),
-      wallCommentsProvider.overrideWith((ref) => Stream.value(const <WallComment>[])),
-      wallSelfIdProvider.overrideWithValue('me'),
-      ownProfileProvider.overrideWith((ref) async => null),
-      spouseProfileProvider.overrideWith((ref) async => null),
-      secureStoreProvider.overrideWithValue(store ?? InMemorySecureStore()),
-      currentCoupleProvider.overrideWith((ref) => Stream.value(const Couple(
-          id: 'c1', memberA: 'me', memberB: 'sp', status: 'active', longDistance: false))),
-      wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
-      linkPreviewServiceProvider.overrideWithValue(FakeLinkPreviewService()),
-    ],
-    child: router != null
-        ? MaterialApp.router(theme: LovTheme.dark(), routerConfig: router)
-        : MaterialApp(
-            theme: LovTheme.dark(),
-            home: visible == null
-                ? const WallScreen()
-                : ValueListenableBuilder<bool>(
-                    valueListenable: visible,
-                    builder: (_, show, _) => show ? const WallScreen() : const SizedBox(),
-                  ),
+    SystemChannels.platform,
+    (call) async => null,
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      null,
+    ),
+  );
+  await tester.pumpWidget(
+    ProviderScope(
+      // No automatic retry: the error state must be observable and the retry
+      // button is what reloads.
+      retry: (_, _) => null,
+      overrides: [
+        wallItemsProvider.overrideWith((ref) => itemsBuilder?.call() ?? items),
+        wallReactionsProvider.overrideWith(
+          (ref) => Stream.value(const <WallReaction>[]),
+        ),
+        wallCommentsProvider.overrideWith(
+          (ref) => Stream.value(const <WallComment>[]),
+        ),
+        wallSelfIdProvider.overrideWithValue('me'),
+        ownProfileProvider.overrideWith((ref) async => null),
+        spouseProfileProvider.overrideWith((ref) async => null),
+        secureStoreProvider.overrideWithValue(store ?? InMemorySecureStore()),
+        currentCoupleProvider.overrideWith(
+          (ref) => Stream.value(
+            const Couple(
+              id: 'c1',
+              memberA: 'me',
+              memberB: 'sp',
+              status: 'active',
+              longDistance: false,
+            ),
           ),
-  ));
+        ),
+        wallRepositoryProvider.overrideWithValue(FakeWallRepository()),
+        linkPreviewServiceProvider.overrideWithValue(FakeLinkPreviewService()),
+      ],
+      child: router != null
+          ? MaterialApp.router(theme: LovTheme.dark(), routerConfig: router)
+          : MaterialApp(
+              theme: LovTheme.dark(),
+              home: visible == null
+                  ? const WallScreen()
+                  : ValueListenableBuilder<bool>(
+                      valueListenable: visible,
+                      builder: (_, show, _) =>
+                          show ? const WallScreen() : const SizedBox(),
+                    ),
+            ),
+    ),
+  );
 }
 
 void main() {
@@ -84,11 +116,21 @@ void main() {
     expect(find.text('Share your first find'), findsOneWidget);
   });
 
-  testWidgets('renders cards, pinned row and filters by collection', (tester) async {
-    await pumpWall(tester, Stream.value([
-      _item('a', 'Lamb biryani', collection: WallCollection.recipes, pinned: true),
-      _item('b', 'Lake cabin', collection: WallCollection.places),
-    ]));
+  testWidgets('renders cards, pinned row and filters by collection', (
+    tester,
+  ) async {
+    await pumpWall(
+      tester,
+      Stream.value([
+        _item(
+          'a',
+          'Lamb biryani',
+          collection: WallCollection.recipes,
+          pinned: true,
+        ),
+        _item('b', 'Lake cabin', collection: WallCollection.places),
+      ]),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Our Wall'), findsOneWidget);
     expect(find.text('2 things shared this week'), findsOneWidget);
@@ -125,8 +167,13 @@ void main() {
     await tester.pumpAndSettle();
 
     double opacityOf(String title) {
-      final enter = find.ancestor(of: find.text(title), matching: find.byType(LovEnter));
-      final opacity = find.descendant(of: enter, matching: find.byType(Opacity)).first;
+      final enter = find.ancestor(
+        of: find.text(title),
+        matching: find.byType(LovEnter),
+      );
+      final opacity = find
+          .descendant(of: enter, matching: find.byType(Opacity))
+          .first;
       return tester.widget<Opacity>(opacity).opacity;
     }
 
@@ -149,8 +196,12 @@ void main() {
     final store = InMemorySecureStore();
     final visible = ValueNotifier(true);
     addTearDown(visible.dispose);
-    await pumpWall(tester, Stream.value(const <WallItem>[]),
-        store: store, visible: visible);
+    await pumpWall(
+      tester,
+      Stream.value(const <WallItem>[]),
+      store: store,
+      visible: visible,
+    );
     await tester.pumpAndSettle();
     expect(await store.read('wall.last_visit.me'), isNull);
 
@@ -185,98 +236,124 @@ void main() {
     expect(find.text('Share your first find'), findsOneWidget);
   });
 
-  testWidgets('a pending share opens the sheet pre-filled; a second one queues',
-      (tester) async {
-    await pumpWall(tester, Stream.value(const <WallItem>[]));
-    await tester.pumpAndSettle();
-    final container =
-        ProviderScope.containerOf(tester.element(find.byType(WallScreen)));
+  testWidgets(
+    'a pending share opens the sheet pre-filled; a second one queues',
+    (tester) async {
+      await pumpWall(tester, Stream.value(const <WallItem>[]));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(WallScreen)),
+      );
 
-    container.read(pendingShareProvider.notifier)
-        .set(const SharedPayload(text: 'look https://youtu.be/first'));
-    await tester.pumpAndSettle();
-    expect(find.byType(AddToWallSheet), findsOneWidget);
-    expect(find.text('https://youtu.be/first'), findsOneWidget);
+      container
+          .read(pendingShareProvider.notifier)
+          .set(const SharedPayload(text: 'look https://youtu.be/first'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AddToWallSheet), findsOneWidget);
+      expect(find.text('https://youtu.be/first'), findsOneWidget);
 
-    container.read(pendingShareProvider.notifier)
-        .set(const SharedPayload(text: 'https://youtu.be/second'));
-    await tester.pumpAndSettle();
-    expect(find.byType(AddToWallSheet), findsOneWidget, reason: 'no stacked sheets');
+      container
+          .read(pendingShareProvider.notifier)
+          .set(const SharedPayload(text: 'https://youtu.be/second'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(AddToWallSheet),
+        findsOneWidget,
+        reason: 'no stacked sheets',
+      );
 
-    Navigator.of(tester.element(find.byType(AddToWallSheet))).pop();
-    await tester.pumpAndSettle();
-    expect(find.byType(AddToWallSheet), findsOneWidget, reason: 'queued share opens next');
-    expect(find.text('https://youtu.be/second'), findsOneWidget);
-    expect(container.read(pendingShareProvider), isNull);
-  });
+      Navigator.of(tester.element(find.byType(AddToWallSheet))).pop();
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(AddToWallSheet),
+        findsOneWidget,
+        reason: 'queued share opens next',
+      );
+      expect(find.text('https://youtu.be/second'), findsOneWidget);
+      expect(container.read(pendingShareProvider), isNull);
+    },
+  );
 
   GoRouter wallRouter(String initialLocation) => GoRouter(
-        initialLocation: initialLocation,
+    initialLocation: initialLocation,
+    routes: [
+      GoRoute(
+        path: '/home',
+        builder: (_, _) => const Scaffold(body: Text('home')),
         routes: [
           GoRoute(
-            path: '/home',
-            builder: (_, _) => const Scaffold(body: Text('home')),
+            path: 'wall',
+            builder: (_, _) => const WallScreen(),
             routes: [
               GoRoute(
-                path: 'wall',
-                builder: (_, _) => const WallScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    builder: (_, state) =>
-                        Scaffold(body: Text('detail ${state.pathParameters['id']}')),
-                  ),
-                ],
+                path: ':id',
+                builder: (_, state) => Scaffold(
+                  body: Text('detail ${state.pathParameters['id']}'),
+                ),
               ),
             ],
           ),
         ],
+      ),
+    ],
+  );
+
+  testWidgets(
+    'a share pending before the Wall opens is consumed when it opens',
+    (tester) async {
+      final router = wallRouter('/home');
+      addTearDown(router.dispose);
+      await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('home')),
       );
+      container
+          .read(pendingShareProvider.notifier)
+          .set(const SharedPayload(text: 'https://youtu.be/cold'));
 
-  testWidgets('a share pending before the Wall opens is consumed when it opens',
-      (tester) async {
-    final router = wallRouter('/home');
-    addTearDown(router.dispose);
-    await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
-    await tester.pumpAndSettle();
-    final container = ProviderScope.containerOf(tester.element(find.text('home')));
-    container.read(pendingShareProvider.notifier)
-        .set(const SharedPayload(text: 'https://youtu.be/cold'));
+      router.go('/home/wall');
+      await tester.pumpAndSettle();
+      expect(find.byType(AddToWallSheet), findsOneWidget);
+      expect(find.text('https://youtu.be/cold'), findsOneWidget);
+      expect(container.read(pendingShareProvider), isNull);
+    },
+  );
 
-    router.go('/home/wall');
-    await tester.pumpAndSettle();
-    expect(find.byType(AddToWallSheet), findsOneWidget);
-    expect(find.text('https://youtu.be/cold'), findsOneWidget);
-    expect(container.read(pendingShareProvider), isNull);
-  });
+  testWidgets(
+    'a share arriving while an item is open survives going back to the Wall',
+    (tester) async {
+      // Mirrors the app: the item detail is a child route of the Wall, and an
+      // incoming share routes with go('/home/wall') (see _routeShare in app.dart).
+      final router = wallRouter('/home/wall');
+      addTearDown(router.dispose);
+      await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
+      await tester.pumpAndSettle();
 
-  testWidgets('a share arriving while an item is open survives going back to the Wall',
-      (tester) async {
-    // Mirrors the app: the item detail is a child route of the Wall, and an
-    // incoming share routes with go('/home/wall') (see _routeShare in app.dart).
-    final router = wallRouter('/home/wall');
-    addTearDown(router.dispose);
-    await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
-    await tester.pumpAndSettle();
+      unawaited(router.push('/home/wall/a'));
+      await tester.pumpAndSettle();
+      expect(find.text('detail a'), findsOneWidget);
 
-    unawaited(router.push('/home/wall/a'));
-    await tester.pumpAndSettle();
-    expect(find.text('detail a'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(WallScreen, skipOffstage: false)),
+      );
+      container
+          .read(pendingShareProvider.notifier)
+          .set(const SharedPayload(text: 'look https://youtu.be/shared'));
+      await tester.pump();
+      expect(
+        find.byType(AddToWallSheet),
+        findsNothing,
+        reason: 'the Wall is covered; the share waits',
+      );
+      expect(container.read(pendingShareProvider), isNotNull);
 
-    final container = ProviderScope.containerOf(
-        tester.element(find.byType(WallScreen, skipOffstage: false)));
-    container.read(pendingShareProvider.notifier)
-        .set(const SharedPayload(text: 'look https://youtu.be/shared'));
-    await tester.pump();
-    expect(find.byType(AddToWallSheet), findsNothing,
-        reason: 'the Wall is covered; the share waits');
-    expect(container.read(pendingShareProvider), isNotNull);
-
-    router.go('/home/wall');
-    await tester.pumpAndSettle();
-    expect(find.text('detail a'), findsNothing);
-    expect(find.byType(AddToWallSheet), findsOneWidget);
-    expect(find.text('https://youtu.be/shared'), findsOneWidget);
-    expect(container.read(pendingShareProvider), isNull);
-  });
+      router.go('/home/wall');
+      await tester.pumpAndSettle();
+      expect(find.text('detail a'), findsNothing);
+      expect(find.byType(AddToWallSheet), findsOneWidget);
+      expect(find.text('https://youtu.be/shared'), findsOneWidget);
+      expect(container.read(pendingShareProvider), isNull);
+    },
+  );
 }

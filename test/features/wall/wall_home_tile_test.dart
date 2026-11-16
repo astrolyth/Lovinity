@@ -10,18 +10,22 @@ import 'package:lovinity/features/wall/domain/wall_providers.dart';
 import 'package:lovinity/features/wall/presentation/wall_home_tile.dart';
 
 Future<void> _pump(WidgetTester tester, List<WallItem> items) async {
-  await tester.pumpWidget(ProviderScope(
-    overrides: [
-      wallItemsProvider.overrideWith((ref) => Stream.value(items)),
-      wallSelfIdProvider.overrideWithValue('me'),
-      spouseProfileProvider.overrideWith((ref) async => null),
-      secureStoreProvider.overrideWithValue(InMemorySecureStore()),
-    ],
-    child: MaterialApp(
-      theme: LovTheme.dark(),
-      home: const Scaffold(body: Padding(padding: EdgeInsets.all(16), child: WallHomeTile())),
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        wallItemsProvider.overrideWith((ref) => Stream.value(items)),
+        wallSelfIdProvider.overrideWithValue('me'),
+        spouseProfileProvider.overrideWith((ref) async => null),
+        secureStoreProvider.overrideWithValue(InMemorySecureStore()),
+      ],
+      child: MaterialApp(
+        theme: LovTheme.dark(),
+        home: const Scaffold(
+          body: Padding(padding: EdgeInsets.all(16), child: WallHomeTile()),
+        ),
+      ),
     ),
-  ));
+  );
   await tester.pumpAndSettle();
 }
 
@@ -33,11 +37,18 @@ void main() {
     expect(find.byKey(const Key('wall-unseen-dot')), findsNothing);
   });
 
-  testWidgets('shows the latest item and an unseen dot for spouse posts', (tester) async {
+  testWidgets('shows the latest item and an unseen dot for spouse posts', (
+    tester,
+  ) async {
     await _pump(tester, [
       WallItem(
-        id: 'i1', coupleId: 'c', addedBy: 'sp', url: 'https://youtu.be/a',
-        title: 'Morning habit', source: WallSource.youtube, isPinned: false,
+        id: 'i1',
+        coupleId: 'c',
+        addedBy: 'sp',
+        url: 'https://youtu.be/a',
+        title: 'Morning habit',
+        source: WallSource.youtube,
+        isPinned: false,
         createdAt: DateTime.now(),
       ),
     ]);
@@ -46,12 +57,19 @@ void main() {
     expect(find.byKey(const Key('wall-unseen-dot')), findsOneWidget);
   });
 
-  testWidgets('a very long title does not push the shared time out of view', (tester) async {
+  testWidgets('a very long title does not push the shared time out of view', (
+    tester,
+  ) async {
     final longTitle = 'A' * 300;
     await _pump(tester, [
       WallItem(
-        id: 'i2', coupleId: 'c', addedBy: 'sp', url: 'https://youtu.be/b',
-        title: longTitle, source: WallSource.youtube, isPinned: false,
+        id: 'i2',
+        coupleId: 'c',
+        addedBy: 'sp',
+        url: 'https://youtu.be/b',
+        title: longTitle,
+        source: WallSource.youtube,
+        isPinned: false,
         createdAt: DateTime.now(),
       ),
     ]);

@@ -115,7 +115,8 @@ class WallItem {
       title: row['title'] as String?,
       description: row['description'] as String?,
       imageUrl: row['image_url'] as String?,
-      source: WallSource.fromKey(row['source'] as String?) ??
+      source:
+          WallSource.fromKey(row['source'] as String?) ??
           (url == null ? WallSource.note : WallSource.article),
       collection: WallCollection.fromKey(row['collection'] as String?),
       note: row['note'] as String?,
@@ -188,12 +189,12 @@ class WallComment {
   final DateTime createdAt;
 
   factory WallComment.fromRow(Map<String, dynamic> row) => WallComment(
-        id: row['id'] as String,
-        itemId: row['item_id'] as String,
-        authorId: row['author_id'] as String,
-        body: row['body'] as String,
-        createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
-      );
+    id: row['id'] as String,
+    itemId: row['item_id'] as String,
+    authorId: row['author_id'] as String,
+    body: row['body'] as String,
+    createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+  );
 }
 
 /// How many of one reaction an item has, and whether one of them is mine.

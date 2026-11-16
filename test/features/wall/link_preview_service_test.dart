@@ -12,7 +12,9 @@ bool _hasLoneSurrogate(String s) {
   for (var i = 0; i < u.length; i++) {
     final c = u[i];
     if (c >= 0xD800 && c <= 0xDBFF) {
-      if (i + 1 >= u.length || u[i + 1] < 0xDC00 || u[i + 1] > 0xDFFF) return true;
+      if (i + 1 >= u.length || u[i + 1] < 0xDC00 || u[i + 1] > 0xDFFF) {
+        return true;
+      }
       i++;
     } else if (c >= 0xDC00 && c <= 0xDFFF) {
       return true;
@@ -21,9 +23,15 @@ bool _hasLoneSurrogate(String s) {
   return false;
 }
 
-http.Response _resp(String body,
-        {int status = 200, String type = 'text/html; charset=utf-8'}) =>
-    http.Response.bytes(utf8.encode(body), status, headers: {'content-type': type});
+http.Response _resp(
+  String body, {
+  int status = 200,
+  String type = 'text/html; charset=utf-8',
+}) => http.Response.bytes(
+  utf8.encode(body),
+  status,
+  headers: {'content-type': type},
+);
 
 /// Streams a body in 4 KB chunks and records how much of it was pulled and
 /// whether the subscription was cancelled before the body ran out.
@@ -58,18 +66,24 @@ class _StreamingClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async =>
-      http.StreamedResponse(counter.body(), 200,
-          headers: {'content-type': 'text/html; charset=utf-8'}, request: request);
+      http.StreamedResponse(
+        counter.body(),
+        200,
+        headers: {'content-type': 'text/html; charset=utf-8'},
+        request: request,
+      );
 }
 
 void main() {
   group('parsers', () {
     test('parseOEmbed reads title, thumbnail and provider', () {
-      final p = parseOEmbed(jsonEncode({
-        'title': 'The 10-minute habit',
-        'thumbnail_url': 'https://i.ytimg.com/vi/x/hq.jpg',
-        'provider_name': 'YouTube',
-      }))!;
+      final p = parseOEmbed(
+        jsonEncode({
+          'title': 'The 10-minute habit',
+          'thumbnail_url': 'https://i.ytimg.com/vi/x/hq.jpg',
+          'provider_name': 'YouTube',
+        }),
+      )!;
       expect(p.title, 'The 10-minute habit');
       expect(p.imageUrl, 'https://i.ytimg.com/vi/x/hq.jpg');
       expect(p.siteName, 'YouTube');
@@ -111,21 +125,29 @@ void main() {
       expect(p.title, 'Tw title');
       expect(p.imageUrl, 'https://x.example/i.png');
       expect(
-        parseHtmlPreview('<title> Only   title </title>',
-                baseUrl: Uri.parse('https://x.example'))!
-            .title,
+        parseHtmlPreview(
+          '<title> Only   title </title>',
+          baseUrl: Uri.parse('https://x.example'),
+        )!.title,
         'Only title',
       );
     });
 
     test('returns null when the page has nothing usable', () {
-      expect(parseHtmlPreview('<html><body>hi</body></html>',
-          baseUrl: Uri.parse('https://x.example')), isNull);
+      expect(
+        parseHtmlPreview(
+          '<html><body>hi</body></html>',
+          baseUrl: Uri.parse('https://x.example'),
+        ),
+        isNull,
+      );
     });
 
     test('caps title length at 300', () {
-      final p = parseHtmlPreview('<title>${'a' * 400}</title>',
-          baseUrl: Uri.parse('https://x.example'))!;
+      final p = parseHtmlPreview(
+        '<title>${'a' * 400}</title>',
+        baseUrl: Uri.parse('https://x.example'),
+      )!;
       expect(p.title!.length, 300);
     });
 
@@ -133,8 +155,10 @@ void main() {
       // 299 + the emoji = 300 code points but 301 UTF-16 code units: a
       // code-unit cut would leave a lone high surrogate.
       final raw = '${'a' * 299}\u{1F90D} and more';
-      final html = parseHtmlPreview('<title>$raw</title>',
-          baseUrl: Uri.parse('https://x.example'))!;
+      final html = parseHtmlPreview(
+        '<title>$raw</title>',
+        baseUrl: Uri.parse('https://x.example'),
+      )!;
       final oembed = parseOEmbed(jsonEncode({'title': raw}))!;
       for (final t in [html.title!, oembed.title!]) {
         expect(t, '${'a' * 299}\u{1F90D}');
@@ -145,10 +169,17 @@ void main() {
     });
 
     test('oembedEndpoint only for YouTube and TikTok', () {
-      expect(oembedEndpoint('https://youtu.be/x', WallSource.youtube)!.host,
-          'www.youtube.com');
-      expect(oembedEndpoint('https://www.tiktok.com/@a/video/1', WallSource.tiktok)!.host,
-          'www.tiktok.com');
+      expect(
+        oembedEndpoint('https://youtu.be/x', WallSource.youtube)!.host,
+        'www.youtube.com',
+      );
+      expect(
+        oembedEndpoint(
+          'https://www.tiktok.com/@a/video/1',
+          WallSource.tiktok,
+        )!.host,
+        'www.tiktok.com',
+      );
       expect(oembedEndpoint('https://example.com', WallSource.article), isNull);
     });
   });
@@ -156,32 +187,46 @@ void main() {
   group('fetch', () {
     test('uses oEmbed for YouTube', () async {
       final seen = <Uri>[];
-      final svc = LinkPreviewService(client: MockClient((req) async {
-        seen.add(req.url);
-        return _resp(jsonEncode({'title': 'Vid', 'thumbnail_url': 'https://i/t.jpg'}),
-            type: 'application/json');
-      }));
+      final svc = LinkPreviewService(
+        client: MockClient((req) async {
+          seen.add(req.url);
+          return _resp(
+            jsonEncode({'title': 'Vid', 'thumbnail_url': 'https://i/t.jpg'}),
+            type: 'application/json',
+          );
+        }),
+      );
       final p = await svc.fetch('https://youtu.be/abc');
       expect(p!.title, 'Vid');
       expect(seen.single.path, '/oembed');
     });
 
     test('falls back to the page when oEmbed fails', () async {
-      final svc = LinkPreviewService(client: MockClient((req) async {
-        if (req.url.path == '/oembed') return _resp('', status: 404);
-        return _resp('<meta property="og:title" content="From page">');
-      }));
-      expect((await svc.fetch('https://www.youtube.com/watch?v=1'))!.title, 'From page');
+      final svc = LinkPreviewService(
+        client: MockClient((req) async {
+          if (req.url.path == '/oembed') return _resp('', status: 404);
+          return _resp('<meta property="og:title" content="From page">');
+        }),
+      );
+      expect(
+        (await svc.fetch('https://www.youtube.com/watch?v=1'))!.title,
+        'From page',
+      );
     });
 
     test('non-HTML returns null', () async {
-      final svc = LinkPreviewService(client: MockClient((_) async =>
-          _resp('%PDF-1.7', type: 'application/pdf')));
+      final svc = LinkPreviewService(
+        client: MockClient(
+          (_) async => _resp('%PDF-1.7', type: 'application/pdf'),
+        ),
+      );
       expect(await svc.fetch('https://example.com/file.pdf'), isNull);
     });
 
     test('non-200 returns null', () async {
-      final svc = LinkPreviewService(client: MockClient((_) async => _resp('x', status: 500)));
+      final svc = LinkPreviewService(
+        client: MockClient((_) async => _resp('x', status: 500)),
+      );
       expect(await svc.fetch('https://example.com'), isNull);
     });
 
@@ -198,10 +243,12 @@ void main() {
 
     test('rejects non-http schemes without a request', () async {
       var called = false;
-      final svc = LinkPreviewService(client: MockClient((_) async {
-        called = true;
-        return _resp('');
-      }));
+      final svc = LinkPreviewService(
+        client: MockClient((_) async {
+          called = true;
+          return _resp('');
+        }),
+      );
       expect(await svc.fetch('file:///etc/passwd'), isNull);
       expect(called, isFalse);
     });
@@ -210,40 +257,58 @@ void main() {
       final counter = _PullCounter();
       final svc = LinkPreviewService(client: _StreamingClient(counter));
       expect((await svc.fetch('https://example.com'))!.title, 'Big');
-      expect(counter.bytesPulled,
-          lessThanOrEqualTo(LinkPreviewService.maxBytes + _PullCounter.chunkSize));
+      expect(
+        counter.bytesPulled,
+        lessThanOrEqualTo(LinkPreviewService.maxBytes + _PullCounter.chunkSize),
+      );
       expect(counter.drained, isFalse);
       expect(counter.cancelled, isTrue);
     });
 
-    test('follows a redirect and resolves relative og:image against the final URL',
-        () async {
-      final svc = LinkPreviewService(client: MockClient((req) async {
-        if (req.url.host == 'short.example') {
-          return http.Response('', 301, headers: {'location': 'https://site.example/post'});
-        }
-        return _resp('<meta property="og:image" content="/img/a.png">');
-      }));
-      final p = await svc.fetch('https://short.example/x');
-      expect(p!.imageUrl, 'https://site.example/img/a.png');
-    });
+    test(
+      'follows a redirect and resolves relative og:image against the final URL',
+      () async {
+        final svc = LinkPreviewService(
+          client: MockClient((req) async {
+            if (req.url.host == 'short.example') {
+              return http.Response(
+                '',
+                301,
+                headers: {'location': 'https://site.example/post'},
+              );
+            }
+            return _resp('<meta property="og:image" content="/img/a.png">');
+          }),
+        );
+        final p = await svc.fetch('https://short.example/x');
+        expect(p!.imageUrl, 'https://site.example/img/a.png');
+      },
+    );
 
     test('gives up after 5 redirects', () async {
       var calls = 0;
-      final svc = LinkPreviewService(client: MockClient((_) async {
-        calls++;
-        return http.Response('', 302, headers: {'location': 'https://loop.example/next'});
-      }));
+      final svc = LinkPreviewService(
+        client: MockClient((_) async {
+          calls++;
+          return http.Response(
+            '',
+            302,
+            headers: {'location': 'https://loop.example/next'},
+          );
+        }),
+      );
       expect(await svc.fetch('https://loop.example/start'), isNull);
       expect(calls, 6); // the original request plus 5 followed hops
     });
 
     test('refuses a redirect to a non-http scheme', () async {
       var calls = 0;
-      final svc = LinkPreviewService(client: MockClient((_) async {
-        calls++;
-        return http.Response('', 302, headers: {'location': 'ftp://x/file'});
-      }));
+      final svc = LinkPreviewService(
+        client: MockClient((_) async {
+          calls++;
+          return http.Response('', 302, headers: {'location': 'ftp://x/file'});
+        }),
+      );
       expect(await svc.fetch('https://short.example/x'), isNull);
       expect(calls, 1);
     });

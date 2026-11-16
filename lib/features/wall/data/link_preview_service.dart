@@ -10,7 +10,12 @@ import '../domain/wall_models.dart';
 
 @immutable
 class LinkPreview {
-  const LinkPreview({this.title, this.description, this.imageUrl, this.siteName});
+  const LinkPreview({
+    this.title,
+    this.description,
+    this.imageUrl,
+    this.siteName,
+  });
 
   final String? title;
   final String? description;
@@ -22,8 +27,10 @@ class LinkPreview {
 /// no server-side "fetch any URL" surface. Never throws: any failure,
 /// non-HTML response or timeout yields null and the item posts without one.
 class LinkPreviewService {
-  LinkPreviewService({http.Client? client, this.timeout = const Duration(seconds: 5)})
-      : _client = client ?? http.Client();
+  LinkPreviewService({
+    http.Client? client,
+    this.timeout = const Duration(seconds: 5),
+  }) : _client = client ?? http.Client();
 
   static const maxBytes = 512 * 1024;
   static const _maxRedirects = 5;
@@ -49,9 +56,14 @@ class LinkPreviewService {
     final oembed = oembedEndpoint(url, classifyUrl(url));
     if (oembed != null) {
       try {
-        final res = await _client.get(oembed, headers: {'User-Agent': _userAgent});
+        final res = await _client.get(
+          oembed,
+          headers: {'User-Agent': _userAgent},
+        );
         if (res.statusCode == 200) {
-          final p = parseOEmbed(utf8.decode(res.bodyBytes, allowMalformed: true));
+          final p = parseOEmbed(
+            utf8.decode(res.bodyBytes, allowMalformed: true),
+          );
           if (p != null) return p;
         }
       } catch (_) {
@@ -63,7 +75,7 @@ class LinkPreviewService {
     // so relative URLs resolve against the URL that actually served the page.
     var current = uri;
     late final http.StreamedResponse res;
-    for (var hop = 0;; hop++) {
+    for (var hop = 0; ; hop++) {
       final req = http.Request('GET', current)
         ..followRedirects = false
         ..headers['User-Agent'] = _userAgent
@@ -99,11 +111,13 @@ class LinkPreviewService {
 
 /// Public oEmbed endpoints that work without an API key.
 Uri? oembedEndpoint(String url, WallSource source) => switch (source) {
-      WallSource.youtube =>
-        Uri.https('www.youtube.com', '/oembed', {'url': url, 'format': 'json'}),
-      WallSource.tiktok => Uri.https('www.tiktok.com', '/oembed', {'url': url}),
-      _ => null,
-    };
+  WallSource.youtube => Uri.https('www.youtube.com', '/oembed', {
+    'url': url,
+    'format': 'json',
+  }),
+  WallSource.tiktok => Uri.https('www.tiktok.com', '/oembed', {'url': url}),
+  _ => null,
+};
 
 LinkPreview? parseOEmbed(String body) {
   try {
@@ -136,18 +150,30 @@ LinkPreview? parseHtmlPreview(String html, {required Uri baseUrl}) {
   }
 
   final title = _clean(
-      meta('og:title') ?? meta('twitter:title') ?? doc.querySelector('title')?.text,
-      300);
+    meta('og:title') ??
+        meta('twitter:title') ??
+        doc.querySelector('title')?.text,
+    300,
+  );
   final description = _clean(
-      meta('og:description') ?? meta('twitter:description') ?? meta('description'),
-      1000);
+    meta('og:description') ??
+        meta('twitter:description') ??
+        meta('description'),
+    1000,
+  );
   final image = _httpUrl(
-      meta('og:image') ?? meta('og:image:url') ?? meta('twitter:image'), baseUrl);
+    meta('og:image') ?? meta('og:image:url') ?? meta('twitter:image'),
+    baseUrl,
+  );
   final site = _clean(meta('og:site_name'), 100);
 
   if (title == null && image == null && description == null) return null;
   return LinkPreview(
-      title: title, description: description, imageUrl: image, siteName: site);
+    title: title,
+    description: description,
+    imageUrl: image,
+    siteName: site,
+  );
 }
 
 String? _clean(String? s, int max) {
@@ -162,7 +188,9 @@ String? _clean(String? s, int max) {
 
 String? _httpUrl(String? raw, Uri? base) {
   if (raw == null || raw.trim().isEmpty) return null;
-  final resolved = base == null ? Uri.tryParse(raw.trim()) : base.resolve(raw.trim());
+  final resolved = base == null
+      ? Uri.tryParse(raw.trim())
+      : base.resolve(raw.trim());
   if (resolved == null) return null;
   if (resolved.scheme != 'http' && resolved.scheme != 'https') return null;
   final s = resolved.toString();

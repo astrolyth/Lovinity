@@ -10,7 +10,9 @@ bool _hasLoneSurrogate(String s) {
   for (var i = 0; i < u.length; i++) {
     final c = u[i];
     if (c >= 0xD800 && c <= 0xDBFF) {
-      if (i + 1 >= u.length || u[i + 1] < 0xDC00 || u[i + 1] > 0xDFFF) return true;
+      if (i + 1 >= u.length || u[i + 1] < 0xDC00 || u[i + 1] > 0xDFFF) {
+        return true;
+      }
       i++;
     } else if (c >= 0xDC00 && c <= 0xDFFF) {
       return true;
@@ -22,20 +24,32 @@ bool _hasLoneSurrogate(String s) {
 void main() {
   group('extractFirstUrl', () {
     test('finds a URL inside text', () {
-      expect(extractFirstUrl('Check this out! https://youtu.be/abc123 so good'),
-          'https://youtu.be/abc123');
+      expect(
+        extractFirstUrl('Check this out! https://youtu.be/abc123 so good'),
+        'https://youtu.be/abc123',
+      );
     });
     test('strips trailing punctuation and an unbalanced paren', () {
-      expect(extractFirstUrl('(see https://example.com/a).'), 'https://example.com/a');
-      expect(extractFirstUrl('wow https://example.com/b!!'), 'https://example.com/b');
+      expect(
+        extractFirstUrl('(see https://example.com/a).'),
+        'https://example.com/a',
+      );
+      expect(
+        extractFirstUrl('wow https://example.com/b!!'),
+        'https://example.com/b',
+      );
     });
     test('keeps a balanced paren that is part of the path', () {
-      expect(extractFirstUrl('https://en.wikipedia.org/wiki/Foo_(bar)'),
-          'https://en.wikipedia.org/wiki/Foo_(bar)');
+      expect(
+        extractFirstUrl('https://en.wikipedia.org/wiki/Foo_(bar)'),
+        'https://en.wikipedia.org/wiki/Foo_(bar)',
+      );
     });
     test('returns the first of several URLs', () {
-      expect(extractFirstUrl('a http://one.example b https://two.example'),
-          'http://one.example');
+      expect(
+        extractFirstUrl('a http://one.example b https://two.example'),
+        'http://one.example',
+      );
     });
     test('null when there is no usable URL', () {
       expect(extractFirstUrl('no links here'), isNull);
@@ -46,10 +60,19 @@ void main() {
 
   group('classifyUrl', () {
     test('recognises video hosts including subdomains and short links', () {
-      expect(classifyUrl('https://www.youtube.com/watch?v=1'), WallSource.youtube);
-      expect(classifyUrl('https://m.youtube.com/watch?v=1'), WallSource.youtube);
+      expect(
+        classifyUrl('https://www.youtube.com/watch?v=1'),
+        WallSource.youtube,
+      );
+      expect(
+        classifyUrl('https://m.youtube.com/watch?v=1'),
+        WallSource.youtube,
+      );
       expect(classifyUrl('https://youtu.be/1'), WallSource.youtube);
-      expect(classifyUrl('https://www.instagram.com/reel/C9x/'), WallSource.instagram);
+      expect(
+        classifyUrl('https://www.instagram.com/reel/C9x/'),
+        WallSource.instagram,
+      );
       expect(classifyUrl('https://vm.tiktok.com/ZM123/'), WallSource.tiktok);
     });
     test('look-alike hosts are articles', () {

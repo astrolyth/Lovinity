@@ -24,13 +24,13 @@ class WallItemThumbnail extends StatelessWidget {
   final bool showPlay;
 
   Widget _thumb(String? url) => WallThumbnail(
-        source: item.source,
-        imageUrl: url,
-        height: height,
-        borderRadius: borderRadius,
-        showSourcePill: showSourcePill,
-        showPlay: showPlay,
-      );
+    source: item.source,
+    imageUrl: url,
+    height: height,
+    borderRadius: borderRadius,
+    showSourcePill: showSourcePill,
+    showPlay: showPlay,
+  );
 
   @override
   Widget build(BuildContext context) {

@@ -50,8 +50,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
 
   void _snack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.maybeOf(context)
-        ?.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Drops pending toggles the server now agrees with.
@@ -69,7 +70,10 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
   }
 
   Future<void> _toggleReaction(
-      WallItem item, WallReactionKind kind, List<ReactionCount> shown) async {
+    WallItem item,
+    WallReactionKind kind,
+    List<ReactionCount> shown,
+  ) async {
     final selfId = ref.read(wallSelfIdProvider);
     if (selfId == null) return;
     final currentlyMine = shown.any((r) => r.kind == kind && r.mine);
@@ -79,10 +83,16 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     setState(() => _pending[kind] = want); // the UI flips instantly
     final repo = ref.read(wallRepositoryProvider);
     final previous = _chain[kind] ?? Future<void>.value();
-    final call = previous.then((_) => want
-        ? repo.addReaction(
-            coupleId: item.coupleId, itemId: item.id, userId: selfId, kind: kind)
-        : repo.removeReaction(itemId: item.id, userId: selfId, kind: kind));
+    final call = previous.then(
+      (_) => want
+          ? repo.addReaction(
+              coupleId: item.coupleId,
+              itemId: item.id,
+              userId: selfId,
+              kind: kind,
+            )
+          : repo.removeReaction(itemId: item.id, userId: selfId, kind: kind),
+    );
     _chain[kind] = call.then<void>((_) {}, onError: (_) {});
     try {
       await call;
@@ -102,8 +112,14 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     if (body.isEmpty || selfId == null || _sending) return;
     setState(() => _sending = true);
     try {
-      await ref.read(wallRepositoryProvider).addComment(
-          coupleId: item.coupleId, itemId: item.id, userId: selfId, body: body);
+      await ref
+          .read(wallRepositoryProvider)
+          .addComment(
+            coupleId: item.coupleId,
+            itemId: item.id,
+            userId: selfId,
+            body: body,
+          );
       if (!mounted) return;
       _comment.clear();
       HapticFeedback.lightImpact();
@@ -121,8 +137,14 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
         title: Text(title),
         content: Text(body),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -130,7 +152,12 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
   }
 
   Future<void> _deleteItem(WallItem item) async {
-    if (!await _confirm('Delete from our Wall?', 'This removes it for both of you.')) return;
+    if (!await _confirm(
+      'Delete from our Wall?',
+      'This removes it for both of you.',
+    )) {
+      return;
+    }
     try {
       await ref.read(wallRepositoryProvider).deleteItem(item);
       if (!mounted) return;
@@ -141,7 +168,12 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
   }
 
   Future<void> _deleteComment(WallComment c) async {
-    if (!await _confirm('Delete comment?', 'This removes it for both of you.')) return;
+    if (!await _confirm(
+      'Delete comment?',
+      'This removes it for both of you.',
+    )) {
+      return;
+    }
     try {
       await ref.read(wallRepositoryProvider).deleteComment(c.id);
     } catch (_) {
@@ -154,7 +186,12 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
       context: context,
       showDragHandle: true,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(LovSpace.lg, 0, LovSpace.lg, LovSpace.xl),
+        padding: const EdgeInsets.fromLTRB(
+          LovSpace.lg,
+          0,
+          LovSpace.lg,
+          LovSpace.xl,
+        ),
         child: Wrap(
           spacing: LovSpace.sm,
           runSpacing: LovSpace.sm,
@@ -176,7 +213,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     );
     if (picked == null || !mounted) return;
     try {
-      await ref.read(wallRepositoryProvider).setCollection(item.id, picked.value);
+      await ref
+          .read(wallRepositoryProvider)
+          .setCollection(item.id, picked.value);
     } catch (_) {
       _snack("Couldn't change the collection");
     }
@@ -202,8 +241,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
         body: const Center(child: CircularProgressIndicator.adaptive()),
       ),
       error: (_, _) => const _Gone(message: "Couldn't load this item"),
-      data: (item) =>
-          item == null ? const _Gone(message: 'This item was removed') : _buildItem(item),
+      data: (item) => item == null
+          ? const _Gone(message: 'This item was removed')
+          : _buildItem(item),
     );
   }
 
@@ -214,7 +254,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
     final nameFor = ref.watch(wallNameForProvider);
     final isMine = item.addedBy == selfId;
     final summary = applyPendingReactions(
-        ref.watch(wallReactionSummaryProvider(item.id)), _pending);
+      ref.watch(wallReactionSummaryProvider(item.id)),
+      _pending,
+    );
     final comments = ref.watch(wallItemCommentsProvider(item.id));
     final note = item.note?.trim();
     final meta = [
@@ -233,7 +275,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
         actions: [
           IconButton(
             tooltip: item.isPinned ? 'Unpin' : 'Pin',
-            icon: Icon(item.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+            icon: Icon(
+              item.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+            ),
             onPressed: () => _togglePin(item),
           ),
           PopupMenuButton<_ItemAction>(
@@ -244,7 +288,9 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
             },
             itemBuilder: (_) => [
               const PopupMenuItem(
-                  value: _ItemAction.collection, child: Text('Change collection')),
+                value: _ItemAction.collection,
+                child: Text('Change collection'),
+              ),
               if (isMine)
                 PopupMenuItem(
                   value: _ItemAction.delete,
@@ -259,7 +305,11 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
-                  LovSpace.lg, LovSpace.sm, LovSpace.lg, LovSpace.lg),
+                LovSpace.lg,
+                LovSpace.sm,
+                LovSpace.lg,
+                LovSpace.lg,
+              ),
               children: [
                 if (item.hasMedia)
                   ClipRRect(
@@ -281,12 +331,16 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
                     ),
                   ),
                 const SizedBox(height: LovSpace.md),
-                if (item.url != null) Text(item.displayTitle, style: theme.textTheme.titleLarge),
+                if (item.url != null)
+                  Text(item.displayTitle, style: theme.textTheme.titleLarge),
                 const SizedBox(height: LovSpace.xs),
                 Text(meta, style: theme.textTheme.bodySmall),
                 if (note != null && note.isNotEmpty) ...[
                   const SizedBox(height: LovSpace.md),
-                  WallNoteQuote(text: note, large: item.url == null && !item.hasMedia),
+                  WallNoteQuote(
+                    text: note,
+                    large: item.url == null && !item.hasMedia,
+                  ),
                 ],
                 if (item.url != null && !item.hasMedia) ...[
                   const SizedBox(height: LovSpace.md),
@@ -302,15 +356,19 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
                   onToggle: (k) => _toggleReaction(item, k, summary),
                 ),
                 const SizedBox(height: LovSpace.xl),
-                Text(comments.isEmpty ? 'No comments yet' : 'Comments',
-                    style: theme.textTheme.titleSmall),
+                Text(
+                  comments.isEmpty ? 'No comments yet' : 'Comments',
+                  style: theme.textTheme.titleSmall,
+                ),
                 const SizedBox(height: LovSpace.sm),
                 for (final c in comments)
                   _CommentBubble(
                     comment: c,
                     name: nameFor(c.authorId),
                     isMine: c.authorId == selfId,
-                    onLongPress: c.authorId == selfId ? () => _deleteComment(c) : null,
+                    onLongPress: c.authorId == selfId
+                        ? () => _deleteComment(c)
+                        : null,
                   ),
               ],
             ),
@@ -319,7 +377,11 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  LovSpace.md, LovSpace.sm, LovSpace.md, LovSpace.sm),
+                LovSpace.md,
+                LovSpace.sm,
+                LovSpace.md,
+                LovSpace.sm,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -334,8 +396,10 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
                         hintText: 'Reply…',
                         filled: true,
                         fillColor: scheme.surfaceContainerLow,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(LovRadius.pill),
                           borderSide: BorderSide.none,
@@ -385,20 +449,30 @@ class _CommentBubble extends StatelessWidget {
       child: Align(
         alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.75),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.sizeOf(context).width * 0.75,
+          ),
           child: GestureDetector(
             onLongPress: onLongPress,
             child: Column(
-              crossAxisAlignment:
-                  isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isMine
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
-                Text('$name · ${formatWallTime(comment.createdAt)}',
-                    style: theme.textTheme.labelSmall),
+                Text(
+                  '$name · ${formatWallTime(comment.createdAt)}',
+                  style: theme.textTheme.labelSmall,
+                ),
                 const SizedBox(height: 2),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: isMine ? scheme.secondary : scheme.surfaceContainerLow,
+                    color: isMine
+                        ? scheme.secondary
+                        : scheme.surfaceContainerLow,
                     borderRadius: BorderRadius.only(
                       topLeft: isMine ? r : tight,
                       topRight: isMine ? tight : r,
@@ -430,8 +504,11 @@ class _Gone extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.hide_source_rounded,
-                size: 40, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+            Icon(
+              Icons.hide_source_rounded,
+              size: 40,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: LovSpace.md),
             Text(message, style: theme.textTheme.titleMedium),
             const SizedBox(height: LovSpace.sm),
@@ -484,7 +561,7 @@ class _WallVideo extends ConsumerWidget {
     return SizedBox(
       height: 360,
       child: url.when(
-        data: (u) => _VideoPlayer(url: u),
+        data: (u) => _VideoPlayer(key: ValueKey(u), url: u),
         loading: () => WallThumbnail(source: item.source, showPlay: false),
         error: (_, _) => WallThumbnail(source: item.source, showPlay: false),
       ),
@@ -497,19 +574,20 @@ class _CantPlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-        color: Colors.black,
-        child: Center(
-          child: Text("Can't play this video",
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.white70)),
-        ),
-      );
+    color: Colors.black,
+    child: Center(
+      child: Text(
+        "Can't play this video",
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+      ),
+    ),
+  );
 }
 
 class _VideoPlayer extends StatefulWidget {
-  const _VideoPlayer({required this.url});
+  const _VideoPlayer({super.key, required this.url});
   final String url;
 
   @override
@@ -519,19 +597,29 @@ class _VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends State<_VideoPlayer> {
   late final VideoPlayerController _c;
   var _failed = false;
+  var _wasPlaying = false;
 
   @override
   void initState() {
     super.initState();
     _c = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..addListener(() {
-        if (_c.value.hasError && !_failed && mounted) setState(() => _failed = true);
+        if (!mounted) return;
+        if (_c.value.hasError && !_failed) {
+          setState(() => _failed = true);
+        } else if (_c.value.isPlaying != _wasPlaying) {
+          // Playback can end on its own; keep the icon and label in step.
+          _wasPlaying = _c.value.isPlaying;
+          setState(() {});
+        }
       })
-      ..initialize().then((_) {
-        if (mounted) setState(() {});
-      }).catchError((_) {
-        if (mounted) setState(() => _failed = true);
-      });
+      ..initialize()
+          .then((_) {
+            if (mounted) setState(() {});
+          })
+          .catchError((_) {
+            if (mounted) setState(() => _failed = true);
+          });
   }
 
   @override
@@ -543,23 +631,37 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   @override
   Widget build(BuildContext context) {
     if (_failed) return const _CantPlay();
-    if (!_c.value.isInitialized) return const ColoredBox(color: Colors.black);
+    if (!_c.value.isInitialized) {
+      return const ColoredBox(
+        color: Colors.black,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Semantics(
       button: true,
       label: _c.value.isPlaying ? 'Pause video' : 'Play video',
       child: GestureDetector(
-      onTap: () => setState(() => _c.value.isPlaying ? _c.pause() : _c.play()),
-      child: ColoredBox(
-        color: Colors.black,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            AspectRatio(aspectRatio: _c.value.aspectRatio, child: VideoPlayer(_c)),
-            if (!_c.value.isPlaying)
-              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 64),
-          ],
+        onTap: () =>
+            setState(() => _c.value.isPlaying ? _c.pause() : _c.play()),
+        child: ColoredBox(
+          color: Colors.black,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AspectRatio(
+                aspectRatio: _c.value.aspectRatio,
+                child: VideoPlayer(_c),
+              ),
+              if (!_c.value.isPlaying)
+                const Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 64,
+                ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }

@@ -17,17 +17,19 @@ final wallRepositoryProvider = Provider<WallRepository>((ref) {
 
 /// Signed URL for a storage path. Kept alive 50 min so it is refreshed before
 /// the 1-hour expiry, without re-signing on every rebuild.
-final wallSignedUrlProvider =
-    FutureProvider.autoDispose.family<String, String>((ref, path) async {
-  final url = await ref.read(wallRepositoryProvider).signedUrl(path);
-  // Keep-alive only after success, so a failed signing retries on next load.
-  if (ref.mounted) {
-    final link = ref.keepAlive();
-    final timer = Timer(const Duration(minutes: 50), link.close);
-    ref.onDispose(timer.cancel);
-  }
-  return url;
-});
+final wallSignedUrlProvider = FutureProvider.autoDispose.family<String, String>(
+  (ref, path) async {
+    final url = await ref.read(wallRepositoryProvider).signedUrl(path);
+    // Keep-alive only after success, so a failed signing retries on next load.
+    if (ref.mounted) {
+      ref.keepAlive();
+      // Invalidate (not just release) so a watched URL re-signs before expiry.
+      final timer = Timer(const Duration(minutes: 50), ref.invalidateSelf);
+      ref.onDispose(timer.cancel);
+    }
+    return url;
+  },
+);
 
 final linkPreviewServiceProvider = Provider<LinkPreviewService>((ref) {
   final service = LinkPreviewService();
@@ -41,7 +43,12 @@ final wallSelfIdProvider = Provider<String?>((ref) {
 
 /// The spouse's display name, or null when unknown/blank.
 final wallSpouseNameProvider = Provider<String?>((ref) {
-  final name = ref.watch(spouseProfileProvider).asData?.value?.displayName.trim();
+  final name = ref
+      .watch(spouseProfileProvider)
+      .asData
+      ?.value
+      ?.displayName
+      .trim();
   return (name == null || name.isEmpty) ? null : name;
 });
 
@@ -56,7 +63,11 @@ final wallNameForProvider = Provider<String Function(String userId)>((ref) {
 /// stream reloads or errors). Stays loading while the couple is loading (no
 /// empty-state flash); errors when the couple failed to load at all (not
 /// "Share your first find"); empty when there is no couple.
-Stream<T> _forCouple<T>(Ref ref, T empty, Stream<T> Function(String coupleId) open) {
+Stream<T> _forCouple<T>(
+  Ref ref,
+  T empty,
+  Stream<T> Function(String coupleId) open,
+) {
   final coupleAsync = ref.watch(currentCoupleProvider);
   final couple = coupleAsync.value;
   if (couple == null) {
@@ -69,17 +80,27 @@ Stream<T> _forCouple<T>(Ref ref, T empty, Stream<T> Function(String coupleId) op
 }
 
 final wallItemsProvider = StreamProvider<List<WallItem>>((ref) {
-  return _forCouple(ref, const <WallItem>[], ref.read(wallRepositoryProvider).watchItems);
+  return _forCouple(
+    ref,
+    const <WallItem>[],
+    ref.read(wallRepositoryProvider).watchItems,
+  );
 });
 
 final wallReactionsProvider = StreamProvider<List<WallReaction>>((ref) {
   return _forCouple(
-      ref, const <WallReaction>[], ref.read(wallRepositoryProvider).watchReactions);
+    ref,
+    const <WallReaction>[],
+    ref.read(wallRepositoryProvider).watchReactions,
+  );
 });
 
 final wallCommentsProvider = StreamProvider<List<WallComment>>((ref) {
   return _forCouple(
-      ref, const <WallComment>[], ref.read(wallRepositoryProvider).watchComments);
+    ref,
+    const <WallComment>[],
+    ref.read(wallRepositoryProvider).watchComments,
+  );
 });
 
 class WallFilter extends Notifier<WallCollection?> {
@@ -97,18 +118,32 @@ final wallFilterProvider =
 
 final filteredWallItemsProvider =
     Provider.autoDispose<AsyncValue<List<WallItem>>>((ref) {
-  final filter = ref.watch(wallFilterProvider);
-  return ref.watch(wallItemsProvider).whenData((items) => filter == null
-      ? items
-      : [for (final i in items) if (i.collection == filter) i]);
-});
+      final filter = ref.watch(wallFilterProvider);
+      return ref
+          .watch(wallItemsProvider)
+          .whenData(
+            (items) => filter == null
+                ? items
+                : [
+                    for (final i in items)
+                      if (i.collection == filter) i,
+                  ],
+          );
+    });
 
 final pinnedWallItemsProvider = Provider<List<WallItem>>((ref) {
-  final items = ref.watch(wallItemsProvider).asData?.value ?? const <WallItem>[];
-  return [for (final i in items) if (i.isPinned) i];
+  final items =
+      ref.watch(wallItemsProvider).asData?.value ?? const <WallItem>[];
+  return [
+    for (final i in items)
+      if (i.isPinned) i,
+  ];
 });
 
-final wallItemProvider = Provider.family<AsyncValue<WallItem?>, String>((ref, id) {
+final wallItemProvider = Provider.family<AsyncValue<WallItem?>, String>((
+  ref,
+  id,
+) {
   return ref.watch(wallItemsProvider).whenData((items) {
     for (final i in items) {
       if (i.id == id) return i;
@@ -119,17 +154,24 @@ final wallItemProvider = Provider.family<AsyncValue<WallItem?>, String>((ref, id
 
 final wallReactionSummaryProvider =
     Provider.family<List<ReactionCount>, String>((ref, itemId) {
-  return summarizeReactions(
-    ref.watch(wallReactionsProvider).asData?.value ?? const <WallReaction>[],
-    itemId: itemId,
-    selfId: ref.watch(wallSelfIdProvider),
-  );
-});
+      return summarizeReactions(
+        ref.watch(wallReactionsProvider).asData?.value ??
+            const <WallReaction>[],
+        itemId: itemId,
+        selfId: ref.watch(wallSelfIdProvider),
+      );
+    });
 
-final wallItemCommentsProvider =
-    Provider.family<List<WallComment>, String>((ref, itemId) {
-  final comments = ref.watch(wallCommentsProvider).asData?.value ?? const <WallComment>[];
-  return [for (final c in comments) if (c.itemId == itemId) c];
+final wallItemCommentsProvider = Provider.family<List<WallComment>, String>((
+  ref,
+  itemId,
+) {
+  final comments =
+      ref.watch(wallCommentsProvider).asData?.value ?? const <WallComment>[];
+  return [
+    for (final c in comments)
+      if (c.itemId == itemId) c,
+  ];
 });
 
 final wallSharedThisWeekProvider = Provider<int>((ref) {
@@ -161,15 +203,18 @@ class WallLastVisit extends AsyncNotifier<DateTime?> {
     final now = DateTime.now();
     state = AsyncData(now);
     try {
-      await ref.read(secureStoreProvider).write(_key(userId), now.toIso8601String());
+      await ref
+          .read(secureStoreProvider)
+          .write(_key(userId), now.toIso8601String());
     } catch (_) {
       // Best-effort: worst case the dots reappear next launch.
     }
   }
 }
 
-final wallLastVisitProvider =
-    AsyncNotifierProvider<WallLastVisit, DateTime?>(WallLastVisit.new);
+final wallLastVisitProvider = AsyncNotifierProvider<WallLastVisit, DateTime?>(
+  WallLastVisit.new,
+);
 
 final unseenWallItemIdsProvider = Provider<Set<String>>((ref) {
   final lastVisit = ref.watch(wallLastVisitProvider);

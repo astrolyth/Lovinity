@@ -4,7 +4,7 @@
 //     --dart-define-from-file=config/supabase.local.json
 //
 // Sets up a paired couple with the local service-role key, then drives the
-// UI: sign in -> home -> chat -> settings -> sign out.
+// UI: sign in -> home -> chat -> wall (photo post) -> settings -> sign out.
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -23,11 +23,15 @@ const _password = 'password123';
 
 // 1x1 JPEG (the wall bucket accepts image/jpeg).
 final _tinyJpeg = base64Decode(
-    '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=');
+  '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxD/2Q==',
+);
 
 /// pumpAndSettle never settles here (breathing/countdown animations loop).
-Future<void> pumpUntil(WidgetTester t, Finder f,
-    {Duration timeout = const Duration(seconds: 45)}) async {
+Future<void> pumpUntil(
+  WidgetTester t,
+  Finder f, {
+  Duration timeout = const Duration(seconds: 45),
+}) async {
   final end = DateTime.now().add(timeout);
   while (DateTime.now().isBefore(end)) {
     await t.pump(const Duration(milliseconds: 250));
@@ -43,14 +47,22 @@ Future<void> pumpUntil(WidgetTester t, Finder f,
 /// (email, their own client). Gender goes through their own session, as in
 /// the app: public.users is granted to authenticated, not service_role.
 Future<(String, SupabaseClient)> _user(
-    SupabaseClient admin, String tag, String gender) async {
-  final email = 'smoke-$tag-${DateTime.now().microsecondsSinceEpoch}@example.com';
+  SupabaseClient admin,
+  String tag,
+  String gender,
+) async {
+  final email =
+      'smoke-$tag-${DateTime.now().microsecondsSinceEpoch}@example.com';
   final res = await admin.auth.admin.createUser(
-      AdminUserAttributes(email: email, password: _password, emailConfirm: true));
+    AdminUserAttributes(email: email, password: _password, emailConfirm: true),
+  );
   final id = res.user!.id;
   addTearDown(() => admin.auth.admin.deleteUser(id));
-  final client = SupabaseClient(Env.supabaseUrl, Env.supabaseAnonKey,
-      authOptions: const AuthClientOptions(autoRefreshToken: false));
+  final client = SupabaseClient(
+    Env.supabaseUrl,
+    Env.supabaseAnonKey,
+    authOptions: const AuthClientOptions(autoRefreshToken: false),
+  );
   await client.auth.signInWithPassword(email: email, password: _password);
   await client.from('users').update({'gender': gender}).eq('id', id);
   return (email, client);
@@ -60,24 +72,34 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('sign in, open chat and settings, sign out', (tester) async {
-    final admin = SupabaseClient(Env.supabaseUrl, _serviceRoleKey,
-        authOptions: const AuthClientOptions(autoRefreshToken: false));
+    final admin = SupabaseClient(
+      Env.supabaseUrl,
+      _serviceRoleKey,
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    );
     final (husbandEmail, husband) = await _user(admin, 'h', 'male');
     final (_, wife) = await _user(admin, 'w', 'female');
 
     // Pair them through the real RPCs, outside the UI.
     final invite = await husband.rpc('create_pairing_invite');
-    final code = ((invite is List ? invite.first : invite) as Map)['code'] as String;
-    final couple = await wife.rpc('accept_pairing_invite', params: {'p_code': code});
+    final code =
+        ((invite is List ? invite.first : invite) as Map)['code'] as String;
+    final couple = await wife.rpc(
+      'accept_pairing_invite',
+      params: {'p_code': code},
+    );
     final coupleId =
-        Map<String, dynamic>.from((couple is List ? couple.first : couple) as Map)['id']
+        Map<String, dynamic>.from(
+              (couple is List ? couple.first : couple) as Map,
+            )['id']
             as String;
     // The spouse posts a photo with their own client, so they are the author.
     await WallRepository(wife).addMediaItem(
-        coupleId: coupleId,
-        userId: wife.auth.currentUser!.id,
-        bytes: _tinyJpeg,
-        mimeType: 'image/jpeg');
+      coupleId: coupleId,
+      userId: wife.auth.currentUser!.id,
+      bytes: _tinyJpeg,
+      mimeType: 'image/jpeg',
+    );
 
     await app.main();
     // A session left by an earlier run is restored asynchronously, possibly
@@ -92,7 +114,10 @@ void main() {
     }
     await pumpUntil(tester, emailField);
     await tester.enterText(emailField, husbandEmail);
-    await tester.enterText(find.widgetWithText(TextField, 'Password'), _password);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Password'),
+      _password,
+    );
     await tester.tap(find.text('Sign in').last);
 
     // Paired + onboarded => home.
@@ -105,15 +130,22 @@ void main() {
     await tester.pageBack();
     // Home stays mounted under chat, so wait for chat's pop transition to
     // finish, or the next tap lands on the departing chat page.
-    for (var i = 0; i < 40 && find.byType(TextField).evaluate().isNotEmpty; i++) {
+    for (
+      var i = 0;
+      i < 40 && find.byType(TextField).evaluate().isNotEmpty;
+      i++
+    ) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     await pumpUntil(tester, find.byTooltip('Settings'));
 
     // Our Wall: the spouse's photo shows with its "Photo" pill.
     final wallTile = find.text('Our Wall');
-    await tester.scrollUntilVisible(wallTile, 200,
-        scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      wallTile,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.ensureVisible(wallTile);
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(wallTile);

@@ -14,7 +14,7 @@ final class ShareViewController: UIViewController {
         loadShared { [weak self] text, subject in
             DispatchQueue.main.async {
                 guard let self = self else { return }
-                guard let text = text else {
+                guard let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
                     self.extensionContext?.completeRequest(returningItems: nil)
                     return
                 }

@@ -18,7 +18,8 @@ class WallHomeTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final items = ref.watch(wallItemsProvider).asData?.value ?? const <WallItem>[];
+    final items =
+        ref.watch(wallItemsProvider).asData?.value ?? const <WallItem>[];
     final latest = items.isEmpty ? null : items.first;
     final hasUnseen = ref.watch(unseenWallItemIdsProvider).isNotEmpty;
     final nameFor = ref.watch(wallNameForProvider);
@@ -41,8 +42,11 @@ class WallHomeTile extends ConsumerWidget {
                             color: scheme.surface,
                             borderRadius: BorderRadius.circular(LovRadius.md),
                           ),
-                          child: Icon(Icons.auto_awesome_rounded,
-                              size: 20, color: scheme.primary),
+                          child: Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 20,
+                            color: scheme.primary,
+                          ),
                         )
                       : WallItemThumbnail(
                           item: latest,
@@ -51,7 +55,8 @@ class WallHomeTile extends ConsumerWidget {
                           showPlay: false,
                         ),
                 ),
-                if (hasUnseen) const Positioned(top: -3, right: -3, child: WallUnseenDot()),
+                if (hasUnseen)
+                  const Positioned(top: -3, right: -3, child: WallUnseenDot()),
               ],
             ),
           ),
@@ -89,7 +94,10 @@ class WallHomeTile extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: scheme.onSurface.withValues(alpha: 0.4)),
+          Icon(
+            Icons.chevron_right,
+            color: scheme.onSurface.withValues(alpha: 0.4),
+          ),
         ],
       ),
     );

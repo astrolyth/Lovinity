@@ -53,7 +53,11 @@ class WallPinnedRow extends StatelessWidget {
 }
 
 class _PinnedCard extends StatelessWidget {
-  const _PinnedCard({required this.item, required this.subtitle, required this.onTap});
+  const _PinnedCard({
+    required this.item,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   final WallItem item;
   final String subtitle;
@@ -98,7 +102,9 @@ class _PinnedCard extends StatelessWidget {
                       color: scheme.primary,
                       boxShadow: [
                         BoxShadow(
-                            color: scheme.primary.withValues(alpha: 0.35), spreadRadius: 3),
+                          color: scheme.primary.withValues(alpha: 0.35),
+                          spreadRadius: 3,
+                        ),
                       ],
                     ),
                   ),
@@ -116,13 +122,19 @@ class _PinnedCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white70, fontSize: 10),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),

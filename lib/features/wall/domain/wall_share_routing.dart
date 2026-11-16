@@ -13,7 +13,9 @@ import '../../pairing/domain/pairing_providers.dart';
 /// every non-splash path to /splash until the profile resolves (and to
 /// /onboarding while gender is unset), which would swallow the navigation and
 /// leave a stale pending share behind.
-final acceptShareProvider = Provider<Future<bool> Function(SharedPayload)>((ref) {
+final acceptShareProvider = Provider<Future<bool> Function(SharedPayload)>((
+  ref,
+) {
   return (payload) async {
     final session = await ref
         .read(authSessionProvider.future)
@@ -38,12 +40,12 @@ final acceptShareProvider = Provider<Future<bool> Function(SharedPayload)>((ref)
 /// user don't count; signing in from signed-out has nothing to drop (shares
 /// are only accepted with a session).
 final pendingShareAccountGuardProvider = Provider<void>((ref) {
-  ref.listen<String?>(
-    authSessionProvider.select((s) => s.value?.user.id),
-    (previous, next) {
-      if (previous != null && previous != next) {
-        ref.read(pendingShareProvider.notifier).clear();
-      }
-    },
-  );
+  ref.listen<String?>(authSessionProvider.select((s) => s.value?.user.id), (
+    previous,
+    next,
+  ) {
+    if (previous != null && previous != next) {
+      ref.read(pendingShareProvider.notifier).clear();
+    }
+  });
 });

@@ -56,10 +56,7 @@ class WallItemCard extends StatelessWidget {
                 onTap: item.hasMedia ? onOpen : onOpenLink,
                 child: Hero(
                   tag: wallHeroTag(item.id),
-                  child: WallItemThumbnail(
-                    item: item,
-                    height: 168,
-                  ),
+                  child: WallItemThumbnail(item: item, height: 168),
                 ),
               ),
             Padding(

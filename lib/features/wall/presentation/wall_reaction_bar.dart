@@ -8,7 +8,11 @@ import '../domain/wall_models.dart';
 /// One-tap reactions: all six, each toggling independently. Mine are
 /// highlighted; counts show when > 0. Taps bounce + give a light haptic.
 class WallReactionBar extends StatelessWidget {
-  const WallReactionBar({super.key, required this.summary, required this.onToggle});
+  const WallReactionBar({
+    super.key,
+    required this.summary,
+    required this.onToggle,
+  });
 
   final List<ReactionCount> summary;
   final ValueChanged<WallReactionKind> onToggle;
@@ -108,7 +112,10 @@ class _ReactionButtonState extends State<_ReactionButton> {
                 scale: _bump ? 1.3 : 1,
                 duration: LovMotion.quick,
                 curve: LovMotion.springOut,
-                child: Text(widget.kind.emoji, style: const TextStyle(fontSize: 20)),
+                child: Text(
+                  widget.kind.emoji,
+                  style: const TextStyle(fontSize: 20),
+                ),
               ),
               if (widget.count > 0) ...[
                 const SizedBox(width: 4),

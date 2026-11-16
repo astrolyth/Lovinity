@@ -11,13 +11,41 @@ String wallHeroTag(String itemId) => 'wall-thumb-$itemId';
 /// missing or expired image still looks intentional.
 LinearGradient wallSourceGradient(WallSource source) {
   final colors = switch (source) {
-    WallSource.youtube => const [Color(0xFF3B2A12), Color(0xFFC9883A), Color(0xFFF2C14E)],
-    WallSource.instagram => const [Color(0xFF2B1020), Color(0xFF8A3A5C), Color(0xFFE0A3B8)],
-    WallSource.tiktok => const [Color(0xFF0F1A24), Color(0xFF2D6E7E), Color(0xFF8FD3D9)],
-    WallSource.article => const [Color(0xFF10243A), Color(0xFF2F5D8A), Color(0xFF8FB7D9)],
-    WallSource.note => const [Color(0xFF241A3A), Color(0xFF5A4A9A), Color(0xFFB8A8F0)],
-    WallSource.photo => const [Color(0xFF3A1F14), Color(0xFFB8643A), Color(0xFFF0C9A0)],
-    WallSource.video => const [Color(0xFF0B1220), Color(0xFF1F3A5F), Color(0xFF5B7FA8)],
+    WallSource.youtube => const [
+      Color(0xFF3B2A12),
+      Color(0xFFC9883A),
+      Color(0xFFF2C14E),
+    ],
+    WallSource.instagram => const [
+      Color(0xFF2B1020),
+      Color(0xFF8A3A5C),
+      Color(0xFFE0A3B8),
+    ],
+    WallSource.tiktok => const [
+      Color(0xFF0F1A24),
+      Color(0xFF2D6E7E),
+      Color(0xFF8FD3D9),
+    ],
+    WallSource.article => const [
+      Color(0xFF10243A),
+      Color(0xFF2F5D8A),
+      Color(0xFF8FB7D9),
+    ],
+    WallSource.note => const [
+      Color(0xFF241A3A),
+      Color(0xFF5A4A9A),
+      Color(0xFFB8A8F0),
+    ],
+    WallSource.photo => const [
+      Color(0xFF3A1F14),
+      Color(0xFFB8643A),
+      Color(0xFFF0C9A0),
+    ],
+    WallSource.video => const [
+      Color(0xFF0B1220),
+      Color(0xFF1F3A5F),
+      Color(0xFF5B7FA8),
+    ],
   };
   return LinearGradient(
     begin: Alignment.topLeft,
@@ -28,14 +56,14 @@ LinearGradient wallSourceGradient(WallSource source) {
 }
 
 IconData wallSourceIcon(WallSource source) => switch (source) {
-      WallSource.youtube => Icons.smart_display_rounded,
-      WallSource.instagram => Icons.camera_alt_rounded,
-      WallSource.tiktok => Icons.music_note_rounded,
-      WallSource.article => Icons.article_rounded,
-      WallSource.note => Icons.sticky_note_2_rounded,
-      WallSource.photo => Icons.photo_camera_rounded,
-      WallSource.video => Icons.videocam_rounded,
-    };
+  WallSource.youtube => Icons.smart_display_rounded,
+  WallSource.instagram => Icons.camera_alt_rounded,
+  WallSource.tiktok => Icons.music_note_rounded,
+  WallSource.article => Icons.article_rounded,
+  WallSource.note => Icons.sticky_note_2_rounded,
+  WallSource.photo => Icons.photo_camera_rounded,
+  WallSource.video => Icons.videocam_rounded,
+};
 
 class WallThumbnail extends StatelessWidget {
   const WallThumbnail({
@@ -72,8 +100,11 @@ class WallThumbnail extends StatelessWidget {
               child: play
                   ? null
                   : Center(
-                      child: Icon(wallSourceIcon(source),
-                          size: 28, color: Colors.white.withValues(alpha: 0.35)),
+                      child: Icon(
+                        wallSourceIcon(source),
+                        size: 28,
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
                     ),
             ),
             if (url != null)
@@ -98,7 +129,11 @@ class WallThumbnail extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Colors.black.withValues(alpha: 0.45),
                   ),
-                  child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
                 ),
               ),
             if (showSourcePill)
@@ -130,7 +165,10 @@ class _SourcePill extends StatelessWidget {
           Text(
             source.label,
             style: const TextStyle(
-                color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -140,7 +178,12 @@ class _SourcePill extends StatelessWidget {
 
 /// The sharer's note, shown as a quote with a gold rule.
 class WallNoteQuote extends StatelessWidget {
-  const WallNoteQuote({super.key, required this.text, this.maxLines, this.large = false});
+  const WallNoteQuote({
+    super.key,
+    required this.text,
+    this.maxLines,
+    this.large = false,
+  });
 
   final String text;
   final int? maxLines;
@@ -161,8 +204,9 @@ class WallNoteQuote extends StatelessWidget {
         overflow: maxLines == null ? null : TextOverflow.ellipsis,
         style: large
             ? theme.textTheme.titleMedium
-            : theme.textTheme.bodyMedium
-                ?.copyWith(color: scheme.onSurface.withValues(alpha: 0.85)),
+            : theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.85),
+              ),
       ),
     );
   }
@@ -201,7 +245,8 @@ class WallPill extends StatelessWidget {
               color: selected ? scheme.primary : scheme.surface,
               borderRadius: BorderRadius.circular(LovRadius.pill),
               border: Border.all(
-                  color: selected ? scheme.primary : scheme.outlineVariant),
+                color: selected ? scheme.primary : scheme.outlineVariant,
+              ),
             ),
             child: Text(
               label,
@@ -218,7 +263,12 @@ class WallPill extends StatelessWidget {
 }
 
 class WallAvatar extends StatelessWidget {
-  const WallAvatar({super.key, required this.name, required this.isSelf, this.size = 28});
+  const WallAvatar({
+    super.key,
+    required this.name,
+    required this.isSelf,
+    this.size = 28,
+  });
 
   final String name;
   final bool isSelf;
@@ -228,7 +278,9 @@ class WallAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final trimmed = name.trim();
-    final initial = trimmed.isEmpty ? '?' : trimmed.characters.first.toUpperCase();
+    final initial = trimmed.isEmpty
+        ? '?'
+        : trimmed.characters.first.toUpperCase();
     return Container(
       width: size,
       height: size,
@@ -263,7 +315,10 @@ class WallUnseenDot extends StatelessWidget {
         shape: BoxShape.circle,
         color: scheme.primary,
         boxShadow: [
-          BoxShadow(color: scheme.primary.withValues(alpha: 0.35), blurRadius: 6),
+          BoxShadow(
+            color: scheme.primary.withValues(alpha: 0.35),
+            blurRadius: 6,
+          ),
         ],
       ),
     );
@@ -280,6 +335,8 @@ Future<void> openWallLink(BuildContext context, String url) async {
     ok = false;
   }
   if (!ok) {
-    messenger?.showSnackBar(const SnackBar(content: Text("Couldn't open that link")));
+    messenger?.showSnackBar(
+      const SnackBar(content: Text("Couldn't open that link")),
+    );
   }
 }

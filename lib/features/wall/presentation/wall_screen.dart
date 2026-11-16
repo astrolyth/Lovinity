@@ -61,7 +61,11 @@ class _WallScreenState extends ConsumerState<WallScreen> {
 
   Future<void> _openSheet({String? initialUrl, String? initialNote}) async {
     _sheetOpen = true;
-    await showAddToWallSheet(context, initialUrl: initialUrl, initialNote: initialNote);
+    await showAddToWallSheet(
+      context,
+      initialUrl: initialUrl,
+      initialNote: initialNote,
+    );
     _sheetOpen = false;
     // A share that arrived while the sheet was open opens now.
     if (mounted) _consumePendingShare();
@@ -102,13 +106,15 @@ class _WallScreenState extends ConsumerState<WallScreen> {
     }
     final theme = Theme.of(context);
     final itemsAsync = ref.watch(filteredWallItemsProvider);
-    final hasAnyItems = ref.watch(wallItemsProvider).asData?.value.isNotEmpty ?? false;
+    final hasAnyItems =
+        ref.watch(wallItemsProvider).asData?.value.isNotEmpty ?? false;
     final pinned = ref.watch(pinnedWallItemsProvider);
     final filter = ref.watch(wallFilterProvider);
     final nameFor = ref.watch(wallNameForProvider);
     final weekCount = ref.watch(wallSharedThisWeekProvider);
     final unseen = ref.watch(unseenWallItemIdsProvider);
-    final ownName = ref.watch(ownProfileProvider).asData?.value?.displayName ?? 'You';
+    final ownName =
+        ref.watch(ownProfileProvider).asData?.value?.displayName ?? 'You';
     final spouseName = ref.watch(wallSpouseNameProvider) ?? 'Your partner';
 
     final shown = itemsAsync.asData?.value;
@@ -134,20 +140,28 @@ class _WallScreenState extends ConsumerState<WallScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    LovSpace.xs, LovSpace.sm, LovSpace.lg, LovSpace.md),
+                  LovSpace.xs,
+                  LovSpace.sm,
+                  LovSpace.lg,
+                  LovSpace.md,
+                ),
                 child: Row(
                   children: [
                     IconButton(
                       tooltip: 'Back',
                       icon: const Icon(Icons.arrow_back_rounded),
-                      onPressed: () =>
-                          context.canPop() ? context.pop() : context.go('/home'),
+                      onPressed: () => context.canPop()
+                          ? context.pop()
+                          : context.go('/home'),
                     ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Our Wall', style: theme.textTheme.headlineSmall),
+                          Text(
+                            'Our Wall',
+                            style: theme.textTheme.headlineSmall,
+                          ),
                           Text(
                             weekCount == 0
                                 ? 'Your private space for two'
@@ -170,8 +184,16 @@ class _WallScreenState extends ConsumerState<WallScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      LovSpace.lg, 0, LovSpace.lg, LovSpace.lg),
-                  child: WallPinnedRow(items: pinned, nameFor: nameFor, onTap: _openItem),
+                    LovSpace.lg,
+                    0,
+                    LovSpace.lg,
+                    LovSpace.lg,
+                  ),
+                  child: WallPinnedRow(
+                    items: pinned,
+                    nameFor: nameFor,
+                    onTap: _openItem,
+                  ),
                 ),
               ),
             if (hasAnyItems)
@@ -180,19 +202,23 @@ class _WallScreenState extends ConsumerState<WallScreen> {
                   height: 40,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: LovSpace.lg,
+                    ),
                     children: [
                       WallPill(
                         label: 'All',
                         selected: filter == null,
-                        onTap: () => ref.read(wallFilterProvider.notifier).select(null),
+                        onTap: () =>
+                            ref.read(wallFilterProvider.notifier).select(null),
                       ),
                       for (final c in WallCollection.values) ...[
                         const SizedBox(width: LovSpace.sm),
                         WallPill(
                           label: c.label,
                           selected: filter == c,
-                          onTap: () => ref.read(wallFilterProvider.notifier).select(c),
+                          onTap: () =>
+                              ref.read(wallFilterProvider.notifier).select(c),
                         ),
                       ],
                     ],
@@ -204,11 +230,13 @@ class _WallScreenState extends ConsumerState<WallScreen> {
               loading: () => [
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
-                  sliver: SliverList.list(children: const [
-                    _CardSkeleton(),
-                    SizedBox(height: LovSpace.md),
-                    _CardSkeleton(),
-                  ]),
+                  sliver: SliverList.list(
+                    children: const [
+                      _CardSkeleton(),
+                      SizedBox(height: LovSpace.md),
+                      _CardSkeleton(),
+                    ],
+                  ),
                 ),
               ],
               error: (_, _) => [
@@ -246,16 +274,23 @@ class _WallScreenState extends ConsumerState<WallScreen> {
                   : [
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(
-                            LovSpace.lg, 0, LovSpace.lg, 96),
+                          LovSpace.lg,
+                          0,
+                          LovSpace.lg,
+                          96,
+                        ),
                         sliver: SliverList.separated(
                           itemCount: items.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: LovSpace.md),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: LovSpace.md),
                           // Keyed cards keep their elements when indices
                           // shift (item indices; separators are handled by
                           // SliverList.separated).
                           findItemIndexCallback: (key) {
                             if (key is! ValueKey<String>) return null;
-                            final i = items.indexWhere((e) => e.id == key.value);
+                            final i = items.indexWhere(
+                              (e) => e.id == key.value,
+                            );
                             return i < 0 ? null : i;
                           },
                           itemBuilder: (context, i) {
@@ -266,7 +301,8 @@ class _WallScreenState extends ConsumerState<WallScreen> {
                               id: item.id,
                               animatedIds: _animatedIds,
                               delay: Duration(
-                                  milliseconds: stagger < 0 ? 0 : 60 * stagger),
+                                milliseconds: stagger < 0 ? 0 : 60 * stagger,
+                              ),
                               child: _ConnectedCard(
                                 item: item,
                                 sharerName: nameFor(item.addedBy),
@@ -312,8 +348,9 @@ class _AnimateOnceState extends State<_AnimateOnce> {
   late final bool _animate = widget.animatedIds.add(widget.id);
 
   @override
-  Widget build(BuildContext context) =>
-      _animate ? LovEnter(delay: widget.delay, child: widget.child) : widget.child;
+  Widget build(BuildContext context) => _animate
+      ? LovEnter(delay: widget.delay, child: widget.child)
+      : widget.child;
 }
 
 class _ConnectedCard extends ConsumerWidget {
@@ -338,7 +375,9 @@ class _ConnectedCard extends ConsumerWidget {
       commentCount: ref.watch(wallItemCommentsProvider(item.id)).length,
       isUnseen: isUnseen,
       onOpen: onOpen,
-      onOpenLink: item.url == null ? null : () => openWallLink(context, item.url!),
+      onOpenLink: item.url == null
+          ? null
+          : () => openWallLink(context, item.url!),
     );
   }
 }
@@ -390,18 +429,33 @@ class _Message extends StatelessWidget {
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.secondary),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scheme.secondary,
+            ),
             child: Icon(icon, size: 36, color: scheme.primary),
           ),
           const SizedBox(height: LovSpace.lg),
-          Text(title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
           if (body != null) ...[
             const SizedBox(height: LovSpace.sm),
-            Text(body!, style: theme.textTheme.bodyMedium, textAlign: TextAlign.center),
+            Text(
+              body!,
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
           ],
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: LovSpace.xl),
-            LovButton(label: actionLabel!, onPressed: onAction, icon: actionIcon),
+            LovButton(
+              label: actionLabel!,
+              onPressed: onAction,
+              icon: actionIcon,
+            ),
           ],
         ],
       ),
