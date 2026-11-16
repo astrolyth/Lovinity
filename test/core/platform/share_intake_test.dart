@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/core/platform/share_intake.dart';
@@ -39,6 +40,15 @@ void main() {
       (_) {},
     );
     expect((await next).text, 'https://x.example/b');
+  });
+
+  test('ShareIntake is enabled on iOS', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    messenger.setMockMethodCallHandler(channel, (call) async => {'text': 'https://youtu.be/x'});
+    final intake = ShareIntake();
+    addTearDown(intake.dispose);
+    expect((await intake.takeInitialShare())!.text, 'https://youtu.be/x');
   });
 
   test('disabled (non-Android) never touches the channel', () async {

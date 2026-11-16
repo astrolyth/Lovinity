@@ -74,6 +74,17 @@
 		<string>Lovinity needs access to your camera to take photos and videos to share with your spouse.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Lovinity needs access to your microphone to record videos to share with your spouse.</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.lovinity.lovinity</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>lovinity</string>
+				</array>
+			</dict>
+		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
 		<key>UIBackgroundModes</key>

@@ -24,12 +24,14 @@ class SharedPayload {
   }
 }
 
-/// Bridge to MainActivity.kt (Android only). Cold-start shares are pulled
+/// Bridge to MainActivity.kt (Android) / SceneDelegate.swift (iOS). Cold-start shares are pulled
 /// with [takeInitialShare]; shares while running arrive on [shares].
 class ShareIntake {
   ShareIntake({MethodChannel? channel, bool? enabled})
       : _channel = channel ?? const MethodChannel(channelName),
-        _enabled = enabled ?? (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        _enabled = enabled ?? (!kIsWeb &&
+            (defaultTargetPlatform == TargetPlatform.android ||
+                defaultTargetPlatform == TargetPlatform.iOS)) {
     if (_enabled) _channel.setMethodCallHandler(_handle);
   }
 
