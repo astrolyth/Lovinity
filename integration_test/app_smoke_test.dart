@@ -5,10 +5,13 @@
 //
 // Sets up a paired couple with the local service-role key, then drives the
 // UI: sign in -> home -> chat -> settings -> sign out.
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:lovinity/core/config/env.dart';
+import 'package:lovinity/features/wall/data/wall_repository.dart';
 import 'package:lovinity/main.dart' as app;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,6 +20,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 const _serviceRoleKey =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 const _password = 'password123';
+
+// 1x1 JPEG (the wall bucket accepts image/jpeg).
+final _tinyJpeg = base64Decode(
+    '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=');
 
 /// pumpAndSettle never settles here (breathing/countdown animations loop).
 Future<void> pumpUntil(WidgetTester t, Finder f,
@@ -61,7 +68,16 @@ void main() {
     // Pair them through the real RPCs, outside the UI.
     final invite = await husband.rpc('create_pairing_invite');
     final code = ((invite is List ? invite.first : invite) as Map)['code'] as String;
-    await wife.rpc('accept_pairing_invite', params: {'p_code': code});
+    final couple = await wife.rpc('accept_pairing_invite', params: {'p_code': code});
+    final coupleId =
+        Map<String, dynamic>.from((couple is List ? couple.first : couple) as Map)['id']
+            as String;
+    // The spouse posts a photo with their own client, so they are the author.
+    await WallRepository(wife).addMediaItem(
+        coupleId: coupleId,
+        userId: wife.auth.currentUser!.id,
+        bytes: _tinyJpeg,
+        mimeType: 'image/jpeg');
 
     await app.main();
     // A session left by an earlier run is restored asynchronously, possibly
@@ -92,6 +108,22 @@ void main() {
     for (var i = 0; i < 40 && find.byType(TextField).evaluate().isNotEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
+    await pumpUntil(tester, find.byTooltip('Settings'));
+
+    // Our Wall: the spouse's photo shows with its "Photo" pill.
+    final wallTile = find.text('Our Wall');
+    await tester.scrollUntilVisible(wallTile, 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(wallTile);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(wallTile);
+    await pumpUntil(tester, find.text('Photo'));
+    expect(tester.takeException(), isNull);
+    await tester.pageBack();
+    for (var i = 0; i < 40 && find.text('Photo').evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
     await pumpUntil(tester, find.byTooltip('Settings'));
 
     await tester.tap(find.byTooltip('Settings'));
