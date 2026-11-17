@@ -102,6 +102,15 @@ begin
   raise notice 'PASS: dhikr_counter_totals respects the period window';
 end $$;
 
+-- 7. Seed "Morning dhikr" is rejected (duplicates fitrahive): 19 morning items.
+do $$
+declare n bigint;
+begin
+  select count(*) into n from public.duas_library where category = 'morning';
+  if n <> 19 then raise exception 'FAIL: % approved morning rows <> 19', n; end if;
+  raise notice 'PASS: morning set has 19 approved items';
+end $$;
+
 -- 4a. Partner can read A's completion.
 set local request.jwt.claim.sub = '88888888-0000-0000-0000-00000000000b';
 do $$
@@ -120,6 +129,17 @@ begin
     raise exception 'FAIL: outsider can read the completion';
   end if;
   raise notice 'PASS: outsider reads 0 completions';
+end $$;
+
+-- 8. repeat_count must be >= 1.
+reset role;
+do $$
+begin
+  insert into public.duas_library (title, arabic_text, translation, repeat_count)
+  values ('zero', 'x', 'x', 0);
+  raise exception 'FAIL: repeat_count 0 accepted';
+exception when check_violation then
+  raise notice 'PASS: repeat_count 0 rejected';
 end $$;
 
 rollback;
