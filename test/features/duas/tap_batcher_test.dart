@@ -1,3 +1,5 @@
+// ignore: depend_on_referenced_packages
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lovinity/features/duas/domain/tap_batcher.dart';
 
