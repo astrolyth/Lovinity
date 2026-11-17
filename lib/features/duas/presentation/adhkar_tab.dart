@@ -3,10 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:timezone/timezone.dart' as tz;
-
 import '../../../core/theme/tokens.dart';
-import '../../../core/time/local_day.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
@@ -15,6 +12,7 @@ import '../data/adhkar_repository.dart';
 import '../data/dua_library_repository.dart';
 import '../domain/adhkar_providers.dart';
 import '../domain/dua_library_providers.dart';
+import 'library_tab.dart' show LibraryRetry;
 
 class AdhkarTab extends ConsumerStatefulWidget {
   const AdhkarTab({super.key});
@@ -23,42 +21,7 @@ class AdhkarTab extends ConsumerStatefulWidget {
   ConsumerState<AdhkarTab> createState() => _AdhkarTabState();
 }
 
-class _AdhkarTabState extends ConsumerState<AdhkarTab>
-    with WidgetsBindingObserver {
-  Timer? _midnight;
-  String? _scheduledFor;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _midnight?.cancel();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.read(dayTickProvider.notifier).bump();
-    }
-  }
-
-  void _schedule(String key, String tzId) {
-    if (_scheduledFor == key) return;
-    _scheduledFor = key;
-    _midnight?.cancel();
-    final now = localTimeAt(tzId, ref.read(nowProvider)());
-    final next = tz.TZDateTime(now.location, now.year, now.month, now.day + 1);
-    _midnight = Timer(next.difference(now) + const Duration(seconds: 1), () {
-      if (mounted) ref.read(dayTickProvider.notifier).bump();
-    });
-  }
-
+class _AdhkarTabState extends ConsumerState<AdhkarTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -74,12 +37,9 @@ class _AdhkarTabState extends ConsumerState<AdhkarTab>
               ),
             );
     }
-    _schedule(dayKey, profile.asData!.value!.timezone);
     return ref.watch(duaLibraryProvider).when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(
-            child: Text('Could not load', style: theme.textTheme.bodyMedium),
-          ),
+          error: (e, _) => const LibraryRetry(),
           data: (all) {
             final bySet = {
               for (final s in AdhkarSet.values)
@@ -153,9 +113,11 @@ class _SetCardState extends ConsumerState<_SetCard> {
     final n = _counts![d.id] ?? 0;
     if (n >= d.repeatCount) return;
     setState(() => _counts = {..._counts!, d.id: n + 1});
+    // Best effort: a secure-storage failure only loses local progress.
     ref
         .read(adhkarProgressStoreProvider)
-        .save(widget.dayKey, widget.set, _counts!);
+        .save(widget.dayKey, widget.set, _counts!)
+        .catchError((_) {});
   }
 
   Future<void> _complete(String coupleId, String userId) async {

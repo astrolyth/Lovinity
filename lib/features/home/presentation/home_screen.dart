@@ -57,6 +57,8 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(questionNotificationPumpProvider);
     ref.watch(duaNotificationPumpProvider);
     ref.watch(adhkarNotificationPumpProvider);
+    // Session-lifetime day rollover (resume + local midnight) for duas/adhkar.
+    ref.listen(dayTickProvider, (_, _) {});
     ref.watch(gratitudeNotificationPumpProvider);
     ref.watch(calendarNotificationPumpProvider);
     ref.watch(groceryNotificationPumpProvider);

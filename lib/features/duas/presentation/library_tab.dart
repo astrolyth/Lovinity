@@ -24,9 +24,7 @@ class _LibraryTabState extends ConsumerState<LibraryTab> {
     final async = ref.watch(duaLibraryProvider);
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(
-        child: Text('Could not load', style: theme.textTheme.bodyMedium),
-      ),
+      error: (e, _) => const LibraryRetry(),
       data: (all) {
         if (all.isEmpty) {
           return Center(
@@ -102,4 +100,29 @@ class _LibraryTabState extends ConsumerState<LibraryTab> {
     ),
     onTap: () => showLibraryDuaSheet(context, d),
   );
+}
+
+/// Error state for the library-backed tabs: gentle copy plus a retry.
+class LibraryRetry extends ConsumerWidget {
+  const LibraryRetry({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Couldn't reach your duas right now.",
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: LovSpace.sm),
+          TextButton(
+            onPressed: () => ref.invalidate(duaLibraryProvider),
+            child: const Text('Try again'),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../../../core/notifications/activity_detectors.dart';
 import '../../../core/notifications/notification_providers.dart';
@@ -11,6 +13,7 @@ import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/adhkar_progress_store.dart';
 import '../data/adhkar_repository.dart';
+import 'dua_library_providers.dart';
 
 final nowProvider = Provider<DateTime Function()>((_) => DateTime.now);
 
@@ -22,11 +25,57 @@ final adhkarProgressStoreProvider = Provider<AdhkarProgressStore>(
   (ref) => AdhkarProgressStore(ref.read(secureStorageProvider)),
 );
 
-/// Bumped on app resume / local midnight so [adhkarTodayKeyProvider] re-reads the clock.
+/// Bumped on app resume and at the next local midnight (own profile zone) so
+/// [adhkarTodayKeyProvider] re-reads the clock. Session-lifetime: HomeScreen
+/// keeps it alive, so the day rolls over whichever screen is open.
 class DayTick extends Notifier<int> {
+  Timer? _midnight;
+
   @override
-  int build() => 0;
-  void bump() => state++;
+  int build() {
+    final observer = _ResumeObserver(() {
+      bump();
+      // An offline first open leaves the cached library errored; retry it.
+      if (ref.read(duaLibraryProvider).hasError) {
+        ref.invalidate(duaLibraryProvider);
+      }
+    });
+    WidgetsBinding.instance.addObserver(observer);
+    ref.onDispose(() {
+      WidgetsBinding.instance.removeObserver(observer);
+      _midnight?.cancel();
+    });
+    ref.listen(
+      ownProfileProvider.select((p) => p.value?.timezone),
+      (_, _) => _schedule(),
+    );
+    _schedule();
+    return 0;
+  }
+
+  void bump() {
+    state++;
+    _schedule();
+  }
+
+  void _schedule() {
+    _midnight?.cancel();
+    final tzId = ref.read(ownProfileProvider).value?.timezone;
+    if (tzId == null || tzId.isEmpty) return;
+    final now = localTimeAt(tzId, ref.read(nowProvider)());
+    final next = tz.TZDateTime(now.location, now.year, now.month, now.day + 1);
+    _midnight = Timer(next.difference(now) + const Duration(seconds: 1), bump);
+  }
+}
+
+class _ResumeObserver with WidgetsBindingObserver {
+  _ResumeObserver(this.onResume);
+  final void Function() onResume;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) onResume();
+  }
 }
 
 final dayTickProvider = NotifierProvider<DayTick, int>(DayTick.new);

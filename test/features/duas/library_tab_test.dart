@@ -9,10 +9,13 @@ import 'package:lovinity/features/chat/domain/chat_service.dart';
 import 'package:lovinity/features/chat/domain/chat_providers.dart';
 import 'package:lovinity/features/duas/data/dua_library_repository.dart';
 import 'package:lovinity/features/duas/data/dua_repository.dart';
+import 'package:lovinity/features/duas/domain/adhkar_providers.dart';
 import 'package:lovinity/features/duas/domain/dua_library_providers.dart';
 import 'package:lovinity/features/duas/domain/dua_providers.dart';
 import 'package:lovinity/features/duas/domain/dua_share.dart';
 import 'package:lovinity/features/duas/presentation/dua_list_screen.dart';
+import 'package:lovinity/features/duas/presentation/library_tab.dart';
+import 'package:lovinity/features/home/domain/home_providers.dart';
 import 'package:lovinity/features/pairing/domain/pairing_providers.dart';
 import 'package:lovinity/shared/models/couple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -240,4 +243,47 @@ void main() {
     expect(find.text('Library'), findsOneWidget);
     expect(find.text('Sent to your spouse'), findsOneWidget);
   });
+
+  testWidgets('offline first open: gentle retry, then resume refetches',
+      (tester) async {
+    // Riverpod retries on its own first; stay offline until it gives up.
+    final lib = _FlakyLibrary()..failures = 1 << 30;
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        duaLibraryRepositoryProvider.overrideWithValue(lib),
+        ownProfileProvider.overrideWith((ref) async => null),
+      ],
+      child: Consumer(builder: (_, ref, _) {
+        ref.listen(dayTickProvider, (_, _) {}); // as HomeScreen does
+        return MaterialApp(
+          theme: LovTheme.dark(),
+          home: const Scaffold(body: LibraryTab()),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text("Couldn't reach your duas right now."), findsOneWidget);
+    final before = lib.calls;
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+    expect(lib.calls, greaterThan(before));
+    expect(find.text('Try again'), findsOneWidget); // still offline
+
+    lib.failures = 0; // back online
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(find.text('Duas are on their way.'), findsOneWidget);
+  });
+}
+
+class _FlakyLibrary extends Fake implements DuaLibraryRepository {
+  int failures = 0;
+  int calls = 0;
+  @override
+  Future<List<LibraryDua>> fetchApproved() async {
+    calls++;
+    if (failures-- > 0) throw Exception('offline');
+    return const [];
+  }
 }

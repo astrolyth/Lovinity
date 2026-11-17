@@ -9,6 +9,8 @@ import 'package:lovinity/features/calendar/domain/calendar_providers.dart';
 import 'package:lovinity/features/duas/data/dua_library_repository.dart';
 import 'package:lovinity/features/duas/domain/adhkar_providers.dart';
 import 'package:lovinity/features/duas/domain/dua_library_providers.dart';
+import 'package:lovinity/features/duas/domain/dua_suggestions.dart';
+import 'package:lovinity/features/duas/domain/suggestion_providers.dart';
 import 'package:lovinity/features/duas/presentation/dua_for_today_card.dart';
 import 'package:lovinity/features/home/domain/home_providers.dart';
 import 'package:lovinity/shared/models/user_profile.dart';
@@ -84,5 +86,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(mem.data.containsKey('mood:2026-11-17'), isFalse);
     expect(find.text("Because you're feeling anxious"), findsNothing);
+  });
+
+  testWidgets('resume past local midnight resets mood and day key (no tab)',
+      (tester) async {
+    // Pacific/Auckland is UTC+13 in November.
+    var now = DateTime.utc(2026, 11, 16, 10, 30); // 23:30 on the 16th
+    final c = ProviderContainer(overrides: [
+      ownProfileProvider.overrideWith((ref) async => const UserProfile(
+            id: 'me',
+            displayName: 'Me',
+            timezone: 'Pacific/Auckland',
+            madhhab: 'shafi',
+            calcMethod: 'x',
+          )),
+      secureStorageProvider
+          .overrideWithValue(MemStorage() as FlutterSecureStorage),
+      nowProvider.overrideWithValue(() => now),
+    ]);
+    c.listen(dayTickProvider, (_, _) {}); // as HomeScreen does
+    await c.read(ownProfileProvider.future);
+    expect(c.read(adhkarTodayKeyProvider), '2026-11-16');
+    await c.read(todayMoodProvider.future);
+    await c.read(todayMoodProvider.notifier).set(Mood.anxious);
+    expect(c.read(todayMoodProvider).value, Mood.anxious);
+
+    now = DateTime.utc(2026, 11, 16, 11, 30); // 00:30 on the 17th
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    expect(c.read(adhkarTodayKeyProvider), '2026-11-17');
+    expect(await c.read(todayMoodProvider.future), isNull);
+    c.dispose(); // cancels the midnight timer
   });
 }
