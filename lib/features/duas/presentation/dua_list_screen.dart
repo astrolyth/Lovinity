@@ -13,6 +13,7 @@ import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/dua_repository.dart';
 import '../domain/dua_providers.dart';
+import 'library_tab.dart';
 
 class DuaListScreen extends ConsumerWidget {
   const DuaListScreen({super.key});
@@ -22,81 +23,116 @@ class DuaListScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final async = ref.watch(duasProvider);
 
-    return LovScaffold(
-      title: 'Our duas',
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => context.pop(),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openCompose(context, ref),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add a dua'),
-      ),
-      child: async.when(
-        loading: () => const _ListSkeleton(),
-        error: (e, _) => Center(
-          child: Text('Could not load', style: theme.textTheme.bodyMedium),
-        ),
-        data: (all) {
-          final open = all.where((d) => !d.isAnswered).toList();
-          final answered = all.where((d) => d.isAnswered).toList();
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
+    return DefaultTabController(
+      length: 3,
+      child: Builder(
+        builder: (context) {
+          final tabs = DefaultTabController.of(context);
+          return LovScaffold(
+            title: 'Our duas',
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.pop(),
+            ),
+            floatingActionButton: AnimatedBuilder(
+              animation: tabs,
+              builder: (_, _) => tabs.index == 0
+                  ? FloatingActionButton.extended(
+                      onPressed: () => _openCompose(context, ref),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add a dua'),
+                    )
+                  : const SizedBox.shrink(),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (open.isEmpty && answered.isEmpty)
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: LovSpace.xxxl),
-                    child: Center(
-                      child: Text(
-                        'No duas yet. Tap + to add.',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
-                  )
-                else ...[
-                  if (open.isNotEmpty) ...[
-                    LovSectionHeader(title: 'Open (${open.length})'),
-                    const SizedBox(height: LovSpace.sm),
-                    LovStagger(
-                      stagger: const Duration(milliseconds: 40),
-                      children: [
-                        for (final d in open)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: LovSpace.md),
-                            child: _DuaTile(dua: d),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: LovSpace.xl),
+                const TabBar(
+                  tabs: [
+                    Tab(text: 'Our list'),
+                    Tab(text: 'Library'),
+                    Tab(text: 'Adhkar'),
                   ],
-                  if (answered.isNotEmpty) ...[
-                    LovSectionHeader(
-                      title: 'Answered (${answered.length})',
-                      subtitle: 'Alḥamdulillah.',
-                    ),
-                    const SizedBox(height: LovSpace.sm),
-                    LovStagger(
-                      stagger: const Duration(milliseconds: 40),
-                      children: [
-                        for (final d in answered)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: LovSpace.md),
-                            child: _DuaTile(dua: d),
-                          ),
-                      ],
-                    ),
-                  ],
-                ],
-                const SizedBox(height: LovSpace.xxxl),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _ourList(theme, async),
+                      const LibraryTab(),
+                      const SizedBox.shrink(), // Task 5: Adhkar
+                    ],
+                  ),
+                ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _ourList(ThemeData theme, AsyncValue<List<Dua>> async) {
+    return async.when(
+      loading: () => const _ListSkeleton(),
+      error: (e, _) => Center(
+        child: Text('Could not load', style: theme.textTheme.bodyMedium),
+      ),
+      data: (all) {
+        final open = all.where((d) => !d.isAnswered).toList();
+        final answered = all.where((d) => d.isAnswered).toList();
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (open.isEmpty && answered.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: LovSpace.xxxl),
+                  child: Center(
+                    child: Text(
+                      'No duas yet. Tap + to add.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                )
+              else ...[
+                if (open.isNotEmpty) ...[
+                  LovSectionHeader(title: 'Open (${open.length})'),
+                  const SizedBox(height: LovSpace.sm),
+                  LovStagger(
+                    stagger: const Duration(milliseconds: 40),
+                    children: [
+                      for (final d in open)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: LovSpace.md),
+                          child: _DuaTile(dua: d),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: LovSpace.xl),
+                ],
+                if (answered.isNotEmpty) ...[
+                  LovSectionHeader(
+                    title: 'Answered (${answered.length})',
+                    subtitle: 'Alḥamdulillah.',
+                  ),
+                  const SizedBox(height: LovSpace.sm),
+                  LovStagger(
+                    stagger: const Duration(milliseconds: 40),
+                    children: [
+                      for (final d in answered)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: LovSpace.md),
+                          child: _DuaTile(dua: d),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+              const SizedBox(height: LovSpace.xxxl),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -111,13 +147,13 @@ class DuaListScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(LovRadius.lg),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(LovRadius.lg)),
       ),
       builder: (sheetContext) => _AddDuaSheet(
         onSubmit: (title, body, visibility) async {
-          await ref.read(duaRepositoryProvider).add(
+          await ref
+              .read(duaRepositoryProvider)
+              .add(
                 coupleId: couple.id,
                 userId: session.user.id,
                 title: title,
@@ -179,8 +215,9 @@ class _DuaTile extends ConsumerWidget {
                     decoration: dua.isAnswered
                         ? TextDecoration.lineThrough
                         : null,
-                    decorationColor: theme.colorScheme.onSurface
-                        .withValues(alpha: 0.45),
+                    decorationColor: theme.colorScheme.onSurface.withValues(
+                      alpha: 0.45,
+                    ),
                     color: dua.isAnswered
                         ? theme.colorScheme.onSurface.withValues(alpha: 0.55)
                         : null,
@@ -259,7 +296,8 @@ class _DuaTile extends ConsumerWidget {
 
 class _AddDuaSheet extends StatefulWidget {
   const _AddDuaSheet({required this.onSubmit});
-  final Future<void> Function(String title, String? body, String visibility) onSubmit;
+  final Future<void> Function(String title, String? body, String visibility)
+  onSubmit;
 
   @override
   State<_AddDuaSheet> createState() => _AddDuaSheetState();
@@ -344,8 +382,7 @@ class _AddDuaSheetState extends State<_AddDuaSheet> {
                 ),
               ],
               selected: {_visibility},
-              onSelectionChanged: (s) =>
-                  setState(() => _visibility = s.first),
+              onSelectionChanged: (s) => setState(() => _visibility = s.first),
               showSelectedIcon: false,
             ),
             const SizedBox(height: LovSpace.lg),
