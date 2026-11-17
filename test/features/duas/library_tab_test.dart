@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,9 +19,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FakeChat extends Fake implements ChatService {
   final sent = <String>[];
+  Completer<void>? gate;
   @override
-  Future<void> sendText(String body, {String? replyToMessageId}) async =>
-      sent.add(body);
+  Future<void> sendText(String body, {String? replyToMessageId}) async {
+    sent.add(body);
+    await gate?.future;
+  }
 }
 
 class _FakeRepo extends Fake implements DuaRepository {
@@ -215,5 +220,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text("Couldn't add — try again"), findsOneWidget);
     expect(find.text('Add to our list'), findsOneWidget);
+  });
+
+  testWidgets('sheet dismissed mid-send: success does not pop the screen', (
+    tester,
+  ) async {
+    final chat = _FakeChat()..gate = Completer<void>();
+    await _pump(tester, [_eat], chat: chat);
+    await tester.tap(find.text('Before eating'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send to spouse'));
+    await tester.pump();
+    Navigator.of(tester.element(find.text('Send to spouse'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Send to spouse'), findsNothing);
+    chat.gate!.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Our duas'), findsOneWidget);
+    expect(find.text('Library'), findsOneWidget);
+    expect(find.text('Sent to your spouse'), findsOneWidget);
   });
 }

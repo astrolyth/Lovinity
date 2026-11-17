@@ -49,7 +49,8 @@ class _LibraryDuaSheetState extends ConsumerState<_LibraryDuaSheet> {
     try {
       ok = await action();
     } catch (_) {}
-    if (ok && navigator.mounted) navigator.pop();
+    // Own `mounted`: if the sheet was dismissed mid-call, pop() would hit the screen.
+    if (ok && mounted) navigator.pop();
     messenger.showSnackBar(SnackBar(content: Text(ok ? okMsg : failMsg)));
     if (!ok && mounted) setState(() => _busy = false);
   }
