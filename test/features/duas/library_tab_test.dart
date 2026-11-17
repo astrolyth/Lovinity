@@ -24,6 +24,7 @@ class _FakeChat extends Fake implements ChatService {
 
 class _FakeRepo extends Fake implements DuaRepository {
   final calls = <Map<String, Object?>>[];
+  bool fail = false;
   @override
   Future<void> add({
     required String coupleId,
@@ -31,8 +32,10 @@ class _FakeRepo extends Fake implements DuaRepository {
     required String title,
     String? body,
     String visibility = 'shared',
-  }) async =>
-      calls.add({'title': title, 'body': body, 'visibility': visibility});
+  }) async {
+    if (fail) throw Exception('boom');
+    calls.add({'title': title, 'body': body, 'visibility': visibility});
+  }
 }
 
 const _eat = LibraryDua(
@@ -185,5 +188,32 @@ void main() {
     expect(repo.calls.single['visibility'], 'shared');
     expect(repo.calls.single['body'], duaListBody(_eat));
     expect(find.text('Added to your shared list'), findsOneWidget);
+  });
+
+  testWidgets('double tap send sends once; success pops sheet and toasts', (
+    tester,
+  ) async {
+    final chat = _FakeChat();
+    await _pump(tester, [_eat], chat: chat);
+    await tester.tap(find.text('Before eating'));
+    await tester.pumpAndSettle();
+    final btn = find.text('Send to spouse');
+    await tester.tap(btn);
+    await tester.tap(btn, warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(chat.sent, hasLength(1));
+    expect(find.text('Send to spouse'), findsNothing);
+    expect(find.text('Sent to your spouse'), findsOneWidget);
+  });
+
+  testWidgets('add failure keeps sheet open with message', (tester) async {
+    final repo = _FakeRepo()..fail = true;
+    await _pump(tester, [_eat], repo: repo);
+    await tester.tap(find.text('Before eating'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to our list'));
+    await tester.pumpAndSettle();
+    expect(find.text("Couldn't add — try again"), findsOneWidget);
+    expect(find.text('Add to our list'), findsOneWidget);
   });
 }
