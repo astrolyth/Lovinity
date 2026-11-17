@@ -13,6 +13,7 @@ import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/dua_repository.dart';
 import '../domain/dua_providers.dart';
+import 'adhkar_tab.dart';
 import 'library_tab.dart';
 
 class DuaListScreen extends ConsumerWidget {
@@ -58,7 +59,7 @@ class DuaListScreen extends ConsumerWidget {
                     children: [
                       _ourList(theme, async),
                       const LibraryTab(),
-                      const SizedBox.shrink(), // Task 5: Adhkar
+                      const AdhkarTab(),
                     ],
                   ),
                 ),

@@ -19,6 +19,7 @@ import '../../lovemap/domain/lovemap_providers.dart';
 import '../../daily/domain/question_providers.dart';
 import '../../daily/presentation/question_card.dart';
 import '../../daily/presentation/verse_card.dart';
+import '../../duas/domain/adhkar_providers.dart';
 import '../../duas/domain/dua_providers.dart';
 import '../../duas/presentation/dua_card.dart';
 import '../../gratitude/domain/gratitude_providers.dart';
@@ -54,6 +55,7 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(cycleNotificationPumpProvider);
     ref.watch(questionNotificationPumpProvider);
     ref.watch(duaNotificationPumpProvider);
+    ref.watch(adhkarNotificationPumpProvider);
     ref.watch(gratitudeNotificationPumpProvider);
     ref.watch(calendarNotificationPumpProvider);
     ref.watch(groceryNotificationPumpProvider);
