@@ -119,6 +119,7 @@ flutter:
   assets:
     - assets/branding/logo_full.jpg
     - assets/branding/app_icon.png
+    - assets/licenses/fitrahive-dua-dhikr.txt
 
 flutter_launcher_icons:
   image_path: "assets/branding/app_icon.png"

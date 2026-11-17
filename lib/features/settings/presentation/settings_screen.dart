@@ -102,6 +102,12 @@ class SettingsScreen extends ConsumerWidget {
           title: const Text('About Lovinity'),
           onTap: () => context.push('/home/settings/about'),
         ),
+        ListTile(
+          leading: const Icon(Icons.description_outlined),
+          title: const Text('Content sources'),
+          subtitle: const Text('Duas & adhkar: fitrahive/dua-dhikr (MIT)'),
+          onTap: () => showLicensePage(context: context),
+        ),
       ]),
     );
   }

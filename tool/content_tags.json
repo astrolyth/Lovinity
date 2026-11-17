@@ -1,0 +1,305 @@
+{
+ "daily-dua/0": {
+  "category": "sleep",
+  "tags": [
+   "sleep"
+  ]
+ },
+ "daily-dua/1": {
+  "category": "sleep",
+  "tags": [
+   "sleep",
+   "gratitude"
+  ]
+ },
+ "daily-dua/2": {
+  "category": "purification",
+  "tags": [
+   "purification",
+   "protection"
+  ]
+ },
+ "daily-dua/3": {
+  "category": "purification",
+  "tags": [
+   "purification",
+   "forgiveness"
+  ]
+ },
+ "daily-dua/4": {
+  "category": "food",
+  "tags": [
+   "food"
+  ]
+ },
+ "daily-dua/5": {
+  "category": "food",
+  "tags": [
+   "food"
+  ]
+ },
+ "daily-dua/6": {
+  "category": "food",
+  "tags": [
+   "food",
+   "gratitude"
+  ]
+ },
+ "daily-dua/7": {
+  "category": "mosque",
+  "tags": [
+   "mosque"
+  ]
+ },
+ "daily-dua/8": {
+  "category": "mosque",
+  "tags": [
+   "mosque"
+  ]
+ },
+ "daily-dua/9": {
+  "category": "purification",
+  "tags": [
+   "purification"
+  ]
+ },
+ "daily-dua/10": {
+  "category": "purification",
+  "tags": [
+   "purification"
+  ]
+ },
+ "daily-dua/11": {
+  "category": "fasting",
+  "tags": [
+   "fasting",
+   "gratitude"
+  ]
+ },
+ "daily-dua/12": {
+  "category": "home",
+  "tags": [
+   "home",
+   "marriage"
+  ]
+ },
+ "daily-dua/13": {
+  "category": "home",
+  "tags": [
+   "home",
+   "marriage"
+  ]
+ },
+ "daily-dua/14": {
+  "category": "home",
+  "tags": [
+   "home",
+   "protection"
+  ]
+ },
+ "daily-dua/15": {
+  "category": "protection",
+  "tags": [
+   "protection",
+   "travel"
+  ]
+ },
+ "daily-dua/16": {
+  "category": "travel",
+  "tags": [
+   "travel",
+   "protection"
+  ]
+ },
+ "daily-dua/17": {
+  "category": "travel",
+  "tags": [
+   "travel",
+   "protection"
+  ]
+ },
+ "daily-dua/18": {
+  "category": "travel",
+  "tags": [
+   "travel",
+   "protection"
+  ]
+ },
+ "daily-dua/19": {
+  "category": "clothing",
+  "tags": [
+   "clothing",
+   "gratitude"
+  ]
+ },
+ "daily-dua/20": {
+  "category": "clothing",
+  "tags": [
+   "clothing",
+   "gratitude"
+  ]
+ },
+ "daily-dua/21": {
+  "category": "travel",
+  "tags": [
+   "travel",
+   "protection"
+  ]
+ },
+ "daily-dua/22": {
+  "category": "weather",
+  "tags": [
+   "weather"
+  ]
+ },
+ "daily-dua/23": {
+  "category": "weather",
+  "tags": [
+   "weather"
+  ]
+ },
+ "daily-dua/24": {
+  "category": "weather",
+  "tags": [
+   "weather"
+  ]
+ },
+ "daily-dua/25": {
+  "category": "weather",
+  "tags": [
+   "weather",
+   "protection"
+  ]
+ },
+ "daily-dua/26": {
+  "category": "forgiveness",
+  "tags": [
+   "forgiveness",
+   "dhikr"
+  ]
+ },
+ "daily-dua/27": {
+  "category": "distress",
+  "tags": [
+   "distress"
+  ]
+ },
+ "daily-dua/28": {
+  "category": "distress",
+  "tags": [
+   "grief",
+   "distress"
+  ]
+ },
+ "daily-dua/29": {
+  "category": "distress",
+  "tags": [
+   "distress"
+  ]
+ },
+ "daily-dua/30": {
+  "category": "distress",
+  "tags": [
+   "distress",
+   "protection"
+  ]
+ },
+ "daily-dua/31": {
+  "category": "sneezing",
+  "tags": [
+   "sneezing",
+   "gratitude"
+  ]
+ },
+ "daily-dua/32": {
+  "category": "sneezing",
+  "tags": [
+   "sneezing"
+  ]
+ },
+ "daily-dua/33": {
+  "category": "sneezing",
+  "tags": [
+   "sneezing"
+  ]
+ },
+ "daily-dua/34": {
+  "category": "character",
+  "tags": [
+   "character"
+  ]
+ },
+ "daily-dua/35": {
+  "category": "protection",
+  "tags": [
+   "protection"
+  ]
+ },
+ "daily-dua/36": {
+  "category": "adhan",
+  "tags": [
+   "adhan",
+   "dhikr"
+  ]
+ },
+ "daily-dua/37": {
+  "category": "parents",
+  "tags": [
+   "parents",
+   "forgiveness"
+  ]
+ },
+ "selected-dua/0": {
+  "category": "guidance",
+  "tags": [
+   "marriage",
+   "gratitude",
+   "guidance"
+  ]
+ },
+ "selected-dua/1": {
+  "category": "guidance",
+  "tags": [
+   "guidance"
+  ]
+ },
+ "selected-dua/2": {
+  "category": "guidance",
+  "tags": [
+   "guidance"
+  ]
+ },
+ "selected-dua/3": {
+  "category": "guidance",
+  "tags": [
+   "guidance"
+  ]
+ },
+ "selected-dua/4": {
+  "category": "protection",
+  "tags": [
+   "protection",
+   "gratitude"
+  ]
+ },
+ "selected-dua/5": {
+  "category": "protection",
+  "tags": [
+   "protection",
+   "distress"
+  ]
+ },
+ "selected-dua/6": {
+  "category": "distress",
+  "tags": [
+   "distress",
+   "protection"
+  ]
+ },
+ "selected-dua/7": {
+  "category": "gratitude",
+  "tags": [
+   "gratitude"
+  ]
+ }
+}

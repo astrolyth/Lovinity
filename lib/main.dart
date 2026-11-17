@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +13,13 @@ import 'shared/providers/supabase_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initTimezones();
+
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      ['fitrahive/dua-dhikr'],
+      await rootBundle.loadString('assets/licenses/fitrahive-dua-dhikr.txt'),
+    );
+  });
 
   // Fail fast on a missing key. Without this the app boots "successfully",
   // then every Supabase realtime subscription is rejected with an endless
