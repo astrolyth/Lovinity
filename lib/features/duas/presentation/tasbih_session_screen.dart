@@ -10,7 +10,6 @@ import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
-import '../../pairing/domain/pairing_providers.dart';
 import '../data/tasbih_channel.dart';
 import '../domain/tap_batcher.dart';
 import '../domain/tasbih_providers.dart';
@@ -28,10 +27,9 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     with WidgetsBindingObserver {
   late final TasbihChannel _channel;
   late final TapBatcher _batcher;
+  late final int _p0;
   StreamSubscription<int>? _deltaSub;
   StreamSubscription<bool>? _hereSub;
-  String? _selfId;
-  String? _coupleId;
   int? _db; // total at open
   int _mine = 0;
   int _spouse = 0;
@@ -45,29 +43,10 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _channel = ref.read(tasbihChannelProvider(widget.counterId));
-    // Cached: ref is unusable inside dispose(), where the last flush runs.
+    _batcher = ref.read(tasbihBatcherProvider(widget.counterId));
+    _p0 = _batcher.pending; // unsaved taps from an earlier session
     final repo = ref.read(tasbihRepositoryProvider);
-    ref.listenManual(authSessionProvider, (_, s) {
-      _selfId = s.asData?.value?.user.id;
-    }, fireImmediately: true);
-    ref.listenManual(currentCoupleProvider, (_, c) {
-      _coupleId = c.asData?.value?.id;
-    }, fireImmediately: true);
-    _batcher = TapBatcher(
-      flushEvery: const Duration(seconds: 5),
-      save: (n) {
-        final self = _selfId, couple = _coupleId;
-        if (self == null || couple == null) {
-          return Future.error(StateError('not ready'));
-        }
-        return repo.addContribution(
-          counterId: widget.counterId,
-          coupleId: couple,
-          userId: self,
-          count: n,
-        );
-      },
-    );
+    final self = ref.read(authSessionProvider).asData?.value?.user.id;
     _deltaSub = _channel.spouseDeltas.listen((d) {
       if (!mounted) return;
       setState(() => _spouse += d);
@@ -76,11 +55,14 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     _hereSub = _channel.spouseHere.listen((h) {
       if (mounted) setState(() => _here = h);
     });
-    ref.read(counterTotalsProvider(widget.counterId).future).then((t) {
-      if (!mounted) return;
-      setState(() => _db = t.total);
-      _checkGoal();
-    }, onError: (_) {});
+    if (self != null) {
+      // Fetched directly (not via the cached provider) so it is always fresh.
+      repo.totals(widget.counterId, selfId: self).then((t) {
+        if (!mounted) return;
+        setState(() => _db = t.total);
+        _checkGoal();
+      }, onError: (_) {});
+    }
   }
 
   DhikrCounter? get _counter {
@@ -92,7 +74,7 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     return null;
   }
 
-  int get _total => (_db ?? 0) + _mine + _spouse;
+  int get _total => (_db ?? 0) + _p0 + _mine + _spouse;
 
   /// Fires once, only when the total crosses target during this session.
   void _checkGoal() {
@@ -100,7 +82,7 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     if (c == null || _db == null || _fired) return;
     if (!_seen) {
       _seen = true;
-      _armed = _db! < c.target; // only a crossing during this session counts
+      _armed = _db! + _p0 < c.target; // only a crossing during this session counts
     }
     if (_armed && _total >= c.target) {
       _fired = true;
@@ -134,8 +116,7 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     WidgetsBinding.instance.removeObserver(this);
     _deltaSub?.cancel();
     _hereSub?.cancel();
-    _batcher.flushNow();
-    _batcher.dispose();
+    _batcher.flushNow(); // batcher outlives the screen and retries on failure
     _channel.dispose();
     super.dispose();
   }

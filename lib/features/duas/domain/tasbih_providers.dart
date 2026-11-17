@@ -5,6 +5,7 @@ import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/tasbih_channel.dart';
 import '../data/tasbih_repository.dart';
+import 'tap_batcher.dart';
 
 export '../data/tasbih_repository.dart' show DhikrCounter, CounterTotals;
 
@@ -38,4 +39,29 @@ final tasbihChannelProvider =
     selfId: selfId,
     counterId: counterId,
   );
+});
+
+/// Outlives the session screen so unsaved taps keep retrying (5 s) after the
+/// user leaves, e.g. while offline. Ids are captured at creation.
+final tasbihBatcherProvider =
+    Provider.family<TapBatcher, String>((ref, counterId) {
+  final selfId = ref.read(authSessionProvider).asData!.value!.user.id;
+  final coupleId = ref.read(currentCoupleProvider).asData!.value!.id;
+  final repo = ref.read(tasbihRepositoryProvider);
+  late final TapBatcher batcher;
+  batcher = TapBatcher(
+    flushEvery: const Duration(seconds: 5),
+    save: (n) async {
+      await repo.addContribution(
+        counterId: counterId,
+        coupleId: coupleId,
+        userId: selfId,
+        count: n,
+      );
+      // Let the list pick up fresh totals once everything is saved.
+      if (batcher.pending == 0) ref.invalidate(counterTotalsProvider(counterId));
+    },
+  );
+  ref.onDispose(batcher.dispose);
+  return batcher;
 });

@@ -18,14 +18,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _Repo extends Fake implements TasbihRepository {
   final saved = <int>[];
+  int mine = 10, spouse = 5;
+  bool fail = false;
+  @override
+  Future<CounterTotals> totals(String counterId, {required String selfId}) async =>
+      CounterTotals(mine: mine, spouse: spouse);
   @override
   Future<void> addContribution({
     required String counterId,
     required String coupleId,
     required String userId,
     required int count,
-  }) async =>
-      saved.add(count);
+  }) async {
+    if (fail) throw Exception('offline');
+    saved.add(count);
+  }
 }
 
 class _Chan extends Fake implements TasbihChannel {
@@ -71,7 +78,9 @@ Future<(_Repo, _Chan, _Notifs)> _pump(
   int mine = 10,
   int spouse = 5,
 }) async {
-  final repo = _Repo();
+  final repo = _Repo()
+    ..mine = mine
+    ..spouse = spouse;
   final chan = _Chan();
   final notifs = _Notifs();
   final counter = DhikrCounter(
@@ -89,9 +98,6 @@ Future<(_Repo, _Chan, _Notifs)> _pump(
         tasbihChannelProvider('k1').overrideWithValue(chan),
         tasbihCountersProvider
             .overrideWith((ref) => Stream.value([counter])),
-        counterTotalsProvider('k1').overrideWith(
-          (ref) async => CounterTotals(mine: mine, spouse: spouse),
-        ),
         notificationStoreProvider.overrideWithValue(notifs),
         authSessionProvider.overrideWith((ref) => Stream.value(_session)),
         currentCoupleProvider.overrideWith(
@@ -169,5 +175,52 @@ void main() {
     nav.pop();
     await tester.pumpAndSettle();
     expect(repo.saved, [1]);
+  });
+
+  Future<void> reopen(WidgetTester tester) async {
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+  }
+
+  void popIt(WidgetTester tester) =>
+      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+
+  testWidgets('reopen after saved session shows fresh total, one notification',
+      (tester) async {
+    final (repo, _, notifs) = await _pump(tester);
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.byKey(const Key('tasbih-tap')));
+    }
+    await tester.pump();
+    expect(notifs.kinds, ['tasbih']);
+    popIt(tester);
+    await tester.pumpAndSettle();
+    expect(repo.saved, [5]);
+    repo.mine = 15;
+    await reopen(tester);
+    expect(find.text('20 / 20'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tasbih-tap')));
+    await tester.pump();
+    expect(notifs.kinds, ['tasbih']);
+  });
+
+  testWidgets('offline leave retries later; reopen includes pending',
+      (tester) async {
+    final (repo, _, _) = await _pump(tester);
+    repo.fail = true;
+    await tester.tap(find.byKey(const Key('tasbih-tap')));
+    await tester.tap(find.byKey(const Key('tasbih-tap')));
+    popIt(tester);
+    await tester.pumpAndSettle();
+    expect(repo.saved, isEmpty);
+    // (c) reopen while still unsaved: db 15 + pending 2
+    await reopen(tester);
+    expect(find.text('17 / 20'), findsOneWidget);
+    popIt(tester);
+    await tester.pumpAndSettle();
+    // (b) connection returns; the 5 s retry saves the pending count
+    repo.fail = false;
+    await tester.pump(const Duration(seconds: 6));
+    expect(repo.saved, [2]);
   });
 }

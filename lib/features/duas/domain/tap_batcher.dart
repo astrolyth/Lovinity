@@ -38,6 +38,7 @@ class TapBatcher {
       await save(n);
     } catch (_) {
       _pending += n;
+      _arm(); // keep retrying even if nobody taps again
     }
   }
 
