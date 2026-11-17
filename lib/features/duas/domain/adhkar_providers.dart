@@ -22,11 +22,23 @@ final adhkarProgressStoreProvider = Provider<AdhkarProgressStore>(
   (ref) => AdhkarProgressStore(ref.read(secureStorageProvider)),
 );
 
-final adhkarTodayKeyProvider = Provider<String>((ref) {
+/// Bumped on app resume / local midnight so [adhkarTodayKeyProvider] re-reads the clock.
+class DayTick extends Notifier<int> {
+  @override
+  int build() => 0;
+  void bump() => state++;
+}
+
+final dayTickProvider = NotifierProvider<DayTick, int>(DayTick.new);
+
+/// Today's local day key, or null while the own profile timezone is unknown
+/// (loading, error, null or empty): callers must treat null as "not ready".
+final adhkarTodayKeyProvider = Provider<String?>((ref) {
+  ref.watch(dayTickProvider);
   final tzId =
-      ref.watch(ownProfileProvider.select((p) => p.asData?.value?.timezone)) ??
-          'UTC';
-  return dayKey(localDayAt(tzId, ref.watch(nowProvider)()));
+      ref.watch(ownProfileProvider.select((p) => p.asData?.value?.timezone));
+  if (tzId == null || tzId.isEmpty) return null;
+  return dayKey(localDayAt(tzId, ref.read(nowProvider)()));
 });
 
 final adhkarCompletionsProvider =

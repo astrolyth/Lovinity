@@ -19,6 +19,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'adhkar_progress_store_test.dart' show MemStorage;
 
+class _CountingStorage extends MemStorage {
+  int reads = 0;
+  @override
+  dynamic noSuchMethod(Invocation i) {
+    if (i.memberName == #readAll) reads++;
+    return super.noSuchMethod(i);
+  }
+}
+
 class _FakeRepo extends Fake implements AdhkarRepository {
   final calls = <AdhkarSet>[];
   @override
@@ -54,6 +63,9 @@ Future<_FakeRepo> _pump(
   WidgetTester tester,
   List<LibraryDua> duas, {
   List<AdhkarCompletion> completions = const [],
+  DateTime Function()? clock,
+  Future<UserProfile?> Function()? profile,
+  MemStorage? storage,
 }) async {
   final repo = _FakeRepo();
   final session = Session(
@@ -81,14 +93,14 @@ Future<_FakeRepo> _pump(
             longDistance: false,
           )),
         ),
-        ownProfileProvider.overrideWith((ref) async => _profile),
+        ownProfileProvider.overrideWith((ref) => (profile ?? () async => _profile)()),
         spouseProfileProvider.overrideWith((ref) async => null),
         adhkarCompletionsProvider
             .overrideWith((ref) => Stream.value(completions)),
         adhkarRepositoryProvider.overrideWithValue(repo),
         secureStorageProvider
-            .overrideWithValue(MemStorage() as FlutterSecureStorage),
-        nowProvider.overrideWithValue(() => DateTime.utc(2026, 11, 16, 12)),
+            .overrideWithValue((storage ?? MemStorage()) as FlutterSecureStorage),
+        nowProvider.overrideWithValue(clock ?? () => DateTime.utc(2026, 11, 16, 12)),
       ],
       child: Consumer(builder: (_, ref, _) {
         ref.watch(currentCoupleProvider);
@@ -157,5 +169,33 @@ void main() {
     return c.read(ownProfileProvider.future).then((_) {
       expect(c.read(adhkarTodayKeyProvider), '2026-11-17');
     });
+  });
+
+  testWidgets('null profile: no store load or delete', (tester) async {
+    final st = _CountingStorage();
+    await _pump(tester, [_d('1', 1, 0)], profile: () async => null, storage: st);
+    expect(st.reads, 0);
+    expect(find.text('Adhkar are on their way.'), findsOneWidget);
+  });
+
+  testWidgets('resume after midnight resets cards under the new key', (
+    tester,
+  ) async {
+    var now = DateTime.utc(2026, 11, 16, 12);
+    final st = MemStorage();
+    await _pump(tester, [_d('1', 3, 0)], clock: () => now, storage: st);
+    await tester.tap(find.text('Morning'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Item 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('1/3'), findsOneWidget);
+    expect(st.data.keys, ['adhkar:2026-11-16:morning']);
+    now = DateTime.utc(2026, 11, 17, 1);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Morning')); // new card state is collapsed
+    await tester.pumpAndSettle();
+    expect(find.text('0/3'), findsOneWidget);
+    expect(st.data.keys, isEmpty);
   });
 }

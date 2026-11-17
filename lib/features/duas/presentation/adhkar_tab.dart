@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:timezone/timezone.dart' as tz;
+
 import '../../../core/theme/tokens.dart';
+import '../../../core/time/local_day.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
@@ -11,14 +16,65 @@ import '../data/dua_library_repository.dart';
 import '../domain/adhkar_providers.dart';
 import '../domain/dua_library_providers.dart';
 
-class AdhkarTab extends ConsumerWidget {
+class AdhkarTab extends ConsumerStatefulWidget {
   const AdhkarTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdhkarTab> createState() => _AdhkarTabState();
+}
+
+class _AdhkarTabState extends ConsumerState<AdhkarTab>
+    with WidgetsBindingObserver {
+  Timer? _midnight;
+  String? _scheduledFor;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnight?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(dayTickProvider.notifier).bump();
+    }
+  }
+
+  void _schedule(String key, String tzId) {
+    if (_scheduledFor == key) return;
+    _scheduledFor = key;
+    _midnight?.cancel();
+    final now = localTimeAt(tzId, ref.read(nowProvider)());
+    final next = tz.TZDateTime(now.location, now.year, now.month, now.day + 1);
+    _midnight = Timer(next.difference(now) + const Duration(seconds: 1), () {
+      if (mounted) ref.read(dayTickProvider.notifier).bump();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dayKey = ref.watch(adhkarTodayKeyProvider);
-    final profileLoading = ref.watch(ownProfileProvider).isLoading;
+    final profile = ref.watch(ownProfileProvider);
+    if (dayKey == null) {
+      return profile.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Center(
+              child: Text(
+                'Adhkar are on their way.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            );
+    }
+    _schedule(dayKey, profile.asData!.value!.timezone);
     return ref.watch(duaLibraryProvider).when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(
@@ -30,15 +86,13 @@ class AdhkarTab extends ConsumerWidget {
                 s: all.where((d) => d.category == s.dbValue).toList()
                   ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
             };
-            if (profileLoading || bySet.values.every((l) => l.isEmpty)) {
-              return profileLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Center(
-                      child: Text(
-                        'Adhkar are on their way.',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    );
+            if (bySet.values.every((l) => l.isEmpty)) {
+              return Center(
+                child: Text(
+                  'Adhkar are on their way.',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              );
             }
             return ListView(
               padding: const EdgeInsets.all(LovSpace.lg),
