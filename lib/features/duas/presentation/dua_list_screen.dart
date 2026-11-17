@@ -35,6 +35,13 @@ class DuaListScreen extends ConsumerWidget {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => context.pop(),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.radio_button_checked),
+                tooltip: 'Tasbih together',
+                onPressed: () => context.push('/home/tasbih'),
+              ),
+            ],
             floatingActionButton: AnimatedBuilder(
               animation: tabs,
               builder: (_, _) => tabs.index == 0

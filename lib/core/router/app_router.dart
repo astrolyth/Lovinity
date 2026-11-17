@@ -18,6 +18,8 @@ import '../../features/lovemap/presentation/lovemap_screen.dart';
 import '../../features/daily/presentation/question_screen.dart';
 import '../../features/daily/presentation/verse_reader.dart';
 import '../../features/duas/presentation/dua_list_screen.dart';
+import '../../features/duas/presentation/tasbih_list_screen.dart';
+import '../../features/duas/presentation/tasbih_session_screen.dart';
 import '../../features/gratitude/presentation/gratitude_screen.dart';
 import '../../features/home/domain/home_providers.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -166,6 +168,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'duas',
             builder: (_, _) => const DuaListScreen(),
+          ),
+          GoRoute(
+            path: 'tasbih',
+            builder: (_, _) => const TasbihListScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => TasbihSessionScreen(
+                  counterId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: 'cycle',
