@@ -73,7 +73,7 @@ List<DuaSuggestion> suggestDuas({
     triggers.add((tags, "Because you're feeling ${mood.label.toLowerCase()}"));
   }
   if (today.weekday == DateTime.friday) {
-    triggers.add((['dhikr'], "It's Jumu'ah — read Surah Al-Kahf and send salawat"));
+    triggers.add((['dhikr'], "It's Jumu'ah — a good day for dhikr and salawat"));
   } else if (today.weekday == DateTime.monday || today.weekday == DateTime.thursday) {
     triggers.add((['fasting'], 'Monday & Thursday are Sunnah fasting days'));
   }

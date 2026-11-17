@@ -40,11 +40,20 @@ void main() {
     expect(() => rowsForSet('daily-dua', [_item()], {}), throwsStateError);
   });
 
-  test('toSqlUpsert escapes and never updates status', () {
+  test('toSqlUpsert escapes; status only drops approved->pending', () {
     final sql = toSqlUpsert(rowsForSet('morning-dhikr', [_item(title: "Allah's mercy")], {}));
     expect(sql, contains("'Allah''s mercy'"));
     expect(sql, contains('on conflict (source, source_id) do update'));
-    expect(sql.split('do update set').last, isNot(contains('status')));
+    final update = sql.split('do update set').last;
+    // Never re-approves (a rejected row stays rejected); an approved row whose
+    // reference disappeared goes back to pending.
+    expect(
+      update,
+      contains("status = case when excluded.reference is null "
+          "and public.duas_library.status = 'approved' then 'pending' "
+          'else public.duas_library.status end'),
+    );
+    expect(update, isNot(contains('excluded.status')));
   });
 
   test('tags file covers rule tags', () {

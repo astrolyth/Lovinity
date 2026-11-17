@@ -63,7 +63,7 @@ void main() {
 
   test('Friday, Monday', () {
     expect(_s(today: DateTime(2026, 11, 20)).first.reason,
-        startsWith("It's Jumu'ah"));
+        "It's Jumu'ah — a good day for dhikr and salawat");
     expect(_s(today: DateTime(2026, 11, 16)).first.dua.tags, ['fasting']);
   });
 

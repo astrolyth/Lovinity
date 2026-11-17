@@ -96,8 +96,9 @@ String toSqlUpsert(List<ImportRow> rows) {
     'translation', 'reference', 'category', 'repeat_count', 'benefit',
     'tags', 'sort_order', 'status',
   ];
-  // status is deliberately absent from the update list: a re-import must not
-  // re-approve a row a human rejected.
+  // status is never taken from the import: a re-import must not re-approve a
+  // row a human rejected. It only drops approved -> pending when the
+  // reference is gone, so no approved row is left unreferenced.
   final updatable = cols.where((c) => c != 'source' && c != 'source_id' && c != 'status');
   final values = rows.map((r) {
     final tags = 'array[${r.tags.map(_q).join(',')}]::text[]';
@@ -111,5 +112,8 @@ String toSqlUpsert(List<ImportRow> rows) {
   return 'insert into public.duas_library (${cols.join(', ')}) values\n'
       '$values\n'
       'on conflict (source, source_id) do update set\n'
-      '${updatable.map((c) => '  $c = excluded.$c').join(',\n')};\n';
+      '${updatable.map((c) => '  $c = excluded.$c').join(',\n')},\n'
+      "  status = case when excluded.reference is null "
+      "and public.duas_library.status = 'approved' then 'pending' "
+      'else public.duas_library.status end;\n';
 }
