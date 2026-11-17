@@ -22,6 +22,7 @@ import '../../daily/presentation/verse_card.dart';
 import '../../duas/domain/adhkar_providers.dart';
 import '../../duas/domain/dua_providers.dart';
 import '../../duas/presentation/dua_card.dart';
+import '../../duas/presentation/dua_for_today_card.dart';
 import '../../gratitude/domain/gratitude_providers.dart';
 import '../../gratitude/presentation/gratitude_card.dart';
 import '../../letters/domain/letter_providers.dart';
@@ -212,6 +213,8 @@ class HomeScreen extends ConsumerWidget {
                       _CareTile(isWife: isWife),
                       const SizedBox(height: LovSpace.md),
                       const VerseCard(),
+                      const SizedBox(height: LovSpace.md),
+                      const DuaForTodayCard(),
                       const SizedBox(height: LovSpace.md),
                       const QuestionCard(),
                       const SizedBox(height: LovSpace.md),
