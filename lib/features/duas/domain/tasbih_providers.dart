@@ -31,8 +31,10 @@ final counterTotalsProvider =
 /// Owned (disposed) by the session screen, not by the provider.
 final tasbihChannelProvider =
     Provider.autoDispose.family<TasbihChannel, String>((ref, counterId) {
-  final selfId = ref.read(authSessionProvider).asData!.value!.user.id;
-  final coupleId = ref.read(currentCoupleProvider).asData!.value!.id;
+  // `.value` keeps the last value through loading/error; the session screen
+  // only reads this once both ids are present.
+  final selfId = ref.read(authSessionProvider).value!.user.id;
+  final coupleId = ref.read(currentCoupleProvider).value!.id;
   return TasbihChannel(
     supabase: ref.read(supabaseClientProvider),
     coupleId: coupleId,
@@ -45,8 +47,10 @@ final tasbihChannelProvider =
 /// user leaves, e.g. while offline. Ids are captured at creation.
 final tasbihBatcherProvider =
     Provider.family<TapBatcher, String>((ref, counterId) {
-  final selfId = ref.read(authSessionProvider).asData!.value!.user.id;
-  final coupleId = ref.read(currentCoupleProvider).asData!.value!.id;
+  // `.value` keeps the last value through loading/error; the session screen
+  // only reads this once both ids are present.
+  final selfId = ref.read(authSessionProvider).value!.user.id;
+  final coupleId = ref.read(currentCoupleProvider).value!.id;
   final repo = ref.read(tasbihRepositoryProvider);
   late final TapBatcher batcher;
   batcher = TapBatcher(
@@ -58,8 +62,13 @@ final tasbihBatcherProvider =
         userId: selfId,
         count: n,
       );
-      // Let the list pick up fresh totals once everything is saved.
-      if (batcher.pending == 0) ref.invalidate(counterTotalsProvider(counterId));
+      // Swallowed: an invalidate failure must not make the batcher re-add a
+      // count that was already saved.
+      try {
+        if (batcher.pending == 0) {
+          ref.invalidate(counterTotalsProvider(counterId));
+        }
+      } catch (_) {}
     },
   );
   ref.onDispose(batcher.dispose);

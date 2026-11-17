@@ -10,20 +10,49 @@ import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
+import '../../pairing/domain/pairing_providers.dart';
 import '../data/tasbih_channel.dart';
 import '../domain/tap_batcher.dart';
 import '../domain/tasbih_providers.dart';
 
-class TasbihSessionScreen extends ConsumerStatefulWidget {
+/// Waits for the session and couple ids before opening the channel/batcher,
+/// which capture them (a realtime couple stream can briefly lose its value).
+class TasbihSessionScreen extends ConsumerWidget {
   const TasbihSessionScreen({super.key, required this.counterId});
   final String counterId;
 
   @override
-  ConsumerState<TasbihSessionScreen> createState() =>
-      _TasbihSessionScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selfId =
+        ref.watch(authSessionProvider.select((s) => s.value?.user.id));
+    final coupleId =
+        ref.watch(currentCoupleProvider.select((c) => c.value?.id));
+    if (selfId != null && coupleId != null) {
+      return _Session(counterId: counterId);
+    }
+    return LovScaffold(
+      title: 'Tasbih',
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => context.pop(),
+      ),
+      child: Center(
+        child: Text('Connecting…',
+            style: Theme.of(context).textTheme.bodyMedium),
+      ),
+    );
+  }
 }
 
-class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
+class _Session extends ConsumerStatefulWidget {
+  const _Session({required this.counterId});
+  final String counterId;
+
+  @override
+  ConsumerState<_Session> createState() => _SessionState();
+}
+
+class _SessionState extends ConsumerState<_Session>
     with WidgetsBindingObserver {
   late final TasbihChannel _channel;
   late final TapBatcher _batcher;
@@ -46,7 +75,7 @@ class _TasbihSessionScreenState extends ConsumerState<TasbihSessionScreen>
     _batcher = ref.read(tasbihBatcherProvider(widget.counterId));
     _p0 = _batcher.pending; // unsaved taps from an earlier session
     final repo = ref.read(tasbihRepositoryProvider);
-    final self = ref.read(authSessionProvider).asData?.value?.user.id;
+    final self = ref.read(authSessionProvider).value?.user.id;
     _deltaSub = _channel.spouseDeltas.listen((d) {
       if (!mounted) return;
       setState(() => _spouse += d);

@@ -223,4 +223,64 @@ void main() {
     await tester.pump(const Duration(seconds: 6));
     expect(repo.saved, [2]);
   });
+
+  testWidgets('waits for the couple: Connecting… then works, survives errors',
+      (tester) async {
+    final couple = StreamController<Couple>();
+    addTearDown(couple.close);
+    final repo = _Repo();
+    final chan = _Chan();
+    final counter = DhikrCounter(
+      id: 'k1',
+      title: 'Salawat',
+      arabicText: null,
+      target: 20,
+      period: 'weekly',
+      startsAt: DateTime.utc(2026, 11, 10),
+    );
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        tasbihRepositoryProvider.overrideWithValue(repo),
+        tasbihChannelProvider('k1').overrideWithValue(chan),
+        tasbihCountersProvider.overrideWith((ref) => Stream.value([counter])),
+        notificationStoreProvider.overrideWithValue(_Notifs()),
+        authSessionProvider.overrideWith((ref) => Stream.value(_session)),
+        currentCoupleProvider.overrideWith((ref) => couple.stream),
+        spouseProfileProvider.overrideWith((ref) async => null),
+      ],
+      child: MaterialApp(
+        theme: LovTheme.dark(),
+        home: const TasbihSessionScreen(counterId: 'k1'),
+      ),
+    ));
+    await tester.pump();
+    // Loading couple: gentle wait, nothing opened.
+    expect(find.text('Connecting…'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // Error with no value yet: still waiting, no throw.
+    couple.addError(Exception('ws down'));
+    await tester.pump();
+    expect(find.text('Connecting…'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    couple.add(const Couple(
+      id: 'c1',
+      memberA: 'me',
+      memberB: 'sp',
+      status: 'active',
+      longDistance: false,
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('15 / 20'), findsOneWidget);
+
+    // Websocket error after a value: keeps the previous couple, keeps working.
+    couple.addError(Exception('ws down'));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const Key('tasbih-tap')));
+    await tester.pump();
+    expect(find.text('16 / 20'), findsOneWidget);
+    expect(chan.taps, 1);
+  });
 }
