@@ -246,8 +246,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _attachVideo(MediaSource source) async {
-    final video = await ref.read(mediaPickerProvider).pickVideo(source);
-    if (video == null) return;
+    final PickedVideo? video;
+    try {
+      video = await ref.read(mediaPickerProvider).pickVideo(source);
+    } on MediaRejected catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
+    if (video == null || !mounted) return;
     final service = ref.read(chatServiceProvider).value;
     if (service == null) return;
     final caption = _controller.text.trim();

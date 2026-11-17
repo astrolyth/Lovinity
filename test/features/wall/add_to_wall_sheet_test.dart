@@ -28,6 +28,7 @@ const _couple = Couple(
 class _FakePicker implements MediaPicker {
   PickedPhoto? photo;
   PickedVideo? video;
+  Object? videoError;
   int? videoThumbWidth;
 
   @override
@@ -39,6 +40,7 @@ class _FakePicker implements MediaPicker {
     int thumbnailMaxWidth = 200,
   }) async {
     videoThumbWidth = thumbnailMaxWidth;
+    if (videoError != null) throw videoError!;
     return video;
   }
 }
@@ -338,11 +340,8 @@ void main() {
   ) async {
     final repo = FakeWallRepository();
     final picker = _FakePicker()
-      ..video = PickedVideo(
-        bytes: Uint8List.fromList([4]),
-        mimeType: 'video/mp4',
-        durationMs: 61000,
-        thumbnailBytes: Uint8List.fromList([7]),
+      ..videoError = MediaRejected(
+        videoRejection(bytes: 4, durationMs: 61000)!,
       );
     await _open(tester, repo: repo, picker: picker);
     await pickFrom(tester, 'Video Library');
@@ -357,11 +356,8 @@ void main() {
   ) async {
     final repo = FakeWallRepository();
     final picker = _FakePicker()
-      ..video = PickedVideo(
-        bytes: Uint8List(maxWallVideoBytes + 1),
-        mimeType: 'video/mp4',
-        durationMs: 30000,
-        thumbnailBytes: Uint8List.fromList([7]),
+      ..videoError = MediaRejected(
+        videoRejection(bytes: maxVideoBytes + 1, durationMs: 30000)!,
       );
     await _open(tester, repo: repo, picker: picker);
     await pickFrom(tester, 'Video Library');

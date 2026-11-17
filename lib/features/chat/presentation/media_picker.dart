@@ -56,12 +56,32 @@ class PickedVideo {
   final Uint8List thumbnailBytes;
 }
 
+/// Mirrors the 50 MiB Storage file limit (chat-media and wall-media).
+const maxVideoBytes = 50 * 1024 * 1024;
+const maxVideoMs = 60000;
+
+/// Thrown by [MediaPicker.pickVideo] for a video the app won't send; the
+/// message is user-facing.
+class MediaRejected implements Exception {
+  const MediaRejected(this.message);
+  final String message;
+}
+
+/// Why a video can't be sent, or null when it can.
+String? videoRejection({required int bytes, required int durationMs}) {
+  if (durationMs > maxVideoMs) return 'Videos can be up to 60 seconds';
+  if (bytes > maxVideoBytes) {
+    return 'That video is too large (max 50 MB) — try a shorter one';
+  }
+  return null;
+}
+
 abstract class MediaPicker {
   /// Returns null if the user cancelled the picker.
   Future<PickedPhoto?> pickPhoto(MediaSource source);
 
-  /// Returns null if the user cancelled the picker. Videos are capped at 60
-  /// seconds at the picker level (no client-side re-encode).
+  /// Returns null if the user cancelled the picker. Throws [MediaRejected]
+  /// for a video over [maxVideoMs] or [maxVideoBytes] (no client re-encode).
   Future<PickedVideo?> pickVideo(
     MediaSource source, {
     int thumbnailMaxWidth = 200,
@@ -119,6 +139,22 @@ class DevicePicker implements MediaPicker {
     );
     if (xfile == null) return null;
 
+    // Check before loading: maxDuration only limits the camera, and a long
+    // library video read into memory can crash the app.
+    final controller = VideoPlayerController.file(File(xfile.path));
+    final int durationMs;
+    try {
+      await controller.initialize();
+      durationMs = controller.value.duration.inMilliseconds;
+    } finally {
+      await controller.dispose();
+    }
+    final rejection = videoRejection(
+      bytes: await xfile.length(),
+      durationMs: durationMs,
+    );
+    if (rejection != null) throw MediaRejected(rejection);
+
     final bytes = await xfile.readAsBytes();
 
     // Returns non-nullable bytes and throws on failure (unlike the abandoned
@@ -136,11 +172,6 @@ class DevicePicker implements MediaPicker {
     } catch (_) {
       return null;
     }
-
-    final controller = VideoPlayerController.file(File(xfile.path));
-    await controller.initialize();
-    final durationMs = controller.value.duration.inMilliseconds;
-    await controller.dispose();
 
     return PickedVideo(
       bytes: bytes,

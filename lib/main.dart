@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
+import 'core/config/config_error_app.dart';
 import 'core/config/env.dart';
 import 'core/time/timezone_bootstrap.dart';
 import 'shared/providers/supabase_provider.dart';
@@ -18,13 +19,16 @@ Future<void> main() async {
   // depend on it flicker as they mount/unmount. That failure mode is very
   // hard to trace back to a missing build flag, so name the fix here.
   if (!Env.isConfigured) {
-    throw StateError(
-      'SUPABASE_ANON_KEY is empty — the app was built without its config.\n'
-      'Run with the dart-define file, e.g.:\n'
-      '  flutter run --dart-define-from-file=config/supabase.local.json\n'
-      '(use config/supabase.cloud.json for a cloud project). See '
-      'lib/core/config/env.dart.',
-    );
+    const message =
+        'SUPABASE_ANON_KEY is empty — the app was built without its config.\n'
+        'Run with the dart-define file, e.g.:\n'
+        '  flutter run --dart-define-from-file=config/supabase.local.json\n'
+        '(use config/supabase.cloud.json for a cloud project). See '
+        'lib/core/config/env.dart.';
+    debugPrint(message);
+    // Show it on screen too; throwing here leaves only the native splash.
+    runApp(const ConfigErrorApp(message: message));
+    return;
   }
 
   await Supabase.initialize(
