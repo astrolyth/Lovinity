@@ -69,4 +69,42 @@ void main() {
       expect(partnerStoryStart([_m('x', 'me', DateTime(2026))], 'me'), isNull);
     });
   });
+
+  test('vlogDay closes the day at 4am local', () {
+    expect(vlogDay(DateTime(2026, 11, 18, 3, 59)), DateTime(2026, 11, 17));
+    expect(vlogDay(DateTime(2026, 11, 18, 4)), DateTime(2026, 11, 18));
+    // A 1am moment groups with the evening before it.
+    final g = groupByDay([
+      _m('late', 'u', DateTime(2026, 11, 18, 1)),
+      _m('eve', 'u', DateTime(2026, 11, 17, 21)),
+    ]);
+    expect(g.single.$1, DateTime(2026, 11, 17));
+  });
+
+  test('vlogSlots pairs each hour oldest-first without dropping extras', () {
+    final slots = vlogSlots([
+      _m('p3', 'p', DateTime(2026, 11, 18, 15, 40)),
+      _m('me3', 'me', DateTime(2026, 11, 18, 15, 10)),
+      _m('p3b', 'p', DateTime(2026, 11, 18, 15, 50)),
+      _m('me9', 'me', DateTime(2026, 11, 18, 9, 5)),
+    ], 'me');
+    expect(slots.map((s) => (s.hour.hour, s.partner?.id, s.mine?.id)), [
+      (9, null, 'me9'),
+      (15, 'p3', 'me3'),
+      (15, 'p3b', null),
+    ]);
+  });
+
+  test('MomentReply.fromRow reads an emoji reaction', () {
+    final r = MomentReply.fromRow({
+      'id': 'r',
+      'moment_id': 'm',
+      'author_id': 'u',
+      'emoji': '❤️',
+      'body': null,
+      'created_at': '2026-11-18T12:00:00Z',
+    });
+    expect(r.emoji, '❤️');
+    expect(r.body, isNull);
+  });
 }

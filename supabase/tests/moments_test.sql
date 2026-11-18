@@ -124,4 +124,50 @@ begin
   raise notice 'PASS: nudge targets respect recent sends, waking hours, opt-out; cron scheduled';
 end $$;
 
+-- 6. Replies (20261118000004): spouse reacts once per emoji and comments;
+--    a row with both/neither kind is rejected; outsider cannot reply.
+set local role authenticated;
+set local request.jwt.claim.sub = '66666666-0000-0000-0000-00000000000b';
+insert into public.moment_replies (moment_id, couple_id, author_id, emoji)
+values ('66666666-2222-0000-0000-000000000001', '66666666-1111-0000-0000-000000000001',
+        '66666666-0000-0000-0000-00000000000b', '❤️');
+insert into public.moment_replies (moment_id, couple_id, author_id, body)
+values ('66666666-2222-0000-0000-000000000001', '66666666-1111-0000-0000-000000000001',
+        '66666666-0000-0000-0000-00000000000b', 'miss you');
+do $$
+begin
+  begin
+    insert into public.moment_replies (moment_id, couple_id, author_id, emoji)
+    values ('66666666-2222-0000-0000-000000000001', '66666666-1111-0000-0000-000000000001',
+            '66666666-0000-0000-0000-00000000000b', '❤️');
+    raise exception 'FAIL: duplicate emoji accepted';
+  exception when unique_violation then
+    raise notice 'PASS: one of each emoji per person';
+  end;
+  begin
+    insert into public.moment_replies (moment_id, couple_id, author_id, emoji, body)
+    values ('66666666-2222-0000-0000-000000000001', '66666666-1111-0000-0000-000000000001',
+            '66666666-0000-0000-0000-00000000000b', '🔥', 'both');
+    raise exception 'FAIL: emoji+body accepted';
+  exception when check_violation then
+    raise notice 'PASS: exactly one of emoji/body';
+  end;
+end $$;
+set local request.jwt.claim.sub = '66666666-0000-0000-0000-00000000000c';
+do $$
+begin
+  if exists (select 1 from public.moment_replies) then
+    raise exception 'FAIL: outsider can read replies';
+  end if;
+  begin
+    insert into public.moment_replies (moment_id, couple_id, author_id, body)
+    values ('66666666-2222-0000-0000-000000000001', '66666666-1111-0000-0000-000000000001',
+            '66666666-0000-0000-0000-00000000000c', 'hi');
+    raise exception 'FAIL: outsider replied';
+  exception when insufficient_privilege then
+    raise notice 'PASS: outsider cannot read or reply';
+  end;
+end $$;
+reset role;
+
 rollback;

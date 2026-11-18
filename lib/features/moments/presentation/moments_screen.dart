@@ -80,13 +80,23 @@ class MomentsScreen extends ConsumerWidget {
                 for (final (day, items) in groupByDay(list)) ...[
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: LovSpace.lg,
-                        bottom: LovSpace.sm,
-                      ),
-                      child: Text(
-                        _dayLabel(day),
-                        style: Theme.of(context).textTheme.titleSmall,
+                      padding: const EdgeInsets.only(top: LovSpace.md),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _dayLabel(day),
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => context.push(
+                              '/moments/vlog/${DateFormat('yyyy-MM-dd').format(day)}',
+                            ),
+                            icon: const Icon(Icons.play_circle_outline_rounded),
+                            label: const Text('Play vlog'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -114,8 +124,7 @@ class MomentsScreen extends ConsumerWidget {
 }
 
 String _dayLabel(DateTime day) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
+  final today = vlogDay(DateTime.now());
   final diff = today.difference(day).inDays;
   if (diff == 0) return 'Today';
   if (diff == 1) return 'Yesterday';

@@ -42,11 +42,18 @@ class Moment {
   String? get previewPath => isVideo ? thumbPath : mediaPath;
 }
 
-/// Groups newest-first moments by local calendar day, keeping order.
+/// A moment's vlog day: days close at 4am local, so a 1am moment belongs to
+/// the night before (the way people live their day, not the calendar).
+DateTime vlogDay(DateTime local) {
+  final shifted = local.subtract(const Duration(hours: 4));
+  return DateTime(shifted.year, shifted.month, shifted.day);
+}
+
+/// Groups newest-first moments by [vlogDay], keeping order.
 List<(DateTime, List<Moment>)> groupByDay(List<Moment> moments) {
   final out = <(DateTime, List<Moment>)>[];
   for (final m in moments) {
-    final d = DateTime(m.createdAt.year, m.createdAt.month, m.createdAt.day);
+    final d = vlogDay(m.createdAt);
     if (out.isEmpty || out.last.$1 != d) out.add((d, []));
     out.last.$2.add(m);
   }
@@ -59,6 +66,70 @@ Moment? partnerStoryStart(List<Moment> newestFirst, String selfId) {
   final theirs = newestFirst.where((m) => m.senderId != selfId);
   return theirs.where((m) => m.viewedAt == null).lastOrNull ??
       theirs.firstOrNull;
+}
+
+/// One split-screen frame of the daily vlog: the clock hour, plus up to one
+/// moment from each spouse.
+typedef VlogSlot = ({DateTime hour, Moment? partner, Moment? mine});
+
+/// Oldest-first slots for a day's moments. Within an hour, each person's
+/// moments pair up in order, so nothing is dropped when one sent more.
+List<VlogSlot> vlogSlots(List<Moment> dayMoments, String selfId) {
+  final byHour = <DateTime, (List<Moment>, List<Moment>)>{};
+  final sorted = [...dayMoments]
+    ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  for (final m in sorted) {
+    final c = m.createdAt;
+    final h = byHour.putIfAbsent(
+      DateTime(c.year, c.month, c.day, c.hour),
+      () => ([], []),
+    );
+    (m.senderId == selfId ? h.$2 : h.$1).add(m);
+  }
+  return [
+    for (final MapEntry(key: hour, value: (theirs, mine)) in byHour.entries)
+      for (
+        var i = 0;
+        i < (theirs.length > mine.length ? theirs.length : mine.length);
+        i++
+      )
+        (
+          hour: hour,
+          partner: i < theirs.length ? theirs[i] : null,
+          mine: i < mine.length ? mine[i] : null,
+        ),
+  ];
+}
+
+/// Quick reactions offered under a moment (mirrors the DB check).
+const momentEmojis = ['❤️', '😂', '😮', '😢', '🔥', '🤲'];
+
+/// An emoji reaction or a short comment on a moment.
+class MomentReply {
+  const MomentReply({
+    required this.id,
+    required this.momentId,
+    required this.authorId,
+    required this.createdAt,
+    this.emoji,
+    this.body,
+  });
+
+  factory MomentReply.fromRow(Map<String, dynamic> r) => MomentReply(
+    id: r['id'] as String,
+    momentId: r['moment_id'] as String,
+    authorId: r['author_id'] as String,
+    emoji: r['emoji'] as String?,
+    body: r['body'] as String?,
+    createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
+  );
+
+  final String id;
+  final String momentId;
+  final String authorId;
+  final String? emoji;
+  final String? body;
+  final DateTime createdAt;
 }
 
 /// Longest clip the camera records.

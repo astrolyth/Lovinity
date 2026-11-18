@@ -27,6 +27,7 @@ import '../../features/letters/presentation/letters_screen.dart';
 import '../../features/moments/domain/moments_providers.dart';
 import '../../features/moments/presentation/moment_camera_screen.dart';
 import '../../features/moments/presentation/moment_viewer_screen.dart';
+import '../../features/moments/presentation/moment_vlog_screen.dart';
 import '../../features/moments/presentation/moments_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -285,6 +286,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _rootKey,
                     path: 'camera',
                     builder: (_, _) => const MomentCameraScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'vlog/:day',
+                    builder: (_, state) =>
+                        MomentVlogScreen(day: state.pathParameters['day']!),
                   ),
                   GoRoute(
                     parentNavigatorKey: _rootKey,

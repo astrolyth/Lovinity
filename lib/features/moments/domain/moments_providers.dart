@@ -20,6 +20,15 @@ final momentsProvider = StreamProvider<List<Moment>>((ref) {
   return ref.read(momentsRepositoryProvider).watch(coupleId);
 });
 
+/// Reactions and comments for the couple, oldest first, realtime.
+final momentRepliesProvider = StreamProvider<List<MomentReply>>((ref) {
+  final coupleId = ref.watch(
+    currentCoupleProvider.select((c) => c.asData?.value?.id),
+  );
+  if (coupleId == null) return Stream.value(const []);
+  return ref.read(momentsRepositoryProvider).watchReplies(coupleId);
+});
+
 /// Signed URL kept 50 min so it re-signs before the 1-hour expiry.
 final momentSignedUrlProvider = FutureProvider.autoDispose
     .family<String, String>((ref, path) async {

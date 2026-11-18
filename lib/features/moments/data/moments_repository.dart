@@ -90,6 +90,58 @@ class MomentsRepository {
     }
   }
 
+  /// All replies for the couple, oldest first, realtime.
+  Stream<List<MomentReply>> watchReplies(String coupleId) => _client
+      .from('moment_replies')
+      .stream(primaryKey: ['id'])
+      .eq('couple_id', coupleId)
+      .map(
+        (rows) => [
+          for (final r in rows)
+            MomentReply.fromRow(Map<String, dynamic>.from(r)),
+        ]..sort((a, b) => a.createdAt.compareTo(b.createdAt)),
+      );
+
+  /// Adds the emoji, or removes it if [existing] is this user's same emoji.
+  Future<void> toggleReaction({
+    required Moment moment,
+    required String userId,
+    required String emoji,
+    MomentReply? existing,
+  }) async {
+    if (existing != null) {
+      await _client.from('moment_replies').delete().eq('id', existing.id);
+      return;
+    }
+    // Idempotent: a double tap must not fail on the unique index.
+    await _client
+        .from('moment_replies')
+        .upsert(
+          {
+            'moment_id': moment.id,
+            'couple_id': moment.coupleId,
+            'author_id': userId,
+            'emoji': emoji,
+          },
+          onConflict: 'moment_id,author_id,emoji',
+          ignoreDuplicates: true,
+        );
+  }
+
+  Future<void> comment({
+    required Moment moment,
+    required String userId,
+    required String body,
+  }) => _client.from('moment_replies').insert({
+    'moment_id': moment.id,
+    'couple_id': moment.coupleId,
+    'author_id': userId,
+    'body': body.trim(),
+  });
+
+  Future<void> deleteReply(String id) =>
+      _client.from('moment_replies').delete().eq('id', id);
+
   Future<void> markViewed(String id) =>
       _client.rpc('mark_moment_viewed', params: {'p_id': id});
 

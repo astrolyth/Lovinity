@@ -62,6 +62,17 @@ class _MomentViewerScreenState extends ConsumerState<MomentViewerScreen>
     });
   }
 
+  Future<void> _openReplies(Moment m) async {
+    _timer.stop();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _RepliesSheet(moment: m),
+    );
+    if (mounted) _timer.forward();
+  }
+
   Future<void> _delete(Moment m) async {
     _timer.stop();
     final ok = await showDialog<bool>(
@@ -133,7 +144,7 @@ class _MomentViewerScreenState extends ConsumerState<MomentViewerScreen>
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    _Media(
+                    MomentMedia(
                       key: ValueKey(m.id),
                       moment: m,
                       onReady: (d) => _ready(m, d),
@@ -204,6 +215,10 @@ class _MomentViewerScreenState extends ConsumerState<MomentViewerScreen>
                                 ),
                               ),
                             ),
+                          _ReactionBar(
+                            moment: m,
+                            onOpenReplies: () => _openReplies(m),
+                          ),
                           if (m.senderId == self)
                             Padding(
                               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -230,10 +245,17 @@ class _MomentViewerScreenState extends ConsumerState<MomentViewerScreen>
 }
 
 /// Loads the signed URL and reports when the media is on screen.
-class _Media extends ConsumerWidget {
-  const _Media({super.key, required this.moment, required this.onReady});
+/// Shared with the daily vlog, which shows two of these split-screen.
+class MomentMedia extends ConsumerWidget {
+  const MomentMedia({
+    super.key,
+    required this.moment,
+    this.onReady,
+    this.fit = BoxFit.contain,
+  });
   final Moment moment;
-  final ValueChanged<Duration> onReady;
+  final ValueChanged<Duration>? onReady;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -245,14 +267,14 @@ class _Media extends ConsumerWidget {
       loading: () => spinner,
       error: (_, _) => const _Failed(),
       data: (u) => moment.isVideo
-          ? _Video(url: u, onReady: onReady)
+          ? _Video(url: u, onReady: onReady, fit: fit)
           : Image.network(
               u,
-              fit: BoxFit.contain,
+              fit: fit,
               frameBuilder: (_, child, frame, sync) {
                 if (frame != null || sync) {
                   WidgetsBinding.instance.addPostFrameCallback(
-                    (_) => onReady(_photoDuration),
+                    (_) => onReady?.call(_photoDuration),
                   );
                 }
                 return child;
@@ -276,9 +298,10 @@ class _Failed extends StatelessWidget {
 }
 
 class _Video extends StatefulWidget {
-  const _Video({required this.url, required this.onReady});
+  const _Video({required this.url, this.onReady, required this.fit});
   final String url;
-  final ValueChanged<Duration> onReady;
+  final ValueChanged<Duration>? onReady;
+  final BoxFit fit;
 
   @override
   State<_Video> createState() => _VideoState();
@@ -299,7 +322,7 @@ class _VideoState extends State<_Video> {
           if (!mounted) return;
           setState(() {});
           _c.play();
-          widget.onReady(_c.value.duration);
+          widget.onReady?.call(_c.value.duration);
         })
         .catchError((_) {
           if (mounted) setState(() => _failed = true);
@@ -320,10 +343,214 @@ class _VideoState extends State<_Video> {
         child: CircularProgressIndicator(color: Colors.white),
       );
     }
-    return Center(
-      child: AspectRatio(
-        aspectRatio: _c.value.aspectRatio,
-        child: VideoPlayer(_c),
+    final size = _c.value.size;
+    return ClipRect(
+      child: FittedBox(
+        fit: widget.fit,
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
+          child: VideoPlayer(_c),
+        ),
+      ),
+    );
+  }
+}
+
+/// Emoji row (tap to toggle yours) with the partner's reactions shown inline,
+/// plus a button into the comment thread.
+class _ReactionBar extends ConsumerWidget {
+  const _ReactionBar({required this.moment, required this.onOpenReplies});
+  final Moment moment;
+  final VoidCallback onOpenReplies;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final self = ref.watch(wallSelfIdProvider);
+    final replies = (ref.watch(momentRepliesProvider).asData?.value ?? const [])
+        .where((r) => r.momentId == moment.id)
+        .toList();
+    final comments = replies.where((r) => r.body != null).length;
+    final theirs = {
+      for (final r in replies)
+        if (r.emoji != null && r.authorId != self) r.emoji!,
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Row(
+        children: [
+          for (final e in momentEmojis)
+            Builder(
+              builder: (context) {
+                final mine = replies
+                    .where((r) => r.authorId == self && r.emoji == e)
+                    .firstOrNull;
+                return Semantics(
+                  button: true,
+                  selected: mine != null,
+                  label: 'React $e',
+                  child: InkResponse(
+                    onTap: self == null
+                        ? null
+                        : () => ref
+                              .read(momentsRepositoryProvider)
+                              .toggleReaction(
+                                moment: moment,
+                                userId: self,
+                                emoji: e,
+                                existing: mine,
+                              )
+                              .catchError((_) {}),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: mine != null ? Colors.white30 : Colors.black26,
+                        border: theirs.contains(e)
+                            ? Border.all(color: Colors.white, width: 1.5)
+                            : null,
+                      ),
+                      child: Text(e, style: const TextStyle(fontSize: 20)),
+                    ),
+                  ),
+                );
+              },
+            ),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: onOpenReplies,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.black26,
+            ),
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+            label: Text(comments == 0 ? 'Reply' : '$comments'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RepliesSheet extends ConsumerStatefulWidget {
+  const _RepliesSheet({required this.moment});
+  final Moment moment;
+
+  @override
+  ConsumerState<_RepliesSheet> createState() => _RepliesSheetState();
+}
+
+class _RepliesSheetState extends ConsumerState<_RepliesSheet> {
+  final _text = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final self = ref.read(wallSelfIdProvider);
+    final body = _text.text.trim();
+    if (self == null || body.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      await ref
+          .read(momentsRepositoryProvider)
+          .comment(moment: widget.moment, userId: self, body: body);
+      _text.clear();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't send — try again")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final self = ref.watch(wallSelfIdProvider);
+    final nameFor = ref.watch(wallNameForProvider);
+    final replies = (ref.watch(momentRepliesProvider).asData?.value ?? const [])
+        .where((r) => r.momentId == widget.moment.id)
+        .toList();
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+            ),
+            child: replies.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'No replies yet',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  )
+                : ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final r in replies)
+                        ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            r.emoji ?? r.body!,
+                            style: r.emoji != null
+                                ? const TextStyle(fontSize: 22)
+                                : null,
+                          ),
+                          subtitle: Text(
+                            '${nameFor(r.authorId)} · '
+                            '${DateFormat.jm().format(r.createdAt)}',
+                          ),
+                          trailing: r.authorId == self
+                              ? IconButton(
+                                  tooltip: 'Delete reply',
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () => ref
+                                      .read(momentsRepositoryProvider)
+                                      .deleteReply(r.id)
+                                      .catchError((_) {}),
+                                )
+                              : null,
+                        ),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _text,
+            maxLength: 300,
+            textInputAction: TextInputAction.send,
+            onSubmitted: (_) => _send(),
+            decoration: InputDecoration(
+              hintText: 'Reply to this moment…',
+              counterText: '',
+              suffixIcon: IconButton(
+                tooltip: 'Send reply',
+                onPressed: _sending ? null : _send,
+                icon: const Icon(Icons.send_rounded),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
