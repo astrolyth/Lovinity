@@ -99,6 +99,14 @@ void main() {
     expect(find.textContaining('at least $kMinPasswordLength'), findsOneWidget);
   });
 
+  testWidgets('rejects a password without both letters and numbers',
+      (tester) async {
+    await tester.pumpWidget(_app(repo));
+    await _fill(tester, password: 'onlyletters', confirm: 'onlyletters');
+    await _submit(tester);
+    expect(find.textContaining('letters and numbers'), findsOneWidget);
+  });
+
   testWidgets('rejects mismatched passwords', (tester) async {
     await tester.pumpWidget(_app(repo));
     await _fill(tester, password: 'password123', confirm: 'password124');

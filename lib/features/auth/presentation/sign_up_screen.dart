@@ -7,9 +7,21 @@ import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../domain/auth_controller.dart';
 
-/// Minimum password length. Stricter than the server's current floor (6);
-/// raise `minimum_password_length` to match when convenient.
+/// Mirrors supabase/config.toml: `minimum_password_length = 8`,
+/// `password_requirements = "letters_digits"`.
 const int kMinPasswordLength = 8;
+
+/// The password rule's error message, or null when [password] passes.
+String? passwordProblem(String password) {
+  if (password.length < kMinPasswordLength) {
+    return 'Password must be at least $kMinPasswordLength characters.';
+  }
+  if (!password.contains(RegExp(r'[A-Za-z]')) ||
+      !password.contains(RegExp(r'[0-9]'))) {
+    return 'Password must include both letters and numbers.';
+  }
+  return null;
+}
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -46,9 +58,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return 'Please enter a valid email.';
     }
     if (_gender == null) return 'Please select whether you are a man or woman.';
-    if (_password.text.length < kMinPasswordLength) {
-      return 'Password must be at least $kMinPasswordLength characters.';
-    }
+    final passwordError = passwordProblem(_password.text);
+    if (passwordError != null) return passwordError;
     if (_password.text != _confirm.text) return 'Passwords do not match.';
     return null;
   }

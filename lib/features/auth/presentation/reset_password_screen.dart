@@ -11,7 +11,7 @@ import '../../../core/platform/haptics.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../domain/auth_controller.dart';
-import 'sign_up_screen.dart' show kMinPasswordLength;
+import 'sign_up_screen.dart' show passwordProblem;
 
 /// Code + new password in one screen: verifying the recovery code signs the
 /// user in, so splitting the steps would leave a session whose password is
@@ -46,9 +46,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     if (_code.length != Env.otpLength) {
       return 'Enter the ${Env.otpLength}-digit code from your email.';
     }
-    if (_password.text.length < kMinPasswordLength) {
-      return 'Password must be at least $kMinPasswordLength characters.';
-    }
+    final passwordError = passwordProblem(_password.text);
+    if (passwordError != null) return passwordError;
     if (_password.text != _confirm.text) return 'Passwords do not match.';
     return null;
   }

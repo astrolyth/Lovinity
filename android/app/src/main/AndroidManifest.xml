@@ -7,6 +7,7 @@
     <application
         android:label="Lovinity"
         android:name="${applicationName}"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         <!-- Default FCM notification channel/icon, read by the platform for
              background/data-only messages shown outside PushService's own

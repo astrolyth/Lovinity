@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/config_error_app.dart';
 import 'core/config/env.dart';
+import 'core/crypto/secure_store.dart';
+import 'core/storage/secure_session_storage.dart';
 import 'core/time/timezone_bootstrap.dart';
 import 'shared/providers/supabase_provider.dart';
 
@@ -40,10 +42,20 @@ Future<void> main() async {
     return;
   }
 
+  // Same key supabase_flutter uses by default, so the legacy session migrates.
+  final sessionKey =
+      'sb-${Uri.parse(Env.supabaseUrl).host.split('.').first}-auth-token';
   await Supabase.initialize(
     url: Env.supabaseUrl,
     publishableKey: Env.supabaseAnonKey,
     debug: false,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: SecureSessionStorage(
+        const FlutterSecureStore(appSecureStorage),
+        key: sessionKey,
+        legacy: SharedPreferencesLocalStorage(persistSessionKey: sessionKey),
+      ),
+    ),
   );
 
   runApp(

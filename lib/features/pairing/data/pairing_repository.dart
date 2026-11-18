@@ -35,8 +35,13 @@ class PairingRepository {
       final row = await _client.rpc('accept_pairing_invite', params: {
         'p_code': code.toUpperCase(),
       });
-      final data = (row is List) ? row.first : row;
-      return Couple.fromRow(Map<String, dynamic>.from(data as Map));
+      final data = (row is List) ? row.firstOrNull : row;
+      // A wrong code returns no row rather than raising, so the server can
+      // count it toward the attempt limit (20261118000001).
+      if (data is! Map || data['id'] == null) {
+        throw PairingFailure.fromRpcCode('invite_not_found');
+      }
+      return Couple.fromRow(Map<String, dynamic>.from(data));
     } on PostgrestException catch (e) {
       throw PairingFailure.fromRpcCode(e.message);
     }

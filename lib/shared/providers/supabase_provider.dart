@@ -9,8 +9,10 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   );
 });
 
-final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage(
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
-});
+/// The app's one keychain/keystore config; also backs the Supabase session.
+const appSecureStorage = FlutterSecureStorage(
+  iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+);
+
+final secureStorageProvider =
+    Provider<FlutterSecureStorage>((ref) => appSecureStorage);
