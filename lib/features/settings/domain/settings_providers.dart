@@ -19,6 +19,12 @@ final preferencesProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.read(preferencesRepositoryProvider).fetch(session.user.id);
 });
 
+/// Hourly "send a moment" pushes; on unless turned off (matches the server default).
+final momentNudgesProvider = Provider<bool>((ref) {
+  final prefs = ref.watch(preferencesProvider).asData?.value ?? const {};
+  return prefs['moment_nudges'] != false;
+});
+
 final shareCycleByDefaultProvider = Provider<bool>((ref) {
   final prefs = ref.watch(preferencesProvider).asData?.value ?? const {};
   return prefs['share_cycle_default'] == true;

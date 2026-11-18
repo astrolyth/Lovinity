@@ -59,6 +59,7 @@ dependencies:
   emoji_picker_flutter: ^4.5.3
   get_thumbnail_video: ^0.7.3
   home_widget: ^0.9.3
+  camera: ^0.12.2
 
 dev_dependencies:
   flutter_test:

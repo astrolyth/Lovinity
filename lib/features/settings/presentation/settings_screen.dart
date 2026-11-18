@@ -83,6 +83,25 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: Text('Sharing controls appear here as features are added.'),
           ),
         const _SectionHeader('Notifications'),
+        SwitchListTile(
+          title: const Text('Hourly moment reminders'),
+          subtitle: const Text(
+              'A nudge each hour (9am–10pm) to send your spouse a moment.'),
+          value: ref.watch(momentNudgesProvider),
+          onChanged: (v) async {
+            final session = ref.read(authSessionProvider).asData?.value;
+            if (session == null) return;
+            final current =
+                ref.read(preferencesProvider).asData?.value ?? const {};
+            await ref.read(preferencesRepositoryProvider).setKey(
+                  userId: session.user.id,
+                  key: 'moment_nudges',
+                  value: v,
+                  current: Map<String, dynamic>.from(current),
+                );
+            ref.invalidate(preferencesProvider);
+          },
+        ),
         const ListTile(
             title: Text('Reminders'),
             subtitle: Text('Prayer and cycle reminders (coming soon).')),
