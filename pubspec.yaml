@@ -60,6 +60,8 @@ dependencies:
   get_thumbnail_video: ^0.7.3
   home_widget: ^0.9.3
   camera: ^0.12.2
+  ffmpeg_kit_flutter_new_min: ^3.7.2
+  gal: ^3.0.1
 
 dev_dependencies:
   flutter_test:

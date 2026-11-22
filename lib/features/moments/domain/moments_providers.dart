@@ -5,10 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers/supabase_provider.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/moments_repository.dart';
+import '../data/vlog_renderer.dart';
 import 'moment.dart';
 
 final momentsRepositoryProvider = Provider<MomentsRepository>((ref) {
   return MomentsRepository(ref.read(supabaseClientProvider));
+});
+
+final vlogRendererProvider = Provider<VlogRenderer>((ref) {
+  return VlogRenderer(ref.read(momentsRepositoryProvider));
 });
 
 /// Newest first, realtime.

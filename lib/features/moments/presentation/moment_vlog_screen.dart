@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -63,6 +66,52 @@ class _MomentVlogScreenState extends ConsumerState<MomentVlogScreen>
 
   void _close() => context.canPop() ? context.pop() : context.go('/moments');
 
+  bool _saving = false;
+  double _progress = 0;
+
+  /// Renders the day into one MP4 on this phone and saves it to Photos.
+  Future<void> _save() async {
+    if (_saving) return;
+    _timer.stop();
+    final messenger = ScaffoldMessenger.of(context);
+    void say(String m) => messenger.showSnackBar(SnackBar(content: Text(m)));
+    setState(() {
+      _saving = true;
+      _progress = 0;
+    });
+    String? path;
+    try {
+      if (!await Gal.hasPermission() && !await Gal.requestPermission()) {
+        say('Allow photo access in Settings to save vlogs');
+        return;
+      }
+      path = await ref
+          .read(vlogRendererProvider)
+          .render(
+            _slots(),
+            widget.day,
+            onProgress: (p) {
+              if (mounted) setState(() => _progress = p);
+            },
+          );
+      await Gal.putVideo(path);
+      say('Vlog saved to your photos 💛');
+    } catch (_) {
+      say("Couldn't save the vlog — try again");
+    } finally {
+      // Private media: don't leave the rendered copy and clips in temp.
+      if (path != null) {
+        try {
+          File(path).parent.deleteSync(recursive: true);
+        } catch (_) {}
+      }
+      if (mounted) {
+        setState(() => _saving = false);
+        if (!_done) _timer.forward();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(momentsProvider); // rebuild when moments arrive
@@ -122,6 +171,7 @@ class _MomentVlogScreenState extends ConsumerState<MomentVlogScreen>
       if (_done) {
         return _End(
           onReplay: () => _go(0),
+          onSave: _save,
           onClose: _close,
           title: day == null
               ? 'That was the day'
@@ -195,6 +245,14 @@ class _MomentVlogScreenState extends ConsumerState<MomentVlogScreen>
                       ),
                       const Spacer(),
                       IconButton(
+                        tooltip: 'Save vlog to phone',
+                        onPressed: _save,
+                        icon: const Icon(
+                          Icons.download_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
                         tooltip: 'Close',
                         onPressed: _close,
                         icon: const Icon(
@@ -214,7 +272,16 @@ class _MomentVlogScreenState extends ConsumerState<MomentVlogScreen>
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(backgroundColor: Colors.black, body: body()),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            body(),
+            if (_saving) _Saving(progress: _progress),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -222,10 +289,12 @@ class _MomentVlogScreenState extends ConsumerState<MomentVlogScreen>
 class _End extends StatelessWidget {
   const _End({
     required this.onReplay,
+    required this.onSave,
     required this.onClose,
     required this.title,
   });
   final VoidCallback onReplay;
+  final VoidCallback onSave;
   final VoidCallback onClose;
   final String title;
 
@@ -244,6 +313,13 @@ class _End extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
+          onPressed: onSave,
+          icon: const Icon(Icons.download_rounded),
+          label: const Text('Save to phone'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
           onPressed: onReplay,
           icon: const Icon(Icons.replay_rounded),
           label: const Text('Watch again'),
@@ -255,5 +331,40 @@ class _End extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+/// Blocks input while the vlog renders; shows how far along it is.
+class _Saving extends StatelessWidget {
+  const _Saving({required this.progress});
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    fit: StackFit.expand,
+    children: [
+      const ModalBarrier(dismissible: false, color: Colors.black87),
+      Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Making your vlog…',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              const SizedBox(height: 16),
+              LinearProgressIndicator(value: progress == 0 ? null : progress),
+              const SizedBox(height: 8),
+              const Text(
+                'This happens on your phone — keep the app open.',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
   );
 }

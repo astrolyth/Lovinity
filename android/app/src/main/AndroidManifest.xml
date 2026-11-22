@@ -4,6 +4,10 @@
     <!-- Runtime-requested on Android 13+ (API 33) before push notifications
          can be shown; PushService.init() calls requestPermission(). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- gal: saving vlogs to the gallery on Android 10 and below -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
     <application
         android:label="Lovinity"
         android:name="${applicationName}"

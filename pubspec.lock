@@ -409,6 +409,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.2"
+  ffmpeg_kit_flutter_new_min:
+    dependency: "direct main"
+    description:
+      name: ffmpeg_kit_flutter_new_min
+      sha256: "37beafe03cd07f2596634cd339e74b1644144d865bb6355fd402378c86027dd4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.7.2"
+  ffmpeg_kit_flutter_platform_interface:
+    dependency: transitive
+    description:
+      name: ffmpeg_kit_flutter_platform_interface
+      sha256: addf046ae44e190ad0101b2fde2ad909a3cd08a2a109f6106d2f7048b7abedee
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   file:
     dependency: transitive
     description:
@@ -730,6 +746,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.6.4"
+  gal:
+    dependency: "direct main"
+    description:
+      name: gal
+      sha256: "5bd6542d6a387b76b50a803ad87573f3f505baea7c7153054f6d8fac7fc46d98"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
   geoclue:
     dependency: transitive
     description:
