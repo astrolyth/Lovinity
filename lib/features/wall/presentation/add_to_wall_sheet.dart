@@ -13,6 +13,8 @@ import '../data/link_preview_service.dart';
 import '../domain/link_detect.dart';
 import '../domain/wall_models.dart';
 import '../domain/wall_providers.dart';
+import '../../../core/widgets/lov_kit.dart' show lovDisplay;
+import 'wall_screen.dart' show wallAlbumStyle;
 import 'wall_visuals.dart';
 
 Future<void> showAddToWallSheet(
@@ -350,7 +352,7 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Add to our Wall', style: theme.textTheme.titleLarge),
+            Text('Share to the wall', style: lovDisplay(context, size: 21)),
             const SizedBox(height: LovSpace.md),
             if (_mediaBytes != null)
               _MediaRow(
@@ -447,10 +449,19 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
               runSpacing: LovSpace.sm,
               children: [
                 for (final c in WallCollection.values)
-                  WallPill(
-                    label: c.label,
+                  FilterChip(
+                    showCheckmark: false,
+                    avatar: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: wallAlbumStyle(context, c).$1,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    label: Text(c.label),
                     selected: _collection == c,
-                    onTap: () => setState(
+                    onSelected: (_) => setState(
                       () => _collection = _collection == c ? null : c,
                     ),
                   ),
@@ -467,10 +478,7 @@ class _AddToWallSheetState extends ConsumerState<AddToWallSheet> {
             FilledButton(
               onPressed: _canSubmit ? _submit : null,
               style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(LovRadius.md),
-                ),
+                minimumSize: const Size.fromHeight(54),
               ),
               child: _submitting
                   ? const SizedBox(

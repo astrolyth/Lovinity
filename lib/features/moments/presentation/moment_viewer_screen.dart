@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/widgets/lov_kit.dart';
 import '../../wall/domain/wall_providers.dart';
 import '../domain/moment.dart';
 import '../domain/moments_providers.dart';
@@ -168,7 +169,13 @@ class _MomentViewerScreenState extends ConsumerState<MomentViewerScreen>
                           ),
                           Row(
                             children: [
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 14),
+                              LovAvatar(
+                                initial: nameFor(m.senderId),
+                                size: 32,
+                                partner: m.senderId != self,
+                              ),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   '${nameFor(m.senderId)} · '
@@ -189,30 +196,42 @@ class _MomentViewerScreenState extends ConsumerState<MomentViewerScreen>
                                     color: Colors.white,
                                   ),
                                 ),
-                              IconButton(
-                                tooltip: 'Close',
-                                onPressed: _close,
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: IconButton(
+                                  tooltip: 'Close',
+                                  onPressed: _close,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.black26,
+                                  ),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const Spacer(),
                           if (m.caption != null)
-                            Container(
-                              width: double.infinity,
-                              color: Colors.black45,
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 24),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                               child: Text(
                                 m.caption!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
+                                style:
+                                    lovDisplay(
+                                      context,
+                                      size: 28,
+                                      height: 1.2,
+                                      color: Colors.white,
+                                    ).copyWith(
+                                      shadows: const [
+                                        Shadow(
+                                          color: Colors.black45,
+                                          blurRadius: 20,
+                                        ),
+                                      ],
+                                    ),
                               ),
                             ),
                           _ReactionBar(

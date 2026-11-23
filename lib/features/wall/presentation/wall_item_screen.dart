@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../core/theme/theme.dart';
+import '../../../core/widgets/lov_kit.dart';
 import '../domain/wall_logic.dart';
 import '../domain/wall_models.dart';
 import '../domain/wall_providers.dart';
@@ -270,8 +272,20 @@ class _WallItemScreenState extends ConsumerState<WallItemScreen> {
         : 'Open in ${item.source.label}';
 
     return Scaffold(
+      backgroundColor: context.lov.bg,
       appBar: AppBar(
-        title: const Text('Our Wall'),
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: LovIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              label: 'Back',
+              onTap: () => Navigator.maybePop(context),
+            ),
+          ),
+        ),
+        title: const Text('Post'),
         actions: [
           IconButton(
             tooltip: item.isPinned ? 'Unpin' : 'Pin',
