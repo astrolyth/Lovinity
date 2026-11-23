@@ -39,6 +39,7 @@ import '../../features/pairing/presentation/pair_screen.dart';
 import '../../features/planning/presentation/grocery_list_screen.dart';
 import '../../features/planning/presentation/recipe_list_screen.dart';
 import '../../features/planning/presentation/week_plan_screen.dart';
+import '../../features/planning/presentation/week_screen.dart';
 import '../../features/prayer_log/presentation/prayer_log_screen.dart';
 import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -158,6 +159,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _rootKey,
                     path: 'prayer',
                     builder: (_, _) => const PrayerLogScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'week',
+                    builder: (_, _) => const WeekScreen(),
                   ),
                   GoRoute(
                     parentNavigatorKey: _rootKey,

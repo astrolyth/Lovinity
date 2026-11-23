@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/crypto/crypto_providers.dart';
+import '../../../core/theme/theme.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
+import '../../auth/presentation/welcome_screen.dart' show LovEmblem;
 import 'invite_tab.dart';
 import 'join_tab.dart';
 
@@ -34,16 +36,11 @@ class _PairScreenState extends ConsumerState<PairScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final email = ref
-        .watch(authSessionProvider)
-        .asData
-        ?.value
-        ?.user
-        .email;
+    final email = ref.watch(authSessionProvider).asData?.value?.user.email;
 
     return LovScaffold(
       padded: false,
-      title: 'Lovinity',
+      title: 'Your space of two',
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_horiz),
@@ -78,57 +75,52 @@ class _PairScreenState extends ConsumerState<PairScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 8),
+          const Center(
+            child: SizedBox(height: 128, child: FittedBox(child: LovEmblem())),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              LovSpace.lg,
-              LovSpace.xl,
-              LovSpace.lg,
-              LovSpace.lg,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'A space of two',
-                  style: theme.textTheme.displaySmall,
-                ),
-                const SizedBox(height: LovSpace.xs),
-                Text(
-                  'Share a code with your spouse, or enter theirs. Only the two of you will be here.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+            child: Text(
+              'Share a code with your spouse, or enter theirs. '
+              'Only the two of you will be here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: context.lov.muted,
+              ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: LovSpace.lg),
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
             child: Container(
-              padding: const EdgeInsets.all(LovSpace.xs),
+              height: 48,
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(LovRadius.pill),
+                color: context.lov.surface,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: context.lov.line),
               ),
               child: TabBar(
                 controller: _tabs,
                 indicator: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(LovRadius.pill),
-                  boxShadow: LovElevation.subtle,
+                  color: context.lov.line,
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
-                labelColor: theme.colorScheme.onSurface,
-                unselectedLabelColor:
-                    theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                labelStyle: theme.textTheme.labelLarge,
-                unselectedLabelStyle: theme.textTheme.labelLarge,
+                labelColor: context.lov.text,
+                unselectedLabelColor: context.lov.muted,
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
                 splashFactory: NoSplash.splashFactory,
-                overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
                 tabs: const [
                   Tab(text: 'Invite'),
-                  Tab(text: 'Join'),
+                  Tab(text: 'I have a code'),
                 ],
               ),
             ),

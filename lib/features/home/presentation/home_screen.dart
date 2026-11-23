@@ -1112,19 +1112,19 @@ List<_TileSpec> _tiles(
           Icons.calendar_today_outlined,
           'Calendar',
           'Shared',
-          () => push('/home/calendar'),
+          () => push('/home/week'),
         ),
         _TileSpec(
           Icons.restaurant_outlined,
           'Meals',
           'Week plan',
-          () => push('/home/plan'),
+          () => push('/home/week'),
         ),
         _TileSpec(
           Icons.format_list_bulleted_rounded,
           'Groceries',
           'One list',
-          () => push('/home/groceries'),
+          () => push('/home/week'),
         ),
         _TileSpec(
           Icons.wb_sunny_outlined,

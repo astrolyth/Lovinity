@@ -85,7 +85,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const _Emblem(),
+                        const LovEmblem(),
                         const SizedBox(height: 22),
                         const _Title(),
                         const SizedBox(height: 14),
@@ -269,14 +269,14 @@ class _SkyState extends State<_Sky> with SingleTickerProviderStateMixin {
 
 /// Two rings drawn in — you (gold) and your spouse (rose) — with a crescent
 /// where they overlap and two orbiting initials.
-class _Emblem extends StatefulWidget {
-  const _Emblem();
+class LovEmblem extends StatefulWidget {
+  const LovEmblem({super.key});
 
   @override
-  State<_Emblem> createState() => _EmblemState();
+  State<LovEmblem> createState() => _LovEmblemState();
 }
 
-class _EmblemState extends State<_Emblem> with TickerProviderStateMixin {
+class _LovEmblemState extends State<LovEmblem> with TickerProviderStateMixin {
   late final _draw = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1800),
