@@ -18,6 +18,13 @@ UserProfile _profile({required String gender, String madhhab = 'shafi'}) =>
       gender: gender,
     );
 
+/// The redesign's grouped list is taller than the default 800x600 surface.
+void _tall(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
 Widget _app(UserProfile? profile) => ProviderScope(
   overrides: [
     // The screen derives isWife/madhhab from the profile rather than also
@@ -30,6 +37,7 @@ Widget _app(UserProfile? profile) => ProviderScope(
 
 void main() {
   testWidgets('wife sees the cycle privacy toggle', (tester) async {
+    _tall(tester);
     await tester.pumpWidget(_app(_profile(gender: 'female')));
     await tester.pump();
     expect(find.textContaining('Share cycle'), findsOneWidget);
@@ -37,6 +45,7 @@ void main() {
   });
 
   testWidgets('husband does not see the cycle privacy toggle', (tester) async {
+    _tall(tester);
     await tester.pumpWidget(_app(_profile(gender: 'male')));
     await tester.pump();
     expect(find.textContaining('Share cycle'), findsNothing);

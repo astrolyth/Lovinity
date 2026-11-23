@@ -150,7 +150,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           label: 'You and $spouseName',
                           excludeSemantics: true,
                           child: LovPressable(
-                            onTap: () => context.push('/home/lovemap'),
+                            onTap: () => context.push('/home/us'),
                             child: LovDuo(
                               self: own?.displayName ?? '',
                               partner: spouse?.displayName ?? '',
@@ -1097,13 +1097,13 @@ List<_TileSpec> _tiles(
           Icons.place_outlined,
           'Love map',
           'Get to know',
-          () => push('/home/lovemap'),
+          () => push('/home/us'),
         ),
         _TileSpec(
           Icons.favorite_border_rounded,
           'Dates',
           'Ideas for two',
-          () => push('/home/dates'),
+          () => push('/home/us'),
         ),
       ];
     case HomeGroup.home:
@@ -1143,7 +1143,7 @@ List<_TileSpec> _tiles(
           Icons.volunteer_activism_outlined,
           'Care',
           'Gentle tips',
-          () => push('/home/care'),
+          () => push('/home/us'),
         ),
       ];
   }

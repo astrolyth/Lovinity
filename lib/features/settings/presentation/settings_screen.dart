@@ -131,7 +131,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 label: spouseName.isEmpty ? 'Your spouse' : spouseName,
                 value: 'Paired',
-                onTap: () => context.push('/home/lovemap'),
+                onTap: () => context.push('/home/us'),
               ),
               _Row(
                 leading: Icon(Icons.lock_outline_rounded, color: p.accent),
