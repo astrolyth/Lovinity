@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,9 +54,10 @@ void main() {
       expect(find.text('A video'), findsOneWidget);
       expect(find.text('youtu.be'), findsOneWidget);
       expect(find.text('after Fajr?'), findsOneWidget);
-      expect(find.textContaining('Aisha · 2h'), findsOneWidget);
+      expect(find.text('Aisha'), findsOneWidget);
+      expect(find.textContaining('shared from YouTube · 2h'), findsOneWidget);
       expect(find.text('🤍 2'), findsOneWidget);
-      expect(find.text('💬 3'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget); // comment count
       expect(find.byKey(const Key('wall-unseen-dot')), findsOneWidget);
       expect(find.text('YouTube'), findsOneWidget); // source pill
       await tester.tap(find.text('after Fajr?'));
@@ -250,6 +252,8 @@ void main() {
       expect(find.text('Video'), findsOneWidget);
       expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
       await tester.tap(find.byType(WallThumbnail));
+      // The preview also takes a double-tap (heart), so a tap lands after it.
+      await tester.pump(kDoubleTapTimeout);
       expect([opened, linked], [1, 0]);
     });
 

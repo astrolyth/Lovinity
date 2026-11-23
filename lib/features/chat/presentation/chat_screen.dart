@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/crypto/crypto_providers.dart';
+import '../../../core/theme/theme.dart';
 import '../../../core/theme/tokens.dart';
-import '../../../core/widgets/widgets.dart';
+import '../../../core/widgets/lov_kit.dart';
+import '../../home/domain/home_providers.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../domain/chat_providers.dart';
 import '../domain/chat_service.dart';
@@ -63,11 +66,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final typingChannel = ref.watch(typingChannelProvider);
     final spouseTyping = ref.watch(spouseTypingProvider).asData?.value ?? false;
 
-    return LovScaffold(
-      title: 'Chat',
-      padded: false,
-      child: Column(
+    final spouseName =
+        ref.watch(spouseProfileProvider).asData?.value?.displayName.trim() ??
+        '';
+    return Scaffold(
+      backgroundColor: context.lov.bg,
+      body: Column(
         children: [
+          _ChatHeader(name: spouseName.isEmpty ? 'Your spouse' : spouseName),
           Expanded(
             child: messagesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -85,8 +91,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       child: Text(
                         'Say salam to start the conversation',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ),
@@ -97,7 +104,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 final newestFirst = messages.reversed.toList();
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
+                  padding: const EdgeInsets.fromLTRB(0, 12, 0, 16),
                   itemCount: newestFirst.length,
                   itemBuilder: (context, index) {
                     final message = newestFirst[index];
@@ -105,7 +112,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       message: message,
                       isOwn: myId != null && message.senderId == myId,
                       onReact: (emoji) {
-                        ref.read(chatServiceProvider).value?.sendReaction(
+                        ref
+                            .read(chatServiceProvider)
+                            .value
+                            ?.sendReaction(
                               targetMessageId: message.id,
                               emoji: emoji,
                               add: true,
@@ -156,8 +166,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => ref
-                              .invalidate(signalSessionServiceProvider),
+                          onPressed: () =>
+                              ref.invalidate(signalSessionServiceProvider),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -165,23 +175,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   : Text(
                       'Setting up secure chat…',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.55,
+                        ),
                       ),
                     ),
             ),
           if (spouseTyping)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: LovSpace.lg,
-                vertical: LovSpace.xs,
-              ),
-              child: Text(
-                'typing…',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                  fontStyle: FontStyle.italic,
-                ),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: _TypingBubble(),
               ),
             ),
           if (_showEmojiPicker)
@@ -229,15 +234,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (service == null) return;
     final caption = _controller.text.trim();
     final replyToMessageId = _replyToMessageId;
-    unawaited(service.sendPhoto(
-      bytes: photo.bytes,
-      mimeType: photo.mimeType,
-      width: photo.width,
-      height: photo.height,
-      thumbnailBytes: photo.thumbnailBytes,
-      caption: caption.isEmpty ? null : caption,
-      replyToMessageId: replyToMessageId,
-    ));
+    unawaited(
+      service.sendPhoto(
+        bytes: photo.bytes,
+        mimeType: photo.mimeType,
+        width: photo.width,
+        height: photo.height,
+        thumbnailBytes: photo.thumbnailBytes,
+        caption: caption.isEmpty ? null : caption,
+        replyToMessageId: replyToMessageId,
+      ),
+    );
     _controller.clear();
     setState(() {
       _replyToMessageId = null;
@@ -251,8 +258,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       video = await ref.read(mediaPickerProvider).pickVideo(source);
     } on MediaRejected catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
       return;
     }
@@ -261,14 +269,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (service == null) return;
     final caption = _controller.text.trim();
     final replyToMessageId = _replyToMessageId;
-    unawaited(service.sendVideo(
-      bytes: video.bytes,
-      mimeType: video.mimeType,
-      durationMs: video.durationMs,
-      thumbnailBytes: video.thumbnailBytes,
-      caption: caption.isEmpty ? null : caption,
-      replyToMessageId: replyToMessageId,
-    ));
+    unawaited(
+      service.sendVideo(
+        bytes: video.bytes,
+        mimeType: video.mimeType,
+        durationMs: video.durationMs,
+        thumbnailBytes: video.thumbnailBytes,
+        caption: caption.isEmpty ? null : caption,
+        replyToMessageId: replyToMessageId,
+      ),
+    );
     _controller.clear();
     setState(() {
       _replyToMessageId = null;
@@ -277,39 +287,101 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _showAttachSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    showLovSheet<void>(
+      context,
+      title: 'Share',
+      builder: (sheet) {
+        void go(VoidCallback f) {
+          Navigator.of(sheet).pop();
+          f();
+        }
+
+        final tiles = <(IconData, String, VoidCallback)>[
+          (
+            Icons.photo_camera_outlined,
+            'Take Photo',
+            () => _attachPhoto(MediaSource.camera),
+          ),
+          (
+            Icons.photo_library_outlined,
+            'Photo Library',
+            () => _attachPhoto(MediaSource.gallery),
+          ),
+          (
+            Icons.videocam_outlined,
+            'Video',
+            () => _attachVideo(MediaSource.gallery),
+          ),
+          (
+            Icons.mail_outline_rounded,
+            'Letter',
+            () => context.push('/home/letters'),
+          ),
+          (
+            Icons.camera_rounded,
+            'Moment',
+            () => context.push('/moments/camera'),
+          ),
+        ];
+        final p = context.lov;
+        return Column(
           children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take Photo'),
-              onTap: () {
-                Navigator.of(sheetContext).pop();
-                _attachPhoto(MediaSource.camera);
-              },
+            const SizedBox(height: 6),
+            GridView.count(
+              crossAxisCount: 3,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              mainAxisExtent: 96,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                for (final (i, (icon, label, f)) in tiles.indexed)
+                  LovRise(
+                    delay: Duration(milliseconds: 30 * i),
+                    offset: const Offset(0, 12),
+                    child: LovPressable(
+                      onTap: () => go(f),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: p.line),
+                          color: p.hi.withValues(alpha: .04),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: p.accent.withValues(alpha: .12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(icon, color: p.accent, size: 20),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Photo Library'),
-              onTap: () {
-                Navigator.of(sheetContext).pop();
-                _attachPhoto(MediaSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.videocam_outlined),
-              title: const Text('Video'),
-              onTap: () {
-                Navigator.of(sheetContext).pop();
-                _attachVideo(MediaSource.gallery);
-              },
+            const SizedBox(height: 14),
+            Text(
+              'Everything you send is end-to-end encrypted.',
+              style: TextStyle(fontSize: 12, color: p.muted),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -324,7 +396,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final end = selection.end < 0 ? text.length : selection.end;
     final newText = text.replaceRange(start, end, emoji);
     _controller.text = newText;
-    _controller.selection = TextSelection.collapsed(offset: start + emoji.length);
+    _controller.selection = TextSelection.collapsed(
+      offset: start + emoji.length,
+    );
   }
 }
 
@@ -407,54 +481,257 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        LovSpace.lg,
-        LovSpace.xs,
-        LovSpace.lg,
-        LovSpace.lg,
+    final p = context.lov;
+    return Container(
+      decoration: BoxDecoration(
+        color: p.bg,
+        border: Border(top: BorderSide(color: p.surface2)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        12,
+        10,
+        12,
+        10 + MediaQuery.paddingOf(context).bottom,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          IconButton(
-            onPressed: enabled ? onAttach : null,
-            icon: const Icon(Icons.attach_file),
+          LovIconButton(
+            icon: Icons.attach_file,
+            label: 'Attach',
+            onTap: enabled ? onAttach : null,
           ),
-          IconButton(
-            onPressed: enabled ? onToggleEmoji : null,
-            icon: const Icon(Icons.emoji_emotions_outlined),
-          ),
+          const SizedBox(width: 8),
           Expanded(
-            child: TextField(
-              controller: controller,
-              enabled: enabled,
-              minLines: 1,
-              maxLines: 5,
-              textInputAction: TextInputAction.newline,
-              onChanged: onChanged,
-              decoration: InputDecoration(
-                hintText: enabled ? 'Message…' : 'Setting up secure chat…',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerLow,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: LovSpace.lg,
-                  vertical: LovSpace.md,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(LovRadius.pill),
-                  borderSide: BorderSide.none,
-                ),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 44),
+              padding: const EdgeInsets.only(left: 16, right: 4),
+              decoration: BoxDecoration(
+                color: p.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: p.line),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      enabled: enabled,
+                      minLines: 1,
+                      maxLines: 5,
+                      textInputAction: TextInputAction.newline,
+                      onChanged: onChanged,
+                      style: const TextStyle(fontSize: 15),
+                      decoration: InputDecoration(
+                        hintText: enabled
+                            ? 'Message'
+                            : 'Setting up secure chat…',
+                        filled: false,
+                        isDense: true,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, v, _) {
+                      final canSend = enabled && v.text.trim().isNotEmpty;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 3),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, a) => ScaleTransition(
+                            scale: CurvedAnimation(parent: a, curve: lovBounce),
+                            child: child,
+                          ),
+                          child: canSend
+                              ? IconButton(
+                                  key: const ValueKey('send'),
+                                  tooltip: 'Send',
+                                  onPressed: onSend,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: p.accent,
+                                    foregroundColor: p.onAccent,
+                                    minimumSize: const Size(36, 36),
+                                    fixedSize: const Size(36, 36),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.arrow_upward_rounded,
+                                    size: 20,
+                                  ),
+                                )
+                              : IconButton(
+                                  key: const ValueKey('emoji'),
+                                  tooltip: 'Emoji',
+                                  onPressed: enabled ? onToggleEmoji : null,
+                                  color: p.muted,
+                                  icon: const Icon(
+                                    Icons.emoji_emotions_outlined,
+                                    size: 22,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: LovSpace.sm),
-          IconButton.filled(
-            onPressed: enabled ? onSend : null,
-            icon: const Icon(Icons.arrow_upward_rounded),
+        ],
+      ),
+    );
+  }
+}
+
+/// Spouse avatar, name and the encryption note above the thread.
+class _ChatHeader extends StatelessWidget {
+  const _ChatHeader({required this.name});
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.lov;
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        12,
+        MediaQuery.paddingOf(context).top + 10,
+        12,
+        12,
+      ),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: p.surface2)),
+      ),
+      child: Row(
+        children: [
+          LovIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            label: 'Back',
+            onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+          ),
+          const SizedBox(width: 12),
+          LovAvatar(initial: name, size: 40, partner: true),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.lock_outline_rounded, size: 12, color: p.muted),
+                    const SizedBox(width: 4),
+                    Text(
+                      'End-to-end encrypted',
+                      style: TextStyle(fontSize: 12, color: p.muted),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          LovIconButton(
+            icon: Icons.photo_library_outlined,
+            label: 'Shared moments',
+            onTap: () => context.go('/moments'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Three rose dots bouncing in a bubble while your spouse types.
+class _TypingBubble extends StatefulWidget {
+  const _TypingBubble();
+
+  @override
+  State<_TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<_TypingBubble>
+    with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    !context.allowLoops ? _c.stop() : _c.repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.lov;
+    return Semantics(
+      label: 'Your spouse is typing',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: p.surface2,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+            bottomLeft: Radius.circular(6),
+          ),
+        ),
+        child: AnimatedBuilder(
+          animation: _c,
+          builder: (_, _) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < 3; i++) ...[
+                if (i > 0) const SizedBox(width: 4),
+                Builder(
+                  builder: (_) {
+                    final t = ((_c.value - i * .125) % 1 + 1) % 1;
+                    final up = t < .3
+                        ? t / .3
+                        : (t < .6 ? 1 - (t - .3) / .3 : 0);
+                    return Transform.translate(
+                      offset: Offset(0, -4.0 * up),
+                      child: Opacity(
+                        opacity: .5 + .5 * up,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: p.partner,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

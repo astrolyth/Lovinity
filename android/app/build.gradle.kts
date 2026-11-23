@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -15,7 +17,7 @@ if (project.file("google-services.json").exists()) {
 }
 
 val keystoreProperties = rootProject.file("key.properties").takeIf { it.exists() }?.let { f ->
-    java.util.Properties().apply { f.inputStream().use { load(it) } }
+    Properties().apply { f.inputStream().use { load(it) } }
 }
 
 android {

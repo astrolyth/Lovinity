@@ -4,3 +4,5 @@ export 'lov_card.dart';
 export 'lov_digit_slots.dart';
 export 'lov_scaffold.dart';
 export 'lov_section.dart';
+export 'lov_kit.dart';
+export 'lov_tab_bar.dart';

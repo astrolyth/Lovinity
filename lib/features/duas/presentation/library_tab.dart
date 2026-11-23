@@ -8,7 +8,10 @@ import '../domain/dua_search.dart';
 import 'library_dua_sheet.dart';
 
 class LibraryTab extends ConsumerStatefulWidget {
-  const LibraryTab({super.key});
+  const LibraryTab({super.key, this.initialCategory});
+
+  /// Category chip to start on (the Duas page's chips open the library here).
+  final String? initialCategory;
 
   @override
   ConsumerState<LibraryTab> createState() => _LibraryTabState();
@@ -16,7 +19,7 @@ class LibraryTab extends ConsumerStatefulWidget {
 
 class _LibraryTabState extends ConsumerState<LibraryTab> {
   String _query = '';
-  String? _category;
+  late String? _category = widget.initialCategory;
 
   @override
   Widget build(BuildContext context) {

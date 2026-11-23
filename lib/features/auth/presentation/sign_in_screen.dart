@@ -95,8 +95,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final canPop = context.canPop();
     return LovScaffold(
-      showAppBar: false,
+      showAppBar: canPop,
+      leading: canPop
+          ? IconButton(
+              tooltip: 'Back',
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: () => context.pop(),
+            )
+          : null,
       padded: true,
       child: Center(
         child: ConstrainedBox(

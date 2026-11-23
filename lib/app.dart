@@ -10,6 +10,7 @@ import 'core/notifications/push_service.dart';
 import 'core/platform/share_intake.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/wall/domain/wall_share_routing.dart';
 
 /// Handles a push notification the OS delivers while the app is backgrounded
@@ -47,7 +48,7 @@ String? routeForTap(NotificationTap tap) {
   const chatTypes = {'chat', 'message', 'reaction'};
   if (chatTypes.contains(tap.type)) return '/home/chat';
   if (tap.type == 'pairing') return '/home';
-  if (tap.type == 'wall') return '/home/wall';
+  if (tap.type == 'wall') return '/wall';
   if (tap.type == 'moment') return '/moments';
   // The hourly nudge opens straight into the camera.
   if (tap.type == 'moment_nudge') return '/moments/camera';
@@ -155,7 +156,7 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
       if (!accepted || !mounted) return;
       await WidgetsBinding.instance.endOfFrame; // router attached
       if (!mounted) return;
-      ref.read(appRouterProvider).go('/home/wall');
+      ref.read(appRouterProvider).go('/wall');
     } catch (e, st) {
       developer.log('Failed to route a shared link',
           name: 'LovinityApp', error: e, stackTrace: st);
@@ -174,9 +175,9 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       title: 'Lovinity',
-      theme: LovTheme.light(),
-      darkTheme: LovTheme.dark(),
-      themeMode: ThemeMode.system,
+      theme: LovTheme.of(ref.watch(themeProvider)),
+      themeAnimationDuration: const Duration(milliseconds: 600),
+      themeAnimationCurve: Curves.easeOutCubic,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

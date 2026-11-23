@@ -7,13 +7,17 @@ import 'package:intl/intl.dart';
 
 import '../../../core/motion/motion.dart';
 import '../../../core/platform/haptics.dart';
+import '../../../core/theme/theme.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../data/dua_repository.dart';
+import '../domain/dua_library_providers.dart';
 import '../domain/dua_providers.dart';
+import '../domain/dua_search.dart';
 import 'adhkar_tab.dart';
+import 'dua_for_today_card.dart';
 import 'library_tab.dart';
 
 class DuaListScreen extends ConsumerWidget {
@@ -22,58 +26,132 @@ class DuaListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final p = context.lov;
     final async = ref.watch(duasProvider);
-
-    return DefaultTabController(
-      length: 3,
-      child: Builder(
-        builder: (context) {
-          final tabs = DefaultTabController.of(context);
-          return LovScaffold(
-            title: 'Our duas',
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.pop(),
+    final cats =
+        ref
+            .watch(duaLibraryProvider)
+            .asData
+            ?.value
+            .map((d) => d.category)
+            .whereType<String>()
+            .where((c) => !adhkarCategories.contains(c))
+            .toSet()
+            .toList() ??
+        const <String>[];
+    return LovPage(
+      title: 'Duas',
+      action: LovIconButton(
+        icon: Icons.blur_circular_rounded,
+        label: 'Tasbih together',
+        onTap: () => context.push('/home/tasbih'),
+      ),
+      slivers: [
+        const SliverToBoxAdapter(
+          child: LovRise(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: DuaForTodayCard(),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.radio_button_checked),
-                tooltip: 'Tasbih together',
-                onPressed: () => context.push('/home/tasbih'),
-              ),
-            ],
-            floatingActionButton: AnimatedBuilder(
-              animation: tabs,
-              builder: (_, _) => tabs.index == 0
-                  ? FloatingActionButton.extended(
-                      onPressed: () => _openCompose(context, ref),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Add a dua'),
-                    )
-                  : const SizedBox.shrink(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: LovRise(
+            delay: const Duration(milliseconds: 100),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
+              child: Text('Adhkar', style: lovDisplay(context, size: 20)),
             ),
-            child: Column(
-              children: [
-                const TabBar(
-                  tabs: [
-                    Tab(text: 'Our list'),
-                    Tab(text: 'Library'),
-                    Tab(text: 'Adhkar'),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _ourList(theme, async),
-                      const LibraryTab(),
-                      const AdhkarTab(),
-                    ],
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: LovRise(
+            delay: Duration(milliseconds: 150),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: AdhkarTab(),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 20, 8, 4),
+            child: TextButton(
+              onPressed: () => _openLibrary(context),
+              style: TextButton.styleFrom(foregroundColor: p.text),
+              child: Row(
+                children: [
+                  Text('Library', style: lovDisplay(context, size: 20)),
+                  const Spacer(),
+                  Text(
+                    'Search all',
+                    style: TextStyle(fontSize: 13, color: p.accent),
                   ),
+                  Icon(Icons.chevron_right_rounded, color: p.accent),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (cats.isNotEmpty)
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: cats.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (_, i) => ActionChip(
+                  label: Text(_titleCase(cats[i])),
+                  onPressed: () => _openLibrary(context, category: cats[i]),
+                ),
+              ),
+            ),
+          ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 24, 8, 4),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Our duas', style: lovDisplay(context, size: 20)),
+                ),
+                TextButton.icon(
+                  onPressed: () => _openCompose(context, ref),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add a dua'),
                 ),
               ],
             ),
-          );
-        },
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverToBoxAdapter(child: _ourList(theme, async)),
+        ),
+      ],
+    );
+  }
+
+  void _openLibrary(BuildContext context, {String? category}) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheet) => SizedBox(
+        height: MediaQuery.sizeOf(sheet).height * .85,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('All duas', style: lovDisplay(sheet, size: 21)),
+              Expanded(child: LibraryTab(initialCategory: category)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -87,8 +165,8 @@ class DuaListScreen extends ConsumerWidget {
       data: (all) {
         final open = all.where((d) => !d.isAnswered).toList();
         final answered = all.where((d) => d.isAnswered).toList();
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -97,7 +175,7 @@ class DuaListScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: LovSpace.xxxl),
                   child: Center(
                     child: Text(
-                      'No duas yet. Tap + to add.',
+                      'No duas yet. Add one you both want to make.',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
@@ -136,7 +214,6 @@ class DuaListScreen extends ConsumerWidget {
                   ),
                 ],
               ],
-              const SizedBox(height: LovSpace.xxxl),
             ],
           ),
         );
@@ -426,3 +503,7 @@ class _ListSkeleton extends StatelessWidget {
     );
   }
 }
+
+String _titleCase(String s) => s.isEmpty
+    ? s
+    : '${s[0].toUpperCase()}${s.substring(1).replaceAll('_', ' ')}';

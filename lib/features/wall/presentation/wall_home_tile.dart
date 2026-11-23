@@ -26,7 +26,7 @@ class WallHomeTile extends ConsumerWidget {
 
     return LovCard(
       variant: LovCardVariant.tonal,
-      onTap: () => context.go('/home/wall'),
+      onTap: () => context.go('/wall'),
       child: Row(
         children: [
           SizedBox(

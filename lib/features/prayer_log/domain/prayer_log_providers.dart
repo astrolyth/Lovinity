@@ -134,6 +134,22 @@ final prayerLogsForDayProvider = StreamProvider<List<PrayerLogEntry>>((ref) {
       .watchDays(coupleId: coupleId, dayKeyByUserId: keys.byUserId);
 });
 
+/// Both spouses' check-ins for the last seven days (by each entry's own
+/// day), for the week overview grid. Shares the couple-wide stream.
+final prayerWeekLogsProvider = StreamProvider<List<PrayerLogEntry>>((ref) {
+  final coupleId = ref.watch(
+    currentCoupleProvider.select((c) => c.asData?.value?.id),
+  );
+  ref.watch(todayKeyProvider);
+  if (coupleId == null) return const Stream.empty();
+  final now = DateTime.now();
+  final from = DateTime(now.year, now.month, now.day - 6);
+  return ref
+      .read(prayerLogRepositoryProvider)
+      .watchCouple(coupleId: coupleId)
+      .map((all) => [for (final e in all) if (!e.date.isBefore(from)) e]);
+});
+
 /// A gap between two check-ins is only described as shared time when it is
 /// genuinely small. Beyond this, the UI states completion parity and makes no
 /// claim about simultaneity — a couple ten hours apart never prays "together"

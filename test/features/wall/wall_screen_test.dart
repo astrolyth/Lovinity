@@ -119,6 +119,9 @@ void main() {
   testWidgets('renders cards, pinned row and filters by collection', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await pumpWall(
       tester,
       Stream.value([
@@ -132,15 +135,16 @@ void main() {
       ]),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Our Wall'), findsOneWidget);
-    expect(find.text('2 things shared this week'), findsOneWidget);
+    expect(find.text('Our wall'), findsOneWidget);
+    expect(find.text('2 THINGS SHARED THIS WEEK'), findsOneWidget);
     expect(find.text('PINNED'), findsOneWidget);
     expect(find.text('Lake cabin'), findsOneWidget);
 
-    await tester.tap(find.text('Recipes'));
+    // The album bubble (the card's save label also reads 'Recipes').
+    await tester.tap(find.text('Recipes').first);
     await tester.pumpAndSettle();
     expect(find.text('Lake cabin'), findsNothing);
-    // 'Lamb biryani' remains in the feed (and in the unfiltered pinned row).
+    // 'Lamb biryani' remains in the feed.
     expect(find.text('Lamb biryani'), findsWidgets);
   });
 
@@ -280,18 +284,15 @@ void main() {
       GoRoute(
         path: '/home',
         builder: (_, _) => const Scaffold(body: Text('home')),
+      ),
+      GoRoute(
+        path: '/wall',
+        builder: (_, _) => const WallScreen(),
         routes: [
           GoRoute(
-            path: 'wall',
-            builder: (_, _) => const WallScreen(),
-            routes: [
-              GoRoute(
-                path: ':id',
-                builder: (_, state) => Scaffold(
-                  body: Text('detail ${state.pathParameters['id']}'),
-                ),
-              ),
-            ],
+            path: ':id',
+            builder: (_, state) =>
+                Scaffold(body: Text('detail ${state.pathParameters['id']}')),
           ),
         ],
       ),
@@ -312,7 +313,7 @@ void main() {
           .read(pendingShareProvider.notifier)
           .set(const SharedPayload(text: 'https://youtu.be/cold'));
 
-      router.go('/home/wall');
+      router.go('/wall');
       await tester.pumpAndSettle();
       expect(find.byType(AddToWallSheet), findsOneWidget);
       expect(find.text('https://youtu.be/cold'), findsOneWidget);
@@ -324,13 +325,13 @@ void main() {
     'a share arriving while an item is open survives going back to the Wall',
     (tester) async {
       // Mirrors the app: the item detail is a child route of the Wall, and an
-      // incoming share routes with go('/home/wall') (see _routeShare in app.dart).
-      final router = wallRouter('/home/wall');
+      // incoming share routes with go('/wall') (see _routeShare in app.dart).
+      final router = wallRouter('/wall');
       addTearDown(router.dispose);
       await pumpWall(tester, Stream.value(const <WallItem>[]), router: router);
       await tester.pumpAndSettle();
 
-      unawaited(router.push('/home/wall/a'));
+      unawaited(router.push('/wall/a'));
       await tester.pumpAndSettle();
       expect(find.text('detail a'), findsOneWidget);
 
@@ -348,7 +349,7 @@ void main() {
       );
       expect(container.read(pendingShareProvider), isNotNull);
 
-      router.go('/home/wall');
+      router.go('/wall');
       await tester.pumpAndSettle();
       expect(find.text('detail a'), findsNothing);
       expect(find.byType(AddToWallSheet), findsOneWidget);

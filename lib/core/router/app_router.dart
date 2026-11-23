@@ -8,13 +8,16 @@ import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_screen.dart';
+import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/care/presentation/care_screen.dart';
+import '../../features/chat/domain/chat_providers.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/cycle/presentation/cycle_screen.dart';
 import '../../features/dates/presentation/dates_screen.dart';
 import '../../features/learning/presentation/lesson_screen.dart';
 import '../../features/lovemap/presentation/lovemap_screen.dart';
+import '../../features/daily/presentation/daily_screen.dart';
 import '../../features/daily/presentation/question_screen.dart';
 import '../../features/daily/presentation/verse_reader.dart';
 import '../../features/duas/presentation/dua_list_screen.dart';
@@ -43,6 +46,7 @@ import '../../features/wall/domain/wall_providers.dart';
 import '../../features/wall/presentation/wall_item_screen.dart';
 import '../../features/wall/presentation/wall_screen.dart';
 import '../motion/motion.dart';
+import '../widgets/lov_tab_bar.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 
@@ -76,7 +80,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (!signedIn) {
-        return isAuthRoute ? null : '/auth/sign-in';
+        return isAuthRoute ? null : '/auth/welcome';
       }
 
       // Recovery session in progress: the password isn't saved yet, so let the
@@ -114,6 +118,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const _SplashScreen()),
+      GoRoute(path: '/auth/welcome', builder: (_, _) => const WelcomeScreen()),
       GoRoute(path: '/auth/sign-in', builder: (_, _) => const SignInScreen()),
       GoRoute(path: '/auth/sign-up', builder: (_, _) => const SignUpScreen()),
       GoRoute(
@@ -152,6 +157,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _rootKey,
                     path: 'prayer',
                     builder: (_, _) => const PrayerLogScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'today',
+                    builder: (_, _) => const DailyScreen(),
                   ),
                   GoRoute(
                     parentNavigatorKey: _rootKey,
@@ -256,19 +266,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     parentNavigatorKey: _rootKey,
-                    path: 'wall',
-                    builder: (_, _) => const WallScreen(),
-                    routes: [
-                      GoRoute(
-                        parentNavigatorKey: _rootKey,
-                        path: ':id',
-                        builder: (_, state) =>
-                            WallItemScreen(itemId: state.pathParameters['id']!),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    parentNavigatorKey: _rootKey,
                     path: 'notifications',
                     builder: (_, _) => const NotificationsScreen(),
                   ),
@@ -304,13 +301,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/wall',
+                builder: (_, _) => const WallScreen(),
+                routes: [
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: ':id',
+                    builder: (_, state) =>
+                        WallItemScreen(itemId: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     ],
   );
 });
 
-/// Bottom tabs: Home and Moments. Moments shows a badge for unseen partner moments.
+/// The floating glass tab bar: Home, Moments, Chat, Wall. Chat opens the
+/// conversation full-screen (the design gives it a back button, not the bar).
 class _TabShell extends ConsumerWidget {
   const _TabShell({required this.shell});
   final StatefulNavigationShell shell;
@@ -318,7 +332,7 @@ class _TabShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final self = ref.watch(wallSelfIdProvider);
-    final unseen =
+    final unseenMoments =
         ref
             .watch(momentsProvider)
             .asData
@@ -326,26 +340,40 @@ class _TabShell extends ConsumerWidget {
             .where((m) => m.senderId != self && m.viewedAt == null)
             .length ??
         0;
+    final unreadChat = ref.watch(unreadChatCountProvider).asData?.value ?? 0;
+    // Branch index -> bar index (Chat sits between Moments and Wall).
+    final selected = const [0, 1, 3][shell.currentIndex];
     return Scaffold(
+      extendBody: true,
       body: shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: (i) =>
-            shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+      bottomNavigationBar: LovTabBar(
+        selected: selected,
+        onSelect: (i) {
+          if (i == 2) {
+            context.push('/home/chat');
+            return;
+          }
+          final branch = i == 3 ? 2 : i;
+          shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
+        },
+        items: [
+          const LovTabItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
+          LovTabItem(
+            Icons.photo_camera_outlined,
+            Icons.photo_camera_rounded,
+            'Moments',
+            badge: unseenMoments,
           ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: unseen > 0,
-              label: Text('$unseen'),
-              child: const Icon(Icons.camera_outlined),
-            ),
-            selectedIcon: const Icon(Icons.camera_rounded),
-            label: 'Moments',
+          LovTabItem(
+            Icons.chat_bubble_outline_rounded,
+            Icons.chat_bubble_rounded,
+            'Chat',
+            badge: unreadChat,
+          ),
+          const LovTabItem(
+            Icons.dashboard_outlined,
+            Icons.dashboard_rounded,
+            'Wall',
           ),
         ],
       ),

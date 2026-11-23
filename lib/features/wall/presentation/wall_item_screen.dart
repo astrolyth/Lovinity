@@ -513,7 +513,7 @@ class _Gone extends StatelessWidget {
             Text(message, style: theme.textTheme.titleMedium),
             const SizedBox(height: LovSpace.sm),
             TextButton(
-              onPressed: () => context.go('/home/wall'),
+              onPressed: () => context.go('/wall'),
               child: const Text('Back to the Wall'),
             ),
           ],

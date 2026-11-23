@@ -25,8 +25,8 @@ void main() {
       expect(routeForTap(const NotificationTap(type: 'pairing')), '/home');
     });
 
-    test("'wall' routes to /home/wall", () {
-      expect(routeForTap(const NotificationTap(type: 'wall')), '/home/wall');
+    test("'wall' routes to /wall", () {
+      expect(routeForTap(const NotificationTap(type: 'wall')), '/wall');
     });
 
     test("'moment' routes to /moments, the nudge to the camera", () {

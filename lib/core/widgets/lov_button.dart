@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../theme/tokens.dart';
+import '../theme/theme.dart';
+import 'lov_kit.dart';
 
 enum LovButtonVariant { filled, outlined, text, tonal }
+
 enum LovButtonSize { small, medium, large }
 
 class LovButton extends StatefulWidget {
@@ -32,116 +34,90 @@ class LovButton extends StatefulWidget {
 }
 
 class _LovButtonState extends State<LovButton> {
-  bool _pressed = false;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final p = context.lov;
     final enabled = widget.onPressed != null && !widget.loading;
-
-    final (fg, bg, border) = _colors(scheme);
-    final (vPad, hPad, textStyle, iconSize) = _sizeSpec(theme);
-
-    final content = widget.loading
-        ? SizedBox(
-            width: iconSize,
-            height: iconSize,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(fg),
-            ),
+    final height = switch (widget.size) {
+      LovButtonSize.small => 40.0,
+      LovButtonSize.medium => 54.0,
+      LovButtonSize.large => 56.0,
+    };
+    // The redesign's gold call-to-action.
+    if (widget.variant == LovButtonVariant.filled) {
+      return LovPrimaryButton(
+        label: widget.label,
+        icon: widget.icon,
+        loading: widget.loading,
+        expand: widget.expand,
+        height: height,
+        onPressed: widget.onPressed,
+      );
+    }
+    final fg = switch (widget.variant) {
+      LovButtonVariant.text => p.accent,
+      _ => p.text,
+    };
+    final content = Row(
+      mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (widget.loading)
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: fg),
           )
-        : Row(
-            mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, size: iconSize, color: fg),
-                const SizedBox(width: LovSpace.sm),
-              ],
-              Text(widget.label, style: textStyle.copyWith(color: fg)),
-              if (widget.trailingIcon != null) ...[
-                const SizedBox(width: LovSpace.sm),
-                Icon(widget.trailingIcon, size: iconSize, color: fg),
-              ],
-            ],
-          );
-
-    return AnimatedScale(
-      scale: _pressed && enabled ? 0.98 : 1.0,
-      duration: LovDuration.quick,
-      curve: LovCurves.standard,
-      child: GestureDetector(
-        onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
-        onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
-        onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
-        child: Material(
-          color: bg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(LovRadius.pill),
-            side: border,
-          ),
-          child: InkWell(
-            onTap: enabled ? widget.onPressed : null,
-            borderRadius: BorderRadius.circular(LovRadius.pill),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-              child: widget.expand
-                  ? SizedBox(
-                      width: double.infinity,
-                      child: Center(child: content),
-                    )
-                  : content,
+        else ...[
+          if (widget.icon != null) ...[
+            Icon(widget.icon, size: 18, color: fg),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Text(
+              widget.label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: widget.size == LovButtonSize.small ? 14 : 16,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
             ),
+          ),
+          if (widget.trailingIcon != null) ...[
+            const SizedBox(width: 8),
+            Icon(widget.trailingIcon, size: 18, color: fg),
+          ],
+        ],
+      ],
+    );
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.label,
+      excludeSemantics: true,
+      child: LovPressable(
+        onTap: enabled ? widget.onPressed : null,
+        child: Opacity(
+          opacity: enabled || widget.loading ? 1 : .4,
+          child: Container(
+            height: widget.variant == LovButtonVariant.text ? 44 : height,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              color: switch (widget.variant) {
+                LovButtonVariant.tonal => p.hi.withValues(alpha: .06),
+                LovButtonVariant.outlined => p.hi.withValues(alpha: .04),
+                _ => Colors.transparent,
+              },
+              border: widget.variant == LovButtonVariant.outlined
+                  ? Border.all(color: p.hi.withValues(alpha: .1))
+                  : null,
+            ),
+            child: content,
           ),
         ),
       ),
     );
-  }
-
-  (Color fg, Color bg, BorderSide border) _colors(ColorScheme scheme) {
-    switch (widget.variant) {
-      case LovButtonVariant.filled:
-        return (scheme.onPrimary, scheme.primary, BorderSide.none);
-      case LovButtonVariant.tonal:
-        return (scheme.onSecondary, scheme.secondary, BorderSide.none);
-      case LovButtonVariant.outlined:
-        return (
-          scheme.onSurface,
-          Colors.transparent,
-          BorderSide(color: scheme.outlineVariant),
-        );
-      case LovButtonVariant.text:
-        return (scheme.primary, Colors.transparent, BorderSide.none);
-    }
-  }
-
-  (double vPad, double hPad, TextStyle textStyle, double iconSize) _sizeSpec(
-    ThemeData theme,
-  ) {
-    switch (widget.size) {
-      case LovButtonSize.small:
-        return (
-          LovSpace.sm,
-          LovSpace.lg,
-          theme.textTheme.labelMedium!,
-          16.0,
-        );
-      case LovButtonSize.medium:
-        return (
-          LovSpace.md + 2,
-          LovSpace.xl,
-          theme.textTheme.labelLarge!,
-          18.0,
-        );
-      case LovButtonSize.large:
-        return (
-          LovSpace.lg,
-          LovSpace.xxl,
-          theme.textTheme.labelLarge!.copyWith(fontSize: 16),
-          20.0,
-        );
-    }
   }
 }
