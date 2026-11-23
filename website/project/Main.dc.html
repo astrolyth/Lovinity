@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lovinity — Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&amp;family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap">
+<style>
+/* themes: every color on every screen comes from these tokens */
+:root,:root[data-theme="midnight"]{--bg:#0A0A0A;--bg-2:#050505;--surface:#141414;--surface-2:#1C1A16;--card-a:#181715;--card-b:#121211;--line:#2A2722;--line-2:#4A4234;--text:#F5F1E8;--text-2:#D4CBBA;--muted:#A79E8E;--faint:#6E6656;--accent:#F2C14E;--accent-hi:#F8D891;--accent-lo:#E3A93A;--accent-soft:#3A2E12;--accent-ink:#FCEACD;--on-accent:#1A1205;--partner:#E9A6A0;--partner-hi:#F6D5D1;--partner-lo:#D98A84;--partner-soft:#2A1C1C;--on-partner:#1A1010;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:242 193 78;--partner-rgb:233 166 160;--bg-rgb:10 10 10;--surface-rgb:20 20 20;color-scheme:dark}
+:root[data-theme="emerald"]{--bg:#06110D;--bg-2:#030A07;--surface:#0D1C16;--surface-2:#12251D;--card-a:#10211A;--card-b:#0B1813;--line:#1E3A2E;--line-2:#2F5444;--text:#EEF5EF;--text-2:#C6D8CC;--muted:#8FAE9F;--faint:#5E7A6D;--accent:#E3C26F;--accent-hi:#F1DA9C;--accent-lo:#C9A24B;--accent-soft:#2C2A14;--accent-ink:#F6E7BE;--on-accent:#14200F;--partner:#F0A9A0;--partner-hi:#F8D3CD;--partner-lo:#D9847A;--partner-soft:#2C1C1A;--on-partner:#2A1010;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:227 194 111;--partner-rgb:240 169 160;--bg-rgb:6 17 13;--surface-rgb:13 28 22;color-scheme:dark}
+:root[data-theme="lapis"]{--bg:#070B16;--bg-2:#03060D;--surface:#0F1626;--surface-2:#141D31;--card-a:#121A2C;--card-b:#0C1220;--line:#22304D;--line-2:#34466B;--text:#EEF2FA;--text-2:#C8D2E6;--muted:#8E9BB8;--faint:#5C6886;--accent:#8EC5FF;--accent-hi:#BFDEFF;--accent-lo:#5EA6F0;--accent-soft:#15304F;--accent-ink:#DCEBFF;--on-accent:#061224;--partner:#F2B6C9;--partner-hi:#FAD9E3;--partner-lo:#DB8EA6;--partner-soft:#2E1A24;--on-partner:#2A0F1A;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:142 197 255;--partner-rgb:242 182 201;--bg-rgb:7 11 22;--surface-rgb:15 22 38;color-scheme:dark}
+:root[data-theme="rose"]{--bg:#0C0809;--bg-2:#060404;--surface:#171012;--surface-2:#1F1517;--card-a:#1B1214;--card-b:#120C0E;--line:#33242A;--line-2:#50363F;--text:#F8EEF0;--text-2:#E0CCD1;--muted:#B39AA0;--faint:#7A626A;--accent:#F0A2B0;--accent-hi:#F8CCD5;--accent-lo:#DC7F92;--accent-soft:#3E1F27;--accent-ink:#FFE1E7;--on-accent:#2A0C14;--partner:#F2C14E;--partner-hi:#F8D891;--partner-lo:#E3A93A;--partner-soft:#3A2E12;--on-partner:#1A1205;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:240 162 176;--partner-rgb:242 193 78;--bg-rgb:12 8 9;--surface-rgb:23 16 18;color-scheme:dark}
+:root[data-theme="desert"]{--bg:#120C08;--bg-2:#0A0604;--surface:#1C140E;--surface-2:#241A12;--card-a:#20170F;--card-b:#160F0A;--line:#3A2A1E;--line-2:#5A412E;--text:#F7EDE3;--text-2:#E0CDBA;--muted:#B49F8B;--faint:#7D6A58;--accent:#E8875A;--accent-hi:#F4B08E;--accent-lo:#CF6A3E;--accent-soft:#3D2416;--accent-ink:#FFD9C2;--on-accent:#2A1004;--partner:#E9C46A;--partner-hi:#F4DD9E;--partner-lo:#CFA748;--partner-soft:#33290F;--on-partner:#2A1F04;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:232 135 90;--partner-rgb:233 196 106;--bg-rgb:18 12 8;--surface-rgb:28 20 14;color-scheme:dark}
+:root[data-theme="sandstone"]{--bg:#F6F1E7;--bg-2:#EAE2D2;--surface:#FFFDF8;--surface-2:#EFE7D8;--card-a:#FFFEFA;--card-b:#F8F3E9;--line:#E2D7C3;--line-2:#CDBE9F;--text:#1E1A14;--text-2:#3E372B;--muted:#7A6F5E;--faint:#A39883;--accent:#B8862B;--accent-hi:#D9AE5C;--accent-lo:#9C6F1E;--accent-soft:#F3E4C2;--accent-ink:#5A4210;--on-accent:#FFFDF8;--partner:#C76B62;--partner-hi:#E3A39C;--partner-lo:#A9534B;--partner-soft:#F5DEDA;--on-partner:#FFFFFF;--hi:90 66 30;--shadow:90 70 40;--accent-rgb:184 134 43;--partner-rgb:199 107 98;--bg-rgb:246 241 231;--surface-rgb:255 253 248;color-scheme:light}
+:root[data-theme="pearl"]{--bg:#F3F6F4;--bg-2:#E5ECE8;--surface:#FFFFFF;--surface-2:#E9F0EB;--card-a:#FFFFFF;--card-b:#F6F9F7;--line:#D6E1DA;--line-2:#B7C9BE;--text:#10201A;--text-2:#2C3E35;--muted:#5F7469;--faint:#93A59B;--accent:#1F8A5B;--accent-hi:#4DB385;--accent-lo:#156B45;--accent-soft:#D7EFE2;--accent-ink:#0F4A30;--on-accent:#FFFFFF;--partner:#D9776B;--partner-hi:#EDB0A8;--partner-lo:#BC5B50;--partner-soft:#F8E1DE;--on-partner:#FFFFFF;--hi:20 60 40;--shadow:30 60 45;--accent-rgb:31 138 91;--partner-rgb:217 119 107;--bg-rgb:243 246 244;--surface-rgb:255 255 255;color-scheme:light}
+html{background:var(--bg-2)}
+html.theme-vt::view-transition-old(root){animation:none}
+html.theme-vt::view-transition-new(root){animation:themeIn .8s cubic-bezier(.2,.9,.25,1) both}
+@keyframes themeIn{from{clip-path:circle(0 at var(--vx,50%) var(--vy,40%))}to{clip-path:circle(160% at var(--vx,50%) var(--vy,40%))}}
+body{margin:0;background:var(--bg-2)}
+a{color:var(--accent);text-decoration:none}a:hover{color:var(--accent-ink)}
+.scr{width:390px;height:844px;box-sizing:border-box;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;position:relative;overflow:hidden}
+.scroll{position:absolute;inset:0;overflow-y:auto;padding-bottom:112px;scrollbar-width:none}
+.disp{font-family:'Space Grotesk',Inter,sans-serif;letter-spacing:-0.025em}
+.ar{font-family:Amiri,serif}
+.sub{color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.iconbtn{width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--text);position:relative;box-sizing:border-box}
+.tile{display:flex;flex-direction:column;justify-content:space-between;height:108px;box-sizing:border-box;padding:14px;border-radius:20px;background:var(--surface);border:1px solid var(--line);color:var(--text);transition:transform .2s cubic-bezier(.16,1,.3,1),border-color .2s}
+.tile:hover{color:var(--text);border-color:var(--line-2);transform:translateY(-2px)}
+.tile:active{transform:scale(.97)}
+.tile .glyph{width:36px;height:36px;border-radius:12px;background:var(--surface-2);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.seg{flex:1;height:40px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:600 14px Inter,sans-serif;cursor:pointer;transition:background .25s,color .25s}
+.seg[aria-pressed="true"]{background:transparent;color:var(--text)}
+.seg{position:relative;z-index:1}
+.thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 16px) / 3);border-radius:999px;background:var(--line);box-shadow:inset 0 1px 0 rgb(var(--hi) / .07),0 4px 14px rgb(var(--shadow) / .35);transition:transform .5s var(--spring)}
+.fromR .tile{animation-name:inR!important}.fromL .tile{animation-name:inL!important}
+.fromR .tile,.fromL .tile{animation-delay:0s!important}
+.fromR .tile:nth-child(2),.fromL .tile:nth-child(2){animation-delay:30ms!important}
+.fromR .tile:nth-child(3),.fromL .tile:nth-child(3){animation-delay:60ms!important}
+.fromR .tile:nth-child(4),.fromL .tile:nth-child(4){animation-delay:90ms!important}
+.fromR .tile:nth-child(5),.fromL .tile:nth-child(5){animation-delay:120ms!important}
+.fromR .tile:nth-child(6),.fromL .tile:nth-child(6){animation-delay:150ms!important}
+@keyframes inR{from{opacity:0;transform:translateX(28px)}}
+@keyframes inL{from{opacity:0;transform:translateX(-28px)}}
+.pip{display:flex;height:28px;border-radius:999px;overflow:hidden;background:var(--surface-2);gap:2px}
+.pip span{flex:1;transform-origin:left center}
+.you{background:var(--accent);animation:fill .5s cubic-bezier(.16,1,.3,1) both}
+.her{background:var(--partner);animation:fill .5s cubic-bezier(.16,1,.3,1) both;transform-origin:right center!important}
+.next{outline:1.5px dashed var(--accent);outline-offset:-1.5px;background:transparent;animation:breathe 2.4s ease-in-out infinite}
+.nav{position:absolute;left:0;right:0;bottom:0;height:88px;padding:8px 16px 0;box-sizing:border-box;display:flex;justify-content:space-around;align-items:flex-start;background:rgb(var(--bg-rgb) / .82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--surface-2)}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;padding-top:6px;font-size:11px;font-weight:500;color:var(--muted);position:relative}
+.nav a.on{color:var(--accent)}
+.badge{position:absolute;top:0;right:12px;min-width:18px;height:18px;border-radius:999px;background:var(--partner);color:var(--on-partner);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 5px;box-sizing:border-box}
+.ring{animation:ring 1.4s cubic-bezier(.16,1,.3,1) .3s both}
+.rise{animation:rise .6s cubic-bezier(.16,1,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes ring{from{stroke-dashoffset:264}}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.45}}
+.hero{position:relative;background:var(--surface);border:1px solid rgb(var(--hi) / .08);box-shadow:inset 0 1px 0 rgb(var(--hi) / .06),0 34px 60px -34px rgba(242,140,60,.45),0 20px 40px -20px rgb(var(--shadow) / .9)}
+.hero>*:not(.dusk){position:relative}
+.dusk{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;background:radial-gradient(90% 70% at 88% 108%,rgba(238,140,70,.36),transparent 62%),radial-gradient(60% 50% at 70% 100%,rgb(var(--partner-rgb) / .2),transparent 70%),linear-gradient(180deg,var(--card-a) 0%,var(--card-b) 75%)}
+.sun{position:absolute;right:-6px;top:-10px;width:150px;height:150px;border-radius:999px;background:radial-gradient(circle,rgba(255,205,130,.5),rgba(242,140,60,.14) 52%,transparent 70%);transition:transform 1.2s var(--spring)}
+.dusk i{position:absolute;width:2px;height:2px;border-radius:999px;background:var(--accent-ink);opacity:.5;animation:tw 4s ease-in-out infinite}
+@keyframes tw{50%{opacity:.1}}
+.ring{filter:drop-shadow(0 0 6px rgb(var(--accent-rgb) / .55))}
+/* odometer countdown: each digit is a strip that rolls (Magic UI number ticker) */
+.odo{display:inline-flex;font-size:22px;color:var(--accent);-webkit-mask-image:linear-gradient(transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(transparent,#000 18%,#000 82%,transparent)}
+.odo>span{display:block;height:1.2em;overflow:hidden;width:.62em;text-align:center}
+.odo>span.sep{width:.28em}
+.odo i{display:flex;flex-direction:column;font-style:normal;transition:transform .75s var(--bounce)}
+.odo b{display:block;height:1.2em;line-height:1.2em;font-weight:500}
+/* the two of you, one online */
+.duo{display:flex;height:44px;align-items:center}
+.duo span{width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 13px 'Space Grotesk',sans-serif;box-shadow:0 0 0 2.5px var(--bg);transition:transform .6s var(--bounce)}
+.av1{background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));color:var(--on-accent)}
+.av2{background:linear-gradient(135deg,var(--partner-hi),var(--partner-lo));color:var(--on-partner);margin-left:-10px;position:relative}
+.av2::after{content:"";position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:999px;background:#7BD88F;animation:ping 2.4s ease-out infinite}
+@keyframes ping{0%{box-shadow:0 0 0 2px var(--bg),0 0 0 2px rgba(123,216,143,.6)}100%{box-shadow:0 0 0 2px var(--bg),0 0 0 10px rgba(123,216,143,0)}}
+.duo:hover .av1{transform:translateX(-3px)}.duo:hover .av2{transform:translateX(3px)}
+.switch span{background:#FFFDF8!important}
+.gear svg{transition:transform .8s var(--spring)}.gear:hover svg{transform:rotate(90deg)}
+/* Apple-style polish: springs, instant press, materials */
+:root{--spring:linear(0,0.043,0.14,0.258,0.376,0.487,0.584,0.667,0.736,0.793,0.838,0.874,0.903,0.925,0.943,0.956,0.967,0.975,0.981,0.986,0.989,0.992,0.994,0.995,1);--bounce:linear(0,0.042,0.141,0.267,0.399,0.526,0.639,0.735,0.813,0.875,0.922,0.957,0.981,0.997,1.007,1.012,1.015,1.015,1.014,1.012,1.01,1.008,1.007,1.005,1.004,1.002,1.002,1.001,1.001,1,1);--ease:cubic-bezier(.25,.1,.25,1)}
+body{-webkit-font-smoothing:antialiased;font-optical-sizing:auto}
+*{-webkit-tap-highlight-color:transparent}
+.scr :is(a,button){touch-action:manipulation;transition:transform .5s var(--spring),scale .6s var(--bounce),background-color .3s var(--ease),color .3s var(--ease),border-color .3s var(--ease),opacity .3s var(--ease),box-shadow .3s var(--ease)}
+.scr :is(a,button):active:not(:disabled){transform:none;scale:.965;transition-duration:.5s,80ms,.3s,.3s,.3s,.3s,.3s;transition-timing-function:var(--spring),ease-out,var(--ease)}
+.scr :is(a,button,input,textarea):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rise{animation-timing-function:var(--spring)!important;animation-duration:.55s!important;animation-fill-mode:backwards!important}
+.card{box-shadow:inset 0 1px 0 rgb(var(--hi) / .035)}
+.nav{background:rgb(var(--bg-rgb) / .66)!important;backdrop-filter:blur(24px) saturate(180%)!important;-webkit-backdrop-filter:blur(24px) saturate(180%)!important;border-top:1px solid rgb(var(--hi) / .07)!important}
+.scroll>header{position:sticky;top:0;z-index:5;padding-bottom:12px!important;background:rgb(var(--bg-rgb) / .7);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%)}
+.scroll>header::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;background:linear-gradient(rgb(var(--bg-rgb) / .7),rgb(var(--bg-rgb) / 0));pointer-events:none}
+/* v2 component layer. refs: Magic UI (shimmer button, border beam, marquee), Aceternity (aurora, blur-in), shadcn (surfaces), Vaul/Sonner (sheets, toasts), iOS 26 (floating tab bar) */
+@property --beam{syntax:'<angle>';inherits:false;initial-value:0deg}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .26s var(--ease) both}
+::view-transition-new(root){animation:vtIn .55s var(--spring) both}
+@keyframes vtOut{to{opacity:0;scale:.97;filter:blur(6px)}}
+@keyframes vtIn{from{opacity:0;scale:1.03;filter:blur(10px)}}
+::selection{background:rgb(var(--accent-rgb) / .3)}
+.scr{isolation:isolate}
+.scr::before{content:"";position:absolute;left:-30%;right:-30%;top:-25%;height:65%;z-index:-1;pointer-events:none;background:radial-gradient(38% 50% at 28% 45%,rgb(var(--accent-rgb) / .11),transparent 70%),radial-gradient(34% 44% at 78% 35%,rgb(var(--partner-rgb) / .09),transparent 70%);filter:blur(24px);animation:drift 26s ease-in-out infinite alternate}
+.scr::after{content:"";position:absolute;inset:0;z-index:60;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+@keyframes drift{to{transform:translate3d(7%,5%,0) rotate(9deg)}}
+/* surfaces: gradient hairline, lit top edge, soft depth */
+.card,.tile,.scr [style*="background: var(--surface)"][style*="border: 1px solid var(--line)"]{background:linear-gradient(180deg,var(--card-a),var(--card-b)) padding-box,linear-gradient(170deg,rgb(var(--hi) / .12),rgb(var(--hi) / .03) 42%,rgb(var(--accent-rgb) / .12)) border-box!important;border:1px solid transparent!important;box-shadow:inset 0 1px 0 rgb(var(--hi) / .045),0 1px 2px rgb(var(--shadow) / .45),0 14px 34px -18px rgb(var(--shadow) / .9)!important}
+.tile{position:relative;overflow:hidden}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120px circle at 20% 0%,color-mix(in srgb,var(--tint,var(--accent)) 14%,transparent),transparent 70%);opacity:.6;transition:opacity .4s var(--ease)}
+.tile:hover::after{opacity:1}
+.tile:hover{transform:translateY(-3px)!important;box-shadow:inset 0 1px 0 rgb(var(--hi) / .06),0 0 0 1px color-mix(in srgb,var(--tint,var(--accent)) 30%,transparent),0 18px 36px -16px color-mix(in srgb,var(--tint,var(--accent)) 35%,transparent)!important}
+.tile .glyph{color:var(--tint,var(--accent))!important;background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--tint,var(--accent)) 30%,transparent),color-mix(in srgb,var(--tint,var(--accent)) 6%,transparent) 75%)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tint,var(--accent)) 22%,transparent),0 8px 18px -8px color-mix(in srgb,var(--tint,var(--accent)) 55%,transparent);transition:transform .6s var(--bounce)}
+.tile:hover .glyph{transform:translateY(-2px) rotate(-8deg) scale(1.08)}
+/* controls */
+.iconbtn{background:rgb(var(--hi) / .045)!important;border-color:rgb(var(--hi) / .09)!important;backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);box-shadow:inset 0 1px 0 rgb(var(--hi) / .08),0 6px 16px -8px rgb(var(--shadow) / .8)}
+.primary{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,var(--accent-hi),var(--accent) 48%,var(--accent-lo))!important;color:var(--on-accent)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(110,70,0,.25),0 12px 30px -12px rgb(var(--accent-rgb) / .7)!important;letter-spacing:-.01em}
+.primary::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 38%,rgb(var(--hi) / .55) 50%,transparent 62%);transform:translateX(-130%);animation:sheen 5s var(--ease) 1.4s infinite}
+@keyframes sheen{0%{transform:translateX(-130%)}28%,100%{transform:translateX(130%)}}
+.primary:disabled{background:var(--surface-2)!important;color:var(--faint)!important;box-shadow:inset 0 0 0 1px var(--line)!important}
+.primary:disabled::after{display:none}
+.ghost{background:rgb(var(--hi) / .04)!important;border-color:rgb(var(--hi) / .1)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgb(var(--hi) / .07)}
+.field{background:rgb(var(--hi) / .035)!important;transition:border-color .3s var(--ease),box-shadow .4s var(--spring)}
+.field:focus{border-color:rgb(var(--accent-rgb) / .7)!important;box-shadow:0 0 0 4px rgb(var(--accent-rgb) / .13),0 8px 24px -12px rgb(var(--accent-rgb) / .4)}
+.chip{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgb(var(--hi) / .05)}
+.seg[aria-pressed="true"]{box-shadow:inset 0 1px 0 rgb(var(--hi) / .08),0 4px 14px -4px rgb(var(--shadow) / .6)}
+/* iOS switch: the thumb stretches while held */
+.switch span{box-shadow:0 2px 6px rgb(var(--shadow) / .4),inset 0 -1px 0 rgb(var(--shadow) / .08);transition:transform .5s var(--bounce),width .35s var(--spring)!important}
+.switch:active span{width:32px}
+.switch[aria-checked="true"]:active span{transform:translateX(14px)}
+.switch[aria-checked="true"]{box-shadow:0 0 20px -4px rgb(var(--accent-rgb) / .55),inset 0 1px 0 rgb(var(--hi) / .3)}
+/* floating glass tab bar */
+.nav{left:14px!important;right:14px!important;bottom:20px!important;height:64px!important;padding:0 6px!important;align-items:center!important;border-radius:999px!important;border:1px solid rgb(var(--hi) / .09)!important;box-shadow:inset 0 1px 0 rgb(var(--hi) / .09),0 20px 44px -14px rgb(var(--shadow) / .85)!important;z-index:20}
+.nav a{flex:1;min-width:0!important;padding:7px 0 6px!important;border-radius:999px;font-size:10.5px!important}
+.nav a.on{background:linear-gradient(180deg,rgb(var(--accent-rgb) / .18),rgb(var(--accent-rgb) / .05));box-shadow:inset 0 0 0 1px rgb(var(--accent-rgb) / .2),inset 0 1px 0 rgb(var(--hi) / .08)}
+.nav a.on svg{animation:navPop .7s var(--bounce) both}
+.nav .badge{top:3px!important;right:calc(50% - 24px)!important;box-shadow:0 0 0 2px var(--card-b)}
+@keyframes navPop{from{scale:.6;opacity:.4}}
+.toast{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgb(var(--surface-rgb) / .78)!important;box-shadow:0 18px 40px -14px rgb(var(--shadow) / .85),inset 0 1px 0 rgb(var(--hi) / .07);animation:toastIn .6s var(--bounce) both!important}
+@keyframes toastIn{from{opacity:0;transform:translateY(24px) scale(.94);filter:blur(6px)}}
+/* type */
+.scr h1.disp:not(.plain){background:linear-gradient(180deg,var(--text) 15%,var(--text-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.shine{background:linear-gradient(110deg,var(--accent) 30%,var(--accent-hi) 46%,var(--partner) 62%,var(--accent) 80%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:shine 7s linear infinite}
+@keyframes shine{from{background-position:120% 0}to{background-position:-130% 0}}
+/* border beam */
+.beam{position:relative}
+.beam::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;z-index:2;background:conic-gradient(from var(--beam),transparent 0 70%,rgb(var(--accent-rgb) / .9) 84%,var(--partner) 92%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:beam 7s linear infinite}
+@keyframes beam{to{--beam:360deg}}
+/* entrances blur in; scroll-driven reveal and header edge */
+@keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}}
+@supports (animation-timeline:view()){
+.scroll .card:not(.rise){animation:reveal linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+.scroll>header::after{animation:edge linear both;animation-timeline:scroll();animation-range:0 48px}
+}
+@keyframes reveal{from{opacity:0;transform:translateY(28px) scale(.97);filter:blur(6px)}}
+@keyframes edge{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:opacity .2s ease,background-color .2s ease,color .2s ease!important}.scr :is(a,button):active{scale:none!important}}
+@media (prefers-reduced-transparency:reduce){.nav,.scroll>header,.toast,.sheet,.tag{background:var(--surface)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@media (prefers-contrast:more){.card,.tile,.iconbtn{border-color:var(--faint)!important}.sub,.eyebrow{color:var(--text-2)!important}}
+</style>
+</helmet>
+<div class="scr">
+<div class="scroll">
+
+  <div style="padding: 58px 20px 0; display: flex; align-items: center; gap: 10px">
+    <svg class="ico" viewBox="0 0 24 24" style="color: var(--accent)" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+    <span class="sub" style="font-size: 13px; flex: 1">12 Jumada II 1448</span>
+    <a class="iconbtn" href="Notifications.dc.html" aria-label="Notifications, 3 new">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      <span style="position: absolute; top: 10px; right: 11px; width: 8px; height: 8px; border-radius: 999px; background: var(--partner); box-shadow: 0 0 0 2px var(--surface)"></span>
+    </a>
+    <a class="iconbtn gear" href="Settings.dc.html" aria-label="Settings and themes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
+    <a href="Us.dc.html" class="duo" aria-label="You and Naziha. Naziha is online"><span class="av1">R</span><span class="av2">N</span></a>
+  </div>
+
+  <div class="rise" style="padding: 22px 20px 0; animation-delay: .05s">
+    <div class="eyebrow">Sunday · Assalamu alaikum</div>
+    <h1 class="disp" style="margin: 8px 0 0; font-size: 32px; line-height: 1.08; font-weight: 500">You and <span style="color: var(--partner)">Naziha</span>,<br><span class="shine">together.</span></h1>
+  </div>
+
+  <section class="rise hero beam" aria-label="Next prayer" style="margin: 20px 16px 0; padding: 20px; border-radius: 28px; animation-delay: .15s">
+    <div class="dusk" aria-hidden="true"><span class="sun" style="transform: translateY({{sunY}})"></span><i style="left: 24%; top: 14%"></i><i style="left: 48%; top: 8%; animation-delay: 1.2s"></i><i style="left: 62%; top: 22%; animation-delay: 2.1s"></i><i style="left: 12%; top: 40%; animation-delay: .6s"></i></div>
+    <div style="display: flex; align-items: center; gap: 16px">
+      <div style="flex: 1; min-width: 0">
+        <div class="eyebrow">Next prayer</div>
+        <div class="disp" style="font-size: 40px; font-weight: 500; line-height: 1.05; margin-top: 6px">Maghrib</div>
+        <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px">
+          <span class="sub" style="font-size: 13px">5:04 pm · in</span>
+          <span class="disp odo" role="timer" aria-label="{{countdown}}"><sc-for list="{{odo}}" as="d" hint-placeholder-count="7"><span class="{{d.cls}}" aria-hidden="true"><i style="transform: translateY({{d.y}})"><b>0</b><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>:</b></i></span></sc-for></span>
+        </div>
+      </div>
+      <div style="position: relative; width: 100px; height: 100px; flex: none">
+        <svg width="100" height="100" viewBox="0 0 100 100" aria-hidden="true" style="transform: rotate(-90deg)">
+          <circle cx="50" cy="50" r="42" fill="none" stroke-width="6" style="stroke: var(--line)"></circle>
+          <circle class="ring" cx="50" cy="50" r="42" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="264" style="stroke: var(--accent); stroke-dashoffset: {{ringOffset}}"></circle>
+        </svg>
+        <div class="ar" lang="ar" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--accent-ink)">المغرب</div>
+      </div>
+    </div>
+
+    <div style="height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--hi) / .12), transparent); margin: 18px 0 14px"></div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <span style="font-size: 13px; font-weight: 600">Prayed together today</span>
+      <span style="display: flex; align-items: center; gap: 10px; font-size: 12px" class="sub">
+        <span style="display: flex; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; border-radius: 999px; background: var(--accent)"></span>You</span>
+        <span style="display: flex; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; border-radius: 999px; background: var(--partner)"></span>Naziha</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 12px">
+      <div><div class="pip"><span class="you" style="animation-delay: .6s"></span><span class="her" style="animation-delay: .7s"></span></div><div class="sub" style="font-size: 11px; text-align: center; margin-top: 6px">Fajr</div></div>
+      <div><div class="pip"><span class="you" style="animation-delay: .8s"></span><span class="her" style="animation-delay: .9s"></span></div><div class="sub" style="font-size: 11px; text-align: center; margin-top: 6px">Dhuhr</div></div>
+      <div><div class="pip"><span class="you" style="animation-delay: 1s"></span><span class="her" style="animation-delay: 1.1s"></span></div><div class="sub" style="font-size: 11px; text-align: center; margin-top: 6px">Asr</div></div>
+      <div><div class="pip next"></div><div style="font-size: 11px; text-align: center; margin-top: 6px; color: var(--accent); font-weight: 600">Maghrib</div></div>
+      <div><div class="pip"></div><div class="sub" style="font-size: 11px; text-align: center; margin-top: 6px">Isha</div></div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px">
+      <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 600">
+        <svg class="ico" viewBox="0 0 24 24" style="width: 14px; height: 14px" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+        12 days together
+      </span>
+      <a href="Prayer.dc.html" style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; min-height: 44px">Prayer log
+        <svg class="ico" viewBox="0 0 24 24" style="width: 16px; height: 16px" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+      </a>
+    </div>
+  </section>
+
+  <div class="rise" style="position: relative; margin: 24px 16px 0; padding: 4px; display: flex; gap: 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); animation-delay: .25s" role="group" aria-label="Feature groups">
+    <span class="thumb" style="transform: translateX({{thumbX}})" aria-hidden="true"></span>
+    <button class="seg" type="button" aria-pressed="{{deenOn}}" onClick="{{showDeen}}">Deen</button>
+    <button class="seg" type="button" aria-pressed="{{usOn}}" onClick="{{showUs}}">Us</button>
+    <button class="seg" type="button" aria-pressed="{{homeOn}}" onClick="{{showHome}}">Home</button>
+  </div>
+
+  <sc-if value="{{deenOn}}" hint-placeholder-val="{{ true }}">
+  <div class="{{dir}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 16px 0">
+    <a class="tile rise" href="Prayer.dc.html" style="animation-delay: .30s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Prayer log</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">3 of 5 today</span></span></a>
+    <a class="tile rise" href="Duas.dc.html" style="animation-delay: .35s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Duas</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Evening · 4 left</span></span></a>
+    <a class="tile rise" href="Tasbih.dc.html" style="animation-delay: .40s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="3" r="1.5"></circle><circle cx="19" cy="17" r="1.5"></circle><circle cx="5" cy="17" r="1.5"></circle></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Tasbih</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Naziha at 21</span></span></a>
+    <a class="tile rise" href="Daily.dc.html" style="animation-delay: .45s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Verse</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Ar-Rum 30:21</span></span></a>
+    <a class="tile rise" href="Daily.dc.html" style="animation-delay: .50s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Question</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Both answered</span></span></a>
+    <a class="tile rise" href="Daily.dc.html" style="animation-delay: .55s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Learn</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Lesson 6 of 12</span></span></a>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{usOn}}" hint-placeholder-val="{{ false }}">
+  <div class="{{dir}}" style="--tint: var(--partner); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 16px 0">
+    <a class="tile rise" href="Chat.dc.html" style="animation-delay: .00s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Chat</span><span style="display: block; font-size: 12px; margin-top: 2px; color: var(--partner)">2 unread</span></span></a>
+    <a class="tile rise" href="Moments.dc.html" style="animation-delay: .05s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Moments</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Hers is in</span></span></a>
+    <a class="tile rise" href="Wall.dc.html" style="animation-delay: .10s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1.5"></rect><rect width="7" height="5" x="14" y="3" rx="1.5"></rect><rect width="7" height="9" x="14" y="12" rx="1.5"></rect><rect width="7" height="5" x="3" y="16" rx="1.5"></rect></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Wall</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">3 new pins</span></span></a>
+    <a class="tile rise" href="Letters.dc.html" style="animation-delay: .15s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Letters</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Opens in 23 days</span></span></a>
+    <a class="tile rise" href="Us.dc.html" style="animation-delay: .20s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Love map</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">18 of 40</span></span></a>
+    <a class="tile rise" href="Us.dc.html" style="animation-delay: .25s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Dates</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Friday idea</span></span></a>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{homeOn}}" hint-placeholder-val="{{ false }}">
+  <div class="{{dir}}" style="--tint: #A9D3B0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 16px 0">
+    <a class="tile rise" href="Plan.dc.html" style="animation-delay: .00s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Calendar</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Dinner, Thu</span></span></a>
+    <a class="tile rise" href="Plan.dc.html" style="animation-delay: .05s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Meals</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Week planned</span></span></a>
+    <a class="tile rise" href="Plan.dc.html" style="animation-delay: .10s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Groceries</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">6 items</span></span></a>
+    <a class="tile rise" href="Daily.dc.html" style="animation-delay: .15s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Gratitude</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Write today's</span></span></a>
+    <a class="tile rise" href="Cycle.dc.html" style="animation-delay: .20s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Cycle</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Day 14</span></span></a>
+    <a class="tile rise" href="Us.dc.html" style="animation-delay: .25s"><span class="glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"></path><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"></path><path d="m2 15 6 6"></path></svg></span><span><span style="display: block; font-size: 14px; font-weight: 600">Care</span><span class="sub" style="display: block; font-size: 12px; margin-top: 2px">2 gentle tips</span></span></a>
+  </div>
+  </sc-if>
+
+  <a class="rise" href="Daily.dc.html" style="display: block; margin: 24px 16px 0; padding: 20px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); color: var(--text); animation-delay: .5s">
+    <div class="eyebrow">Verse of the day</div>
+    <p class="ar" lang="ar" dir="rtl" style="margin: 14px 0 0; font-size: 24px; line-height: 1.8; color: var(--accent-ink); text-align: right">وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً</p>
+    <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.5">"And He placed between you affection and mercy."</p>
+    <p class="sub" style="margin: 6px 0 0; font-size: 12px">Ar-Rum 30:21</p>
+  </a>
+
+</div>
+
+<nav class="nav" aria-label="Main">
+  <a class="on" href="Main.dc.html" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>Home</a>
+  <a href="Moments.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>Moments</a>
+  <a href="Chat.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>Chat<span class="badge">2</span></a>
+  <a href="Wall.dc.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1.5"></rect><rect width="7" height="5" x="14" y="3" rx="1.5"></rect><rect width="7" height="9" x="14" y="12" rx="1.5"></rect><rect width="7" height="5" x="3" y="16" rx="1.5"></rect></svg>Wall</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // theme: read the saved choice once per document and follow changes made on other screens
+    if (!window.__lvTheme) { window.__lvTheme = 1;
+      const apply = (t, x, y) => { const h = document.documentElement, go = () => h.setAttribute('data-theme', t || 'midnight');
+        if (h.hasAttribute('data-theme') && h.getAttribute('data-theme') !== t && document.startViewTransition) {
+          h.style.setProperty('--vx', (x == null ? innerWidth / 2 : x) + 'px'); h.style.setProperty('--vy', (y == null ? innerHeight * 0.4 : y) + 'px');
+          h.classList.add('theme-vt'); const vt = document.startViewTransition(go); vt.finished.finally(() => h.classList.remove('theme-vt'));
+        } else go(); };
+      window.__lvApply = apply;
+      let t = 'midnight'; try { t = localStorage.getItem('lovinity-theme') || 'midnight'; } catch (e) {}
+      apply(t);
+      window.addEventListener('storage', (e) => { if (e.key === 'lovinity-theme') apply(e.newValue); });
+    }
+
+    this.state = { tab: 'deen', left: 6128, dir: '' };
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState((s) => ({ left: s.left > 0 ? s.left - 1 : 0 })), 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const t = this.state.left;
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    const span = 9240; // Asr 2:30 to Maghrib 5:04
+    const elapsed = Math.min(1, (span - t) / span);
+    const order = ['deen', 'us', 'home'];
+    // tiles enter from the side the thumb moved toward
+    const go = (tab) => {
+      const from = order.indexOf(this.state.tab), to = order.indexOf(tab);
+      if (from !== to) this.setState({ tab, dir: to > from ? 'fromR' : 'fromL' });
+    };
+    return {
+      countdown: h + ':' + pad(m) + ':' + pad(s),
+      odo: (h + ':' + pad(m) + ':' + pad(s)).split('').map((c) => ({ cls: c === ':' ? 'sep' : '', y: (c === ':' ? -12 : -1.2 * c).toFixed(1) + 'em' })),
+      // the sun sinks toward the horizon as Maghrib nears
+      sunY: Math.round(elapsed * 70) + 'px',
+      ringOffset: (264 * (1 - elapsed)).toFixed(1),
+      deenOn: this.state.tab === 'deen',
+      usOn: this.state.tab === 'us',
+      homeOn: this.state.tab === 'home',
+      thumbX: ['0px', 'calc(100% + 4px)', 'calc(200% + 8px)'][order.indexOf(this.state.tab)],
+      dir: this.state.dir,
+      showDeen: () => go('deen'),
+      showUs: () => go('us'),
+      showHome: () => go('home')
+    };
+  }
+}
+</script>
+</body>
+</html>
