@@ -125,9 +125,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            formatHijri(hijriFromGregorian(now)),
-                            style: TextStyle(fontSize: 13, color: p.muted),
+                          // One line on narrow phones: shrink, never wrap.
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              formatHijri(hijriFromGregorian(now)),
+                              maxLines: 1,
+                              style: TextStyle(fontSize: 13, color: p.muted),
+                            ),
                           ),
                         ),
                         LovIconButton(
