@@ -7,10 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/env.dart';
 import '../../../core/crypto/crypto_providers.dart';
 import '../../../core/errors/failures.dart';
-import '../../../core/motion/motion.dart';
 import '../../../core/platform/haptics.dart';
-import '../../../core/theme/tokens.dart';
-import '../../../core/theme/typography.dart';
+import '../../../core/theme/theme.dart';
 import '../../../core/widgets/widgets.dart';
 import '../domain/auth_controller.dart';
 
@@ -29,6 +27,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   bool _busy = false;
   String? _error;
   _Mode _mode = _Mode.password;
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -53,10 +52,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).signInWithPassword(
-            email: email,
-            password: password,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signInWithPassword(email: email, password: password);
       await ref.read(ensureRegisteredProvider)();
       unawaited(LovHaptics.medium());
     } on AppFailure catch (e) {
@@ -93,12 +91,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final canPop = context.canPop();
+    final p = context.lov;
+    final password = _mode == _Mode.password;
     return LovScaffold(
-      showAppBar: canPop,
-      leading: canPop
+      showAppBar: context.canPop(),
+      leading: context.canPop()
           ? IconButton(
               tooltip: 'Back',
               icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -106,210 +103,138 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             )
           : null,
       padded: true,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Salām — glyph-stagger reveal.
-                Center(
-                  child: _GlyphStagger(
-                    text: 'ٱلسَّلَامُ عَلَيْكُمْ',
-                    style: LovTypography.arabicText(
-                      fontSize: 34,
-                      color: theme.colorScheme.primary,
-                    ),
-                    perGlyph: const Duration(milliseconds: 40),
-                  ),
-                ),
-                const SizedBox(height: LovSpace.xs),
-
-                // Wordmark hero — flies from splash.
-                Hero(
-                  tag: 'lovinity-mark',
-                  flightShuttleBuilder: (_, _, _, _, _) => Material(
-                    type: MaterialType.transparency,
+      child: LayoutBuilder(
+        builder: (context, box) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: box.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 22),
+                  LovRise(
                     child: Text(
-                      'Lovinity',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: LovTypography.display,
-                        fontSize: 38,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -1.2,
-                        color: theme.colorScheme.primary,
-                      ),
+                      'Welcome back',
+                      style: lovDisplay(context, size: 34),
                     ),
                   ),
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: Text(
-                      'Lovinity',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.displayMedium?.copyWith(
-                        letterSpacing: -1.2,
-                      ),
-                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    password
+                        ? 'Sign in to your space of two.'
+                        : "We'll email you a ${Env.otpLength}-digit code. "
+                              'No password to remember.',
+                    style: TextStyle(fontSize: 15, height: 1.5, color: p.muted),
                   ),
-                ),
-                const SizedBox(height: LovSpace.sm),
-                LovEnter(
-                  delay: const Duration(milliseconds: 420),
-                  child: Text(
-                    'A private space, for the two of you.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.6),
-                    ),
+                  const SizedBox(height: 20),
+                  LovSegmented<bool>(
+                    values: const [true, false],
+                    labelOf: (v) => v ? 'Sign in' : 'Create account',
+                    selected: true,
+                    onChanged: (v) {
+                      if (!v) context.push('/auth/sign-up');
+                    },
                   ),
-                ),
-                const SizedBox(height: LovSpace.xxxl),
-
-                LovEnter(
-                  delay: const Duration(milliseconds: 520),
-                  child: TextField(
+                  const SizedBox(height: 16),
+                  TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    textInputAction: _mode == _Mode.password
+                    textInputAction: password
                         ? TextInputAction.next
                         : TextInputAction.done,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.mail_outline, size: 20),
-                    ),
+                    decoration: const InputDecoration(labelText: 'Email'),
                   ),
-                ),
-                if (_mode == _Mode.password) ...[
-                  const SizedBox(height: LovSpace.md),
-                  LovEnter(
-                    delay: const Duration(milliseconds: 580),
-                    child: TextField(
+                  if (password) ...[
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscure,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline, size: 20),
+                        suffixIcon: IconButton(
+                          tooltip: _obscure ? 'Show password' : 'Hide password',
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
                       ),
                       onSubmitted: (_) => _signInWithPassword(),
                     ),
-                  ),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: LovSpace.md),
-                  LovInlineError(message: _error!),
-                ],
-                const SizedBox(height: LovSpace.xl),
-                LovEnter(
-                  delay: const Duration(milliseconds: 640),
-                  child: LovButton(
-                    label: _mode == _Mode.password
-                        ? 'Sign in'
-                        : 'Send verification code',
+                  ],
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    LovInlineError(message: _error!),
+                  ],
+                  if (password)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => context.push('/auth/forgot-password'),
+                        child: const Text('Forgot password?'),
+                      ),
+                    ),
+                  const Spacer(),
+                  const SizedBox(height: 18),
+                  LovPrimaryButton(
+                    label: password ? 'Sign in' : 'Send verification code',
+                    height: 56,
+                    loading: _busy,
                     onPressed: _busy
                         ? null
-                        : (_mode == _Mode.password
-                            ? _signInWithPassword
-                            : _sendOtp),
-                    loading: _busy,
-                    expand: true,
+                        : (password ? _signInWithPassword : _sendOtp),
                   ),
-                ),
-                const SizedBox(height: LovSpace.md),
-                LovEnter(
-                  delay: const Duration(milliseconds: 720),
-                  child: LovButton(
-                    label: _mode == _Mode.password
-                        ? 'Use a one-time code instead'
-                        : 'Use password instead',
-                    variant: LovButtonVariant.text,
-                    size: LovButtonSize.small,
-                    onPressed: () {
-                      setState(() {
-                        _mode = _mode == _Mode.password
-                            ? _Mode.otp
-                            : _Mode.password;
-                        _error = null;
-                      });
-                    },
-                  ),
-                ),
-                if (_mode == _Mode.password)
-                  LovEnter(
-                    delay: const Duration(milliseconds: 760),
-                    child: LovButton(
-                      label: 'Forgot password?',
-                      variant: LovButtonVariant.text,
-                      size: LovButtonSize.small,
-                      onPressed: () => context.push('/auth/forgot-password'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      children: [
+                        Expanded(child: Divider(color: p.line)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'or',
+                            style: TextStyle(fontSize: 13, color: p.muted),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: p.line)),
+                      ],
                     ),
                   ),
-                const SizedBox(height: LovSpace.lg),
-                LovEnter(
-                  delay: const Duration(milliseconds: 800),
-                  child: LovButton(
-                    label: 'Create an account',
-                    variant: LovButtonVariant.text,
-                    size: LovButtonSize.small,
-                    onPressed: () => context.push('/auth/sign-up'),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() {
+                      _mode = password ? _Mode.otp : _Mode.password;
+                      _error = null;
+                    }),
+                    icon: Icon(
+                      password
+                          ? Icons.mail_outline_rounded
+                          : Icons.key_outlined,
+                      size: 18,
+                    ),
+                    label: Text(
+                      password
+                          ? 'Email me a code instead'
+                          : 'Use password instead',
+                    ),
                   ),
-                ),
-                const SizedBox(height: LovSpace.lg),
-                LovEnter(
-                  delay: const Duration(milliseconds: 840),
-                  child: Text(
-                    _mode == _Mode.otp
-                        ? "We'll email you a ${Env.otpLength}-digit code. No password needed."
-                        : "Signing in creates your secure keys for chat.",
+                  const SizedBox(height: 14),
+                  Text(
+                    'Signing in creates your secure keys for chat.',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall,
+                    style: TextStyle(fontSize: 12, color: p.muted),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Renders a string glyph-by-glyph, each glyph fading + rising into place
-/// with an incremental delay.
-class _GlyphStagger extends StatelessWidget {
-  const _GlyphStagger({
-    required this.text,
-    required this.style,
-    this.perGlyph = const Duration(milliseconds: 40),
-  });
-
-  final String text;
-  final TextStyle style;
-  final Duration perGlyph;
-  static const Duration _initialDelay = Duration(milliseconds: 80);
-
-  @override
-  Widget build(BuildContext context) {
-    // Split by grapheme clusters so we don't break combining marks.
-    final chars = text.characters.toList();
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (var i = 0; i < chars.length; i++)
-            LovEnter(
-              delay: _initialDelay + perGlyph * i,
-              duration: LovMotion.gentle,
-              slideFrom: 6,
-              child: Text(chars[i], style: style),
-            ),
-        ],
       ),
     );
   }

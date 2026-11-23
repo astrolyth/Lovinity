@@ -423,8 +423,8 @@ class _ReplyBanner extends StatelessWidget {
         vertical: LovSpace.sm,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(LovRadius.sm),
+        color: context.lov.hi.withValues(alpha: .05),
+        borderRadius: BorderRadius.circular(16),
         border: Border(
           left: BorderSide(color: theme.colorScheme.primary, width: 3),
         ),
