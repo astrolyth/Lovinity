@@ -141,7 +141,9 @@ as $$
     left join pg_timezone_names tz on tz.name = u.timezone
     left join public.user_preferences p on p.user_id = m.uid
    where c.status = 'active'
-     and coalesce((p.prefs->>'moment_nudges')::boolean, true)
+     -- jsonb compare, no ::boolean cast: one user's junk value must not abort
+     -- the whole hourly run for everyone.
+     and coalesce(p.prefs->'moment_nudges', 'true'::jsonb) <> 'false'::jsonb
      and extract(hour from p_now at time zone coalesce(tz.name, 'UTC')) between 9 and 21
      and not exists (
        select 1 from public.moments mo
@@ -174,6 +176,8 @@ $$;
 -- Server-only: no client can trigger a nudge storm.
 revoke all on function public.moment_nudge_targets(timestamptz) from public, anon, authenticated;
 revoke all on function public.send_moment_nudges() from public, anon, authenticated;
+-- service_role is server-side only (tests, admin scripts).
+grant execute on function public.moment_nudge_targets(timestamptz) to service_role;
 
 create extension if not exists pg_cron;
 

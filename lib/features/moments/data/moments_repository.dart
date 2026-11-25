@@ -18,6 +18,9 @@ class MomentsRepository {
       .from('moments')
       .stream(primaryKey: ['id'])
       .eq('couple_id', coupleId)
+      // Without order+limit the server returns an arbitrary 1000 (max_rows).
+      .order('created_at')
+      .limit(500)
       .map(
         (rows) =>
             [for (final r in rows) Moment.fromRow(Map<String, dynamic>.from(r))]
@@ -95,6 +98,8 @@ class MomentsRepository {
       .from('moment_replies')
       .stream(primaryKey: ['id'])
       .eq('couple_id', coupleId)
+      .order('created_at')
+      .limit(1000)
       .map(
         (rows) => [
           for (final r in rows)

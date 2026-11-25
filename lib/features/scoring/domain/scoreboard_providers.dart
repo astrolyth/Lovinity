@@ -4,12 +4,7 @@ import '../../auth/domain/auth_controller.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../../home/domain/home_providers.dart';
 import '../../cycle/domain/cycle_providers.dart';
-import '../data/scoreboard_repository.dart';
 import 'score_engine.dart';
-
-final scoreboardRepositoryProvider = Provider<ScoreboardRepository>((ref) {
-  return ScoreboardRepository(ref.read(supabaseClientProvider));
-});
 
 class CoupleScoreboard {
   const CoupleScoreboard({required this.own, required this.spouse});

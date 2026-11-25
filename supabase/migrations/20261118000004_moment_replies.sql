@@ -15,8 +15,10 @@ create table public.moment_replies (
 create index moment_replies_moment_idx on public.moment_replies (moment_id, created_at);
 create index moment_replies_couple_idx on public.moment_replies (couple_id);
 -- One of each emoji per person per moment (tapping again removes it).
+-- Not partial: upsert's ON CONFLICT can't infer a partial index. Comment rows
+-- have a null emoji, and nulls are distinct, so they never collide.
 create unique index moment_replies_one_emoji
-  on public.moment_replies (moment_id, author_id, emoji) where emoji is not null;
+  on public.moment_replies (moment_id, author_id, emoji);
 
 alter table public.moment_replies enable row level security;
 

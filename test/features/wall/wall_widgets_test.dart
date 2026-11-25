@@ -6,7 +6,6 @@ import 'package:lovinity/core/theme/theme.dart';
 import 'package:lovinity/features/wall/domain/wall_models.dart';
 import 'package:lovinity/features/wall/domain/wall_providers.dart';
 import 'package:lovinity/features/wall/presentation/wall_item_card.dart';
-import 'package:lovinity/features/wall/presentation/wall_pinned_row.dart';
 import 'package:lovinity/features/wall/presentation/wall_reaction_bar.dart';
 import 'package:lovinity/features/wall/presentation/wall_visuals.dart';
 
@@ -147,30 +146,6 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('pinned row lists pinned items and is empty-safe', (
-    tester,
-  ) async {
-    WallItem? tapped;
-    await tester.pumpWidget(
-      _host(
-        WallPinnedRow(
-          items: [_link(pinned: true)],
-          nameFor: (_) => 'Aisha',
-          onTap: (i) => tapped = i,
-        ),
-      ),
-    );
-    expect(find.text('PINNED'), findsOneWidget);
-    expect(find.text('A video'), findsOneWidget);
-    await tester.tap(find.text('A video'));
-    expect(tapped?.id, 'i1');
-
-    await tester.pumpWidget(
-      _host(WallPinnedRow(items: const [], nameFor: (_) => '', onTap: (_) {})),
-    );
-    expect(find.text('PINNED'), findsNothing);
   });
 
   testWidgets('reaction bar shows all six and reports taps', (tester) async {

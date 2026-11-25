@@ -419,7 +419,15 @@ class _ReactionBar extends ConsumerWidget {
                                 emoji: e,
                                 existing: mine,
                               )
-                              .catchError((_) {}),
+                              .catchError((_) {
+                                if (context.mounted) {
+                                  showLovToast(
+                                    context,
+                                    "Couldn't react — try again",
+                                    icon: Icons.error_outline_rounded,
+                                  );
+                                }
+                              }),
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       padding: const EdgeInsets.all(6),
@@ -546,7 +554,15 @@ class _RepliesSheetState extends ConsumerState<_RepliesSheet> {
                                   onPressed: () => ref
                                       .read(momentsRepositoryProvider)
                                       .deleteReply(r.id)
-                                      .catchError((_) {}),
+                                      .catchError((_) {
+                                        if (context.mounted) {
+                                          showLovToast(
+                                            context,
+                                            "Couldn't delete — try again",
+                                            icon: Icons.error_outline_rounded,
+                                          );
+                                        }
+                                      }),
                                 )
                               : null,
                         ),
