@@ -345,6 +345,26 @@ class _WallScreenState extends ConsumerState<WallScreen> {
                 ),
               ],
             ),
+            // Fade the feed out under the compose bar and tab bar, so posts
+            // don't peek through the gap between them.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: barTop + 16 + 54 + 28,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [p.bg, p.bg, p.bg.withValues(alpha: 0)],
+                      stops: const [0, .62, 1],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               left: 16,
               right: 16,
