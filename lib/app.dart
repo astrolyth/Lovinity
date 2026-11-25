@@ -9,6 +9,7 @@ import 'core/notifications/notification_providers.dart';
 import 'core/notifications/push_service.dart';
 import 'core/platform/share_intake.dart';
 import 'core/router/app_router.dart';
+import 'core/security/app_lock.dart';
 import 'core/theme/theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/wall/domain/wall_share_routing.dart';
@@ -181,6 +182,7 @@ class _LovinityAppState extends ConsumerState<LovinityApp> {
       themeAnimationCurve: Curves.easeOutCubic,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => AppLockGate(child: child!),
     );
   }
 }

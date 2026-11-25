@@ -1,13 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/theme/theme.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../auth/domain/auth_controller.dart';
+import '../../home/domain/home_providers.dart';
+import '../../pairing/domain/pairing_providers.dart';
 import '../domain/adhkar_providers.dart';
 import '../domain/dua_suggestions.dart';
 import '../domain/suggestion_providers.dart';
 import 'library_dua_sheet.dart';
+
+/// "Ameen together": who has said Ameen today, and the button to say yours.
+class _AmeenRow extends ConsumerWidget {
+  const _AmeenRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = context.lov;
+    final self = ref.watch(authSessionProvider).asData?.value?.user.id;
+    final couple = ref.watch(currentCoupleProvider).asData?.value;
+    final spouseId = self == null ? null : couple?.spouseOf(self);
+    final ownName =
+        ref.watch(ownProfileProvider).asData?.value?.displayName ?? 'You';
+    final spouseName =
+        ref.watch(spouseProfileProvider).asData?.value?.displayName ??
+        'Your spouse';
+    final said = ref.watch(todayAmeensProvider).asData?.value ?? const {};
+    final mine = said.containsKey(self), theirs = said.containsKey(spouseId);
+    final line = switch ((mine, theirs)) {
+      (true, true) => 'You both said Ameen',
+      (false, true) =>
+        '$spouseName said Ameen at ${DateFormat.jm().format(said[spouseId]!.toLocal())}',
+      (true, false) => 'You said Ameen. $spouseName will see it',
+      _ => 'Say Ameen together',
+    };
+    final ready = self != null && couple != null &&
+        ref.watch(adhkarTodayKeyProvider) != null;
+
+    return Row(
+      children: [
+        if (theirs)
+          LovAvatar(initial: spouseName, size: 30, partner: true),
+        if (mine)
+          Transform.translate(
+            offset: Offset(theirs ? -8 : 0, 0),
+            child: LovAvatar(initial: ownName, size: 30),
+          ),
+        if (mine || theirs) const SizedBox(width: 8),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: Text(
+              line,
+              key: ValueKey(line),
+              style: TextStyle(fontSize: 13, color: p.muted),
+            ),
+          ),
+        ),
+        if (!mine)
+          FilledButton(
+            onPressed: !ready
+                ? null
+                : () {
+                    HapticFeedback.mediumImpact();
+                    ref
+                        .read(ameenRepositoryProvider)
+                        .say(
+                          coupleId: couple.id,
+                          userId: self,
+                          day: ref.read(adhkarTodayKeyProvider)!,
+                        )
+                        .catchError((_) {
+                          if (context.mounted) {
+                            showLovToast(
+                              context,
+                              "Couldn't send your Ameen",
+                              icon: Icons.error_outline_rounded,
+                            );
+                          }
+                        });
+                  },
+            child: const Text('Ameen'),
+          ),
+      ],
+    );
+  }
+}
 
 class DuaForTodayCard extends ConsumerWidget {
   const DuaForTodayCard({super.key});
@@ -68,6 +151,8 @@ class DuaForTodayCard extends ConsumerWidget {
                 ),
             ],
           ),
+          const SizedBox(height: LovSpace.md),
+          const _AmeenRow(),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(

@@ -7,6 +7,7 @@ import '../../../core/widgets/lov_kit.dart';
 import '../data/chat_store.dart';
 import 'photo_viewer_screen.dart';
 import 'video_viewer_screen.dart';
+import 'voice_note.dart';
 
 /// One chat bubble: aligns right for the current user, left for the spouse.
 ///
@@ -20,6 +21,8 @@ class MessageBubble extends StatelessWidget {
     required this.onReact,
     required this.onReply,
     required this.onDownloadAttachment,
+    this.onSaveToWall,
+    this.onDeleteForMe,
   });
 
   final ChatMessageRow message;
@@ -27,6 +30,8 @@ class MessageBubble extends StatelessWidget {
   final ValueChanged<String> onReact;
   final VoidCallback onReply;
   final ValueChanged<String> onDownloadAttachment;
+  final VoidCallback? onSaveToWall;
+  final VoidCallback? onDeleteForMe;
 
   static const _reactionEmojis = ['❤️', '🤲', '😂', '😮', '🥹', '👍'];
 
@@ -79,7 +84,17 @@ class MessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (message.attachmentKind != null)
+              if (message.attachmentKind == 'audio')
+                VoiceNotePlayer(
+                  path: message.downloadStatus == 'downloaded'
+                      ? message.localMediaPath
+                      : null,
+                  durationMs: message.durationMs,
+                  color: fg,
+                  downloading: message.downloadStatus == 'downloading',
+                  onDownload: () => onDownloadAttachment(message.id),
+                )
+              else if (message.attachmentKind != null)
                 _AttachmentContent(
                   message: message,
                   onDownloadAttachment: onDownloadAttachment,
@@ -189,6 +204,25 @@ class MessageBubble extends StatelessWidget {
                   Clipboard.setData(ClipboardData(text: text));
                   Navigator.of(sheet).pop();
                   showLovToast(context, 'Copied');
+                },
+              ),
+            if (text.isNotEmpty && onSaveToWall != null)
+              LovSheetRow(
+                icon: Icons.push_pin_outlined,
+                title: 'Save to wall',
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  onSaveToWall!();
+                },
+              ),
+            if (onDeleteForMe != null)
+              LovSheetRow(
+                icon: Icons.delete_outline_rounded,
+                title: 'Delete for me',
+                danger: true,
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  onDeleteForMe!();
                 },
               ),
           ],

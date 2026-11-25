@@ -16,6 +16,7 @@ import '../../pairing/domain/pairing_providers.dart';
 import '../domain/prayer_log_providers.dart';
 import '../../../shared/models/cycle_record.dart';
 import '../../../shared/models/prayer_log.dart';
+import 'qibla_sheet.dart';
 
 /// Whether the CURRENT USER's prayer tiles are excused for [selectedDate].
 ///
@@ -81,6 +82,11 @@ class PrayerLogScreen extends ConsumerWidget {
 
     return LovPage(
       title: 'Prayer log',
+      action: LovIconButton(
+        icon: Icons.explore_outlined,
+        label: 'Qibla direction',
+        onTap: () => showQiblaSheet(context),
+      ),
       slivers: [
         SliverToBoxAdapter(
           child: LovRise(

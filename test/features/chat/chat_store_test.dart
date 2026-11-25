@@ -28,6 +28,17 @@ void main() {
     expect((await store.reactionsFor('m1')).length, 0);
   });
 
+  test('deleteMessage removes only that message and its reactions', () async {
+    await store.upsertMessage(id: 'm1', senderId: 'a', body: 'hi',
+        createdAt: DateTime(2026), status: 'sent');
+    await store.upsertMessage(id: 'm2', senderId: 'a', body: 'yo',
+        createdAt: DateTime(2026, 1, 2), status: 'sent');
+    await store.applyReaction(messageId: 'm1', reactorId: 'b', emoji: '❤️', add: true);
+    await store.deleteMessage('m1');
+    expect((await store.watchConversation().first).map((r) => r.id), ['m2']);
+    expect(await store.reactionsFor('m1'), isEmpty);
+  });
+
   test('watchConversation orders by createdAt', () async {
     await store.upsertMessage(id: 'm2', senderId: 'a', body: '2',
         createdAt: DateTime(2026, 1, 2), status: 'sent');

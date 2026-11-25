@@ -12,6 +12,7 @@ import '../../../shared/providers/supabase_provider.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
+import '../../settings/domain/settings_providers.dart';
 import '../data/prayer_log_repository.dart';
 
 final prayerLogRepositoryProvider = Provider<PrayerLogRepository>((ref) {
@@ -396,6 +397,7 @@ final prayerNotificationPumpProvider = Provider<void>((ref) {
     onNew: (entry) {
       if (entry.userId == selfId) return;
       if (entry.status != PrayerStatus.prayed) return;
+      if (!ref.read(partnerPrayerAlertsProvider)) return;
       unawaited(store.insertBestEffort(
         kind: 'prayer',
         title: 'Your partner logged ${entry.prayer.displayName}',

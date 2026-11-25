@@ -40,6 +40,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   String? _gender;
   String _madhhab = 'shafi';
   bool _busy = false;
+  bool _agree = false;
   String? _error;
 
   @override
@@ -62,6 +63,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final passwordError = passwordProblem(_password.text);
     if (passwordError != null) return passwordError;
     if (_password.text != _confirm.text) return 'Passwords do not match.';
+    if (!_agree) return 'Please agree to the Terms and Privacy Policy.';
     return null;
   }
 
@@ -217,6 +219,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     prefixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
                   onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: LovSpace.sm),
+                CheckboxListTile(
+                  value: _agree,
+                  onChanged: (v) => setState(() => _agree = v ?? false),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'I agree to the Terms and Privacy Policy. '
+                    'We never read your messages.',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: LovSpace.md),

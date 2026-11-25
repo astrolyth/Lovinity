@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/crypto/crypto_providers.dart';
+import '../../../core/crypto/safety_number.dart';
+import '../../../core/security/app_lock.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/widgets/lov_kit.dart';
@@ -112,6 +114,10 @@ class SettingsScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      TextButton(
+                        onPressed: () => _editProfile(context, ref, name),
+                        child: const Text('Edit'),
+                      ),
                     ],
                   ),
                 ),
@@ -136,7 +142,9 @@ class SettingsScreen extends ConsumerWidget {
               _Row(
                 leading: Icon(Icons.lock_outline_rounded, color: p.accent),
                 label: 'Encryption',
-                value: 'End-to-end',
+                value: 'Verify',
+                chevron: true,
+                onTap: () => _verifyEncryption(context, spouseName),
               ),
             ],
           ),
@@ -150,6 +158,8 @@ class SettingsScreen extends ConsumerWidget {
                 value:
                     _methodLabels[profile?.calcMethod] ??
                     _methodLabels['muslim_world_league']!,
+                chevron: true,
+                onTap: () => _pickMethod(context, ref, profile?.calcMethod),
               ),
               _Row(
                 label: 'Asr time',
@@ -198,6 +208,28 @@ class SettingsScreen extends ConsumerWidget {
           child: _Group(
             children: [
               _Row(
+                label: 'Adhan reminders',
+                hint: 'A gentle alert at each prayer time.',
+                trailing: Switch(
+                  value: ref.watch(adhanRemindersProvider),
+                  onChanged: (v) async {
+                    await setPref('adhan_reminders', v);
+                    ref.invalidate(preferencesProvider);
+                  },
+                ),
+              ),
+              _Row(
+                label:
+                    'Tell me when ${spouseName.isEmpty ? 'my spouse' : spouseName} prays',
+                trailing: Switch(
+                  value: ref.watch(partnerPrayerAlertsProvider),
+                  onChanged: (v) async {
+                    await setPref('partner_prayer_alerts', v);
+                    ref.invalidate(preferencesProvider);
+                  },
+                ),
+              ),
+              _Row(
                 label: 'Hourly moment reminders',
                 hint: 'A nudge each hour (9am–10pm) to share a moment.',
                 trailing: Switch(
@@ -242,6 +274,31 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
         ],
+        const _Label('Security'),
+        SliverToBoxAdapter(
+          child: _Group(
+            children: [
+              _Row(
+                leading: Icon(Icons.face_rounded, color: p.accent),
+                label: 'Lock with Face ID',
+                hint: 'Ask for Face ID or your passcode when you come back.',
+                trailing: Switch(
+                  value: ref.watch(appLockProvider),
+                  onChanged: (v) async {
+                    final ok = await ref.read(appLockProvider.notifier).set(v);
+                    if (!ok && context.mounted) {
+                      showLovToast(
+                        context,
+                        "Couldn't confirm it's you",
+                        icon: Icons.error_outline_rounded,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
         SliverToBoxAdapter(
           child: _Group(
             margin: const EdgeInsets.fromLTRB(16, 26, 16, 0),
@@ -265,6 +322,167 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _editProfile(BuildContext context, WidgetRef ref, String name) {
+    final controller = TextEditingController(text: name);
+    showLovSheet<void>(
+      context,
+      title: 'Edit profile',
+      builder: (sheet) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheet).bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (sheet, setState) {
+            final draft = controller.text.trim();
+            Future<void> save() async {
+              final self = ref.read(authSessionProvider).asData?.value;
+              if (self == null || draft.isEmpty) return;
+              final host = Navigator.of(sheet).context;
+              try {
+                await ref
+                    .read(profileRepositoryProvider)
+                    .updateDisplayName(userId: self.user.id, name: draft);
+                ref.invalidate(ownProfileProvider);
+                if (sheet.mounted) Navigator.of(sheet).pop();
+                if (host.mounted) showLovToast(host, 'Profile updated');
+              } catch (_) {
+                if (sheet.mounted) {
+                  showLovToast(
+                    sheet,
+                    "Couldn't save your name",
+                    icon: Icons.error_outline_rounded,
+                  );
+                }
+              }
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  maxLength: 40,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'Your name'),
+                  onChanged: (_) => setState(() {}),
+                  onSubmitted: (_) => save(),
+                ),
+                const SizedBox(height: 12),
+                LovPrimaryButton(
+                  label: 'Save',
+                  onPressed: draft.isEmpty ? null : save,
+                ),
+                const SizedBox(height: 8),
+              ],
+            );
+          },
+        ),
+      ),
+    ).whenComplete(controller.dispose);
+  }
+
+  void _verifyEncryption(BuildContext context, String spouseName) {
+    final who = spouseName.isEmpty ? 'your spouse' : spouseName;
+    showLovSheet<void>(
+      context,
+      title: 'Verify encryption',
+      builder: (sheet) => Consumer(
+        builder: (sheet, ref, _) {
+          final p = sheet.lov;
+          final number = ref.watch(safetyNumberProvider);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Open this screen on $who\'s phone. If the numbers match, '
+                'only the two of you can read your chat.',
+                style: TextStyle(fontSize: 14, height: 1.5, color: p.text2),
+              ),
+              const SizedBox(height: 18),
+              number.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, _) => Text(
+                  "Couldn't load the safety number.",
+                  style: TextStyle(color: p.muted),
+                ),
+                data: (n) => n == null
+                    ? Text(
+                        'Send $who a message first, then come back to compare.',
+                        style: TextStyle(color: p.muted),
+                      )
+                    : Semantics(
+                        label: 'Safety number ${n.split('').join(' ')}',
+                        excludeSemantics: true,
+                        child: GridView.count(
+                          crossAxisCount: 4,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          childAspectRatio: 2.4,
+                          children: [
+                            for (var i = 0; i < 12; i++)
+                              LovRise(
+                                delay: Duration(milliseconds: 30 * i),
+                                child: Center(
+                                  child: Text(
+                                    n.substring(i * 5, i * 5 + 5),
+                                    style: lovDisplay(sheet, size: 18),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _pickMethod(BuildContext context, WidgetRef ref, String? current) {
+    showLovSheet<void>(
+      context,
+      title: 'Calculation method',
+      builder: (sheet) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final MapEntry(key: k, value: label) in _methodLabels.entries)
+            LovSheetRow(
+              icon: k == (current ?? 'muslim_world_league')
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              title: label,
+              onTap: () async {
+                final self = ref.read(authSessionProvider).asData?.value;
+                Navigator.of(sheet).pop();
+                if (self == null) return;
+                try {
+                  await ref
+                      .read(profileRepositoryProvider)
+                      .updateCalcMethod(userId: self.user.id, method: k);
+                  // Recompute prayer times.
+                  ref.invalidate(ownProfileProvider);
+                } catch (_) {
+                  if (context.mounted) {
+                    showLovToast(
+                      context,
+                      "Couldn't change the method",
+                      icon: Icons.error_outline_rounded,
+                    );
+                  }
+                }
+              },
+            ),
+        ],
+      ),
     );
   }
 

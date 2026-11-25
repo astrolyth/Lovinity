@@ -25,6 +25,18 @@ final momentNudgesProvider = Provider<bool>((ref) {
   return prefs['moment_nudges'] != false;
 });
 
+/// "Tell me when (spouse) prays": on unless turned off.
+final partnerPrayerAlertsProvider = Provider<bool>((ref) {
+  final prefs = ref.watch(preferencesProvider).asData?.value ?? const {};
+  return prefs['partner_prayer_alerts'] != false;
+});
+
+/// "Adhan reminders": local prayer-time notifications; on unless turned off.
+final adhanRemindersProvider = Provider<bool>((ref) {
+  final prefs = ref.watch(preferencesProvider).asData?.value ?? const {};
+  return prefs['adhan_reminders'] != false;
+});
+
 final shareCycleByDefaultProvider = Provider<bool>((ref) {
   final prefs = ref.watch(preferencesProvider).asData?.value ?? const {};
   return prefs['share_cycle_default'] == true;

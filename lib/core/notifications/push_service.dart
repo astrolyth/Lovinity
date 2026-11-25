@@ -172,6 +172,9 @@ class PushService {
   final PushTokenApi? _pushTokenApi;
 
   bool _available = false;
+
+  /// Whether init() succeeded (and so set up local notifications).
+  bool get available => _available;
   bool _loggedInitFailure = false;
 
   /// Monotonic id for locally-shown notifications. All chat pushes carry

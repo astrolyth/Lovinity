@@ -119,6 +119,39 @@ class ChatStore {
     );
   }
 
+  /// A live-location share: one row per [id] (the share's session). Later
+  /// updates replace only the coordinates, so the bubble keeps its place.
+  Future<void> upsertLocation({
+    required String id,
+    required String senderId,
+    required String json,
+    required DateTime createdAt,
+    required String status,
+  }) {
+    return _db.into(_db.chatMessages).insert(
+          ChatMessagesCompanion.insert(
+            id: id,
+            senderId: senderId,
+            body: Value(json),
+            attachmentKind: const Value('location'),
+            createdAt: createdAt,
+            status: status,
+          ),
+          onConflict: DoUpdate(
+            (_) => ChatMessagesCompanion(body: Value(json)),
+          ),
+        );
+  }
+
+  /// "Delete for me": removes the message and its reactions from this phone
+  /// only; the spouse's copy is untouched.
+  Future<void> deleteMessage(String id) => _db.transaction(() async {
+    await (_db.delete(
+      _db.chatReactions,
+    )..where((t) => t.messageId.equals(id))).go();
+    await (_db.delete(_db.chatMessages)..where((t) => t.id.equals(id))).go();
+  });
+
   Future<bool> messageExists(String id) async {
     final row = await (_db.select(_db.chatMessages)
           ..where((t) => t.id.equals(id)))

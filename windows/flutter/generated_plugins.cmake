@@ -12,6 +12,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_timezone
   gal
   geolocator_windows
+  local_auth_windows
+  record_windows
   url_launcher_windows
 )
 

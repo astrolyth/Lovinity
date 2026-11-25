@@ -57,6 +57,23 @@ void main() {
     expect(decoded.replyToMessageId, 'm0');
   });
 
+  test('a voice note round-trips as audio with no thumbnail', () {
+    final p = AttachmentPayload(
+      kind: AttachmentKind.audio,
+      mimeType: 'audio/mp4',
+      sizeBytes: 4000,
+      durationMs: 12000,
+      storageKey: 'couple-1/msg-3',
+      encKey: Uint8List.fromList(List.filled(32, 1)),
+      nonce: Uint8List.fromList(List.filled(12, 2)),
+      thumbnailBytes: Uint8List(0),
+    );
+    final decoded = decodePayload(encodePayload(p)) as AttachmentPayload;
+    expect(decoded.kind, AttachmentKind.audio);
+    expect(decoded.durationMs, 12000);
+    expect(decoded.thumbnailBytes, isEmpty);
+  });
+
   test('attachment round-trips a video with durationMs and no caption/reply', () {
     final p = AttachmentPayload(
       kind: AttachmentKind.video,

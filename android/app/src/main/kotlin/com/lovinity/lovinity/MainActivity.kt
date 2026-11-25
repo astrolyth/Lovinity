@@ -1,7 +1,8 @@
 package com.lovinity.lovinity
 
 import android.content.Intent
-import io.flutter.embedding.android.FlutterActivity
+// FragmentActivity: local_auth's biometric prompt needs it.
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -15,7 +16,7 @@ import io.flutter.plugin.common.MethodChannel
  * so there is only ever one FlutterEngine (and one Dart isolate touching the
  * per-account databases and key vault).
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private var channel: MethodChannel? = null
     private var initialShare: Map<String, String?>? = null
 

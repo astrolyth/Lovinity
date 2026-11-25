@@ -11,10 +11,15 @@ import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/lov_kit.dart';
 import '../../home/domain/home_providers.dart';
 import '../../auth/domain/auth_controller.dart';
+import '../../duas/domain/dua_library_providers.dart';
+import '../../pairing/domain/pairing_providers.dart';
+import '../../wall/domain/wall_models.dart';
+import '../../wall/domain/wall_providers.dart';
 import '../domain/chat_providers.dart';
 import '../domain/chat_service.dart';
 import 'media_picker.dart';
 import 'message_bubble.dart';
+import 'voice_note.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -133,6 +138,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           .read(chatServiceProvider)
                           .value
                           ?.downloadAttachment(id),
+                      onSaveToWall: () => _saveToWall(message.body ?? ''),
+                      onDeleteForMe: myId == null
+                          ? null
+                          : () {
+                              ref
+                                  .read(chatStoreProvider(myId))
+                                  .deleteMessage(message.id)
+                                  .then(
+                                    (_) {
+                                      if (context.mounted) {
+                                        showLovToast(context, 'Deleted for you');
+                                      }
+                                    },
+                                    onError: (Object _) {
+                                      if (context.mounted) {
+                                        showLovToast(
+                                          context,
+                                          "Couldn't delete",
+                                          icon: Icons.error_outline_rounded,
+                                        );
+                                      }
+                                    },
+                                  );
+                            },
                     );
                   },
                 );
@@ -205,6 +234,109 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             onToggleEmoji: _toggleEmojiPicker,
           ),
         ],
+      ),
+    );
+  }
+
+  /// "Save to wall": the message text becomes a note on the couple's Wall.
+  Future<void> _saveToWall(String text) async {
+    final self = ref.read(authSessionProvider).asData?.value?.user.id;
+    final coupleId = ref.read(currentCoupleProvider).asData?.value?.id;
+    if (text.trim().isEmpty || self == null || coupleId == null) return;
+    try {
+      await ref
+          .read(wallRepositoryProvider)
+          .addItem(
+            coupleId: coupleId,
+            userId: self,
+            source: WallSource.note,
+            note: text.trim(),
+          );
+      if (mounted) showLovToast(context, 'Pinned to your wall');
+    } catch (_) {
+      if (mounted) {
+        showLovToast(
+          context,
+          "Couldn't save to the wall",
+          icon: Icons.error_outline_rounded,
+        );
+      }
+    }
+  }
+
+  /// Records, sends encrypted, then deletes the temporary recording.
+  Future<void> _sendVoiceNote() async {
+    final rec = await recordVoiceNote(context);
+    if (rec == null) return;
+    final (file, length) = rec;
+    final service = ref.read(chatServiceProvider).value;
+    try {
+      if (service != null) {
+        final replyTo = _replyToMessageId;
+        setState(() {
+          _replyToMessageId = null;
+          _replyPreview = null;
+        });
+        await service.sendVoiceNote(
+          bytes: await file.readAsBytes(),
+          durationMs: length.inMilliseconds,
+          replyToMessageId: replyTo,
+        );
+      }
+    } finally {
+      unawaited(file.delete().then((_) {}, onError: (_) {}));
+    }
+  }
+
+  /// "Dua": pick one from the library and send it as an encrypted message.
+  void _pickDua() {
+    showLovSheet<void>(
+      context,
+      title: 'Send a dua',
+      builder: (sheet) => Consumer(
+        builder: (sheet, ref, _) {
+          final duas = ref.watch(duaLibraryProvider);
+          return duas.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, _) => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text("Couldn't load duas"),
+            ),
+            data: (list) => ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(sheet).height * .6,
+              ),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final d in list)
+                    LovSheetRow(
+                      icon: Icons.menu_book_outlined,
+                      title: d.title,
+                      subtitle: d.reference,
+                      onTap: () {
+                        Navigator.of(sheet).pop();
+                        final service = ref.read(chatServiceProvider).value;
+                        if (service == null) return;
+                        unawaited(
+                          service.sendText(
+                            [
+                              '🤲 ${d.arabic}',
+                              d.translation,
+                              if (d.reference != null) '(${d.reference})',
+                            ].join('\n'),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -312,6 +444,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             'Video',
             () => _attachVideo(MediaSource.gallery),
           ),
+          (Icons.mic_none_rounded, 'Voice note', _sendVoiceNote),
+          (Icons.menu_book_outlined, 'Dua', _pickDua),
           (
             Icons.mail_outline_rounded,
             'Letter',

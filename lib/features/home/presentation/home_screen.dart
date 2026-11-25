@@ -30,6 +30,7 @@ import '../../lovemap/domain/lovemap_providers.dart';
 import '../../moments/domain/moments_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../../planning/domain/planning_providers.dart';
+import '../../prayer_log/domain/adhan_reminders.dart';
 import '../../prayer_log/domain/prayer_log_providers.dart';
 import '../../scoring/domain/scoreboard_providers.dart';
 import '../../wall/domain/wall_providers.dart';
@@ -72,6 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.watch(receiptPumpProvider);
     ref.watch(pairingNotificationPumpProvider);
     ref.watch(prayerNotificationPumpProvider);
+    ref.watch(adhanReminderSchedulerProvider);
     ref.watch(cycleNotificationPumpProvider);
     ref.watch(questionNotificationPumpProvider);
     ref.watch(duaNotificationPumpProvider);

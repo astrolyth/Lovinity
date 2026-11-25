@@ -24,7 +24,7 @@ class ReactionPayload extends ChatPayload {
   final bool add;
 }
 
-enum AttachmentKind { photo, video }
+enum AttachmentKind { photo, video, audio }
 
 class AttachmentPayload extends ChatPayload {
   const AttachmentPayload({
@@ -85,6 +85,34 @@ class LetterKeyPayload extends ChatPayload {
   final Uint8List letterKey;
 }
 
+/// One update of a live-location share. Every update of a share carries the
+/// same [session], so the receiver keeps one bubble and moves its pin.
+class LocationPayload extends ChatPayload {
+  const LocationPayload({
+    required this.session,
+    required this.latitude,
+    required this.longitude,
+    required this.accuracy,
+    required this.until,
+    this.ended = false,
+  });
+  final String session;
+  final double latitude;
+  final double longitude;
+  final double accuracy;
+  final DateTime until;
+  final bool ended;
+}
+
+/// What a location bubble stores in its row's body.
+String locationJson(LocationPayload p) => jsonEncode({
+  'lat': p.latitude,
+  'lon': p.longitude,
+  'acc': p.accuracy,
+  'until': p.until.millisecondsSinceEpoch,
+  'ended': p.ended,
+});
+
 /// A payload from a newer/unknown client — skipped, never fatal.
 class UnsupportedPayload extends ChatPayload {
   const UnsupportedPayload();
@@ -127,6 +155,16 @@ Uint8List encodePayload(ChatPayload p) {
         'couple': p.coupleId,
         'key': base64Encode(p.letterKey),
       },
+    LocationPayload() => {
+        'v': _payloadVersion,
+        'kind': 'location',
+        'session': p.session,
+        'lat': p.latitude,
+        'lon': p.longitude,
+        'acc': p.accuracy,
+        'until': p.until.millisecondsSinceEpoch,
+        if (p.ended) 'ended': true,
+      },
     UnsupportedPayload() => {'v': _payloadVersion, 'kind': 'unsupported'},
   };
   return Uint8List.fromList(utf8.encode(jsonEncode(map)));
@@ -155,7 +193,7 @@ ChatPayload decodePayload(Uint8List bytes) {
         ),
       'attachment'
           when m['mediaKind'] is String &&
-              (m['mediaKind'] == 'photo' || m['mediaKind'] == 'video') &&
+              AttachmentKind.values.asNameMap().containsKey(m['mediaKind']) &&
               m['mime'] is String &&
               m['size'] is num &&
               m['storage'] is String &&
@@ -168,7 +206,7 @@ ChatPayload decodePayload(Uint8List bytes) {
               (m['caption'] == null || m['caption'] is String) &&
               (m['reply'] == null || m['reply'] is String) =>
         AttachmentPayload(
-          kind: m['mediaKind'] == 'video' ? AttachmentKind.video : AttachmentKind.photo,
+          kind: AttachmentKind.values.byName(m['mediaKind'] as String),
           mimeType: m['mime'] as String,
           sizeBytes: (m['size'] as num).toInt(),
           width: (m['w'] as num?)?.toInt(),
@@ -185,6 +223,22 @@ ChatPayload decodePayload(Uint8List bytes) {
         LetterKeyPayload(
           coupleId: m['couple'] as String,
           letterKey: base64Decode(m['key'] as String),
+        ),
+      'location'
+          when m['session'] is String &&
+              m['lat'] is num &&
+              m['lon'] is num &&
+              m['acc'] is num &&
+              m['until'] is num =>
+        LocationPayload(
+          session: m['session'] as String,
+          latitude: (m['lat'] as num).toDouble(),
+          longitude: (m['lon'] as num).toDouble(),
+          accuracy: (m['acc'] as num).toDouble(),
+          until: DateTime.fromMillisecondsSinceEpoch(
+            (m['until'] as num).toInt(),
+          ),
+          ended: m['ended'] == true,
         ),
       _ => const UnsupportedPayload(),
     };
