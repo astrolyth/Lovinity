@@ -5,6 +5,10 @@
     <!-- Runtime-requested on Android 13+ (API 33) before push notifications
          can be shown; PushService.init() calls requestPermission(). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Live location in chat keeps updating for an hour via geolocator's
+         foreground service (it shows a "Sharing your live location" notice). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <!-- Chat voice notes. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Adhan reminders are scheduled ahead; restore them after a reboot. -->

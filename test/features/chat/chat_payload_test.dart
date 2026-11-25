@@ -57,6 +57,23 @@ void main() {
     expect(decoded.replyToMessageId, 'm0');
   });
 
+  test('a live-location update round-trips, ended flag included', () {
+    final until = DateTime.fromMillisecondsSinceEpoch(1790000000000);
+    final p = LocationPayload(
+      session: 's1',
+      latitude: 51.5,
+      longitude: -0.12,
+      accuracy: 8,
+      until: until,
+      ended: true,
+    );
+    final d = decodePayload(encodePayload(p)) as LocationPayload;
+    expect(
+      (d.session, d.latitude, d.longitude, d.accuracy, d.until, d.ended),
+      ('s1', 51.5, -0.12, 8.0, until, true),
+    );
+  });
+
   test('a voice note round-trips as audio with no thumbnail', () {
     final p = AttachmentPayload(
       kind: AttachmentKind.audio,

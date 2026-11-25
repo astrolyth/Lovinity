@@ -7,6 +7,7 @@ import '../../../core/widgets/lov_kit.dart';
 import '../data/chat_store.dart';
 import 'photo_viewer_screen.dart';
 import 'video_viewer_screen.dart';
+import 'location_card.dart';
 import 'voice_note.dart';
 
 /// One chat bubble: aligns right for the current user, left for the spouse.
@@ -84,7 +85,14 @@ class MessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (message.attachmentKind == 'audio')
+              if (message.attachmentKind == 'location')
+                LocationCard(
+                  messageId: message.id,
+                  json: message.body ?? '',
+                  isOwn: isOwn,
+                  color: fg,
+                )
+              else if (message.attachmentKind == 'audio')
                 VoiceNotePlayer(
                   path: message.downloadStatus == 'downloaded'
                       ? message.localMediaPath
@@ -104,7 +112,9 @@ class MessageBubble extends StatelessWidget {
                   message.body ?? '',
                   style: TextStyle(fontSize: 15, height: 1.4, color: fg),
                 )
-              else if (message.body != null && message.body!.isNotEmpty)
+              else if (message.attachmentKind != 'location' &&
+                  message.body != null &&
+                  message.body!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: LovSpace.xs),
                   child: Text(
@@ -128,7 +138,10 @@ class MessageBubble extends StatelessWidget {
 
   void _showActions(BuildContext context) {
     HapticFeedback.selectionClick();
-    final text = (message.body ?? '').trim();
+    // A location row's body is its coordinates, not text to copy or save.
+    final text = message.attachmentKind == 'location'
+        ? ''
+        : (message.body ?? '').trim();
     showLovSheet<void>(
       context,
       title: 'Message',

@@ -17,6 +17,7 @@ import '../../wall/domain/wall_models.dart';
 import '../../wall/domain/wall_providers.dart';
 import '../domain/chat_providers.dart';
 import '../domain/chat_service.dart';
+import '../domain/live_location.dart';
 import 'media_picker.dart';
 import 'message_bubble.dart';
 import 'voice_note.dart';
@@ -129,7 +130,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       onReply: () {
                         setState(() {
                           _replyToMessageId = message.id;
-                          _replyPreview = (message.body ?? '').isEmpty
+                          _replyPreview = message.attachmentKind == 'location'
+                              ? 'a location'
+                              : (message.body ?? '').isEmpty
                               ? 'a message'
                               : message.body;
                         });
@@ -262,6 +265,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     }
+  }
+
+  /// Starts sharing live location for an hour (see [liveLocationProvider]).
+  Future<void> _shareLocation() async {
+    final problem = await ref.read(liveLocationProvider.notifier).start();
+    if (!mounted) return;
+    final message = switch (problem) {
+      null => 'Sharing your live location for 1 hour',
+      LiveLocationProblem.servicesOff => 'Turn on Location Services first',
+      LiveLocationProblem.denied => 'Allow location access in Settings',
+      LiveLocationProblem.notReady => "Chat isn't ready yet. Try again soon",
+    };
+    showLovToast(
+      context,
+      message,
+      icon: problem == null
+          ? Icons.my_location_rounded
+          : Icons.error_outline_rounded,
+    );
   }
 
   /// Records, sends encrypted, then deletes the temporary recording.
@@ -445,6 +467,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             () => _attachVideo(MediaSource.gallery),
           ),
           (Icons.mic_none_rounded, 'Voice note', _sendVoiceNote),
+          (Icons.my_location_rounded, 'Location', _shareLocation),
           (Icons.menu_book_outlined, 'Dua', _pickDua),
           (
             Icons.mail_outline_rounded,

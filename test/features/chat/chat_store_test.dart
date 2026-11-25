@@ -28,6 +28,17 @@ void main() {
     expect((await store.reactionsFor('m1')).length, 0);
   });
 
+  test('live-location updates move the pin, not the bubble', () async {
+    await store.upsertLocation(id: 's1', senderId: 'a', json: '{"lat":1}',
+        createdAt: DateTime(2026, 1, 1), status: 'delivered');
+    await store.upsertLocation(id: 's1', senderId: 'a', json: '{"lat":2}',
+        createdAt: DateTime(2026, 1, 5), status: 'delivered');
+    final row = (await store.watchConversation().first).single;
+    expect(row.body, '{"lat":2}');
+    expect(row.createdAt, DateTime(2026, 1, 1));
+    expect(row.attachmentKind, 'location');
+  });
+
   test('deleteMessage removes only that message and its reactions', () async {
     await store.upsertMessage(id: 'm1', senderId: 'a', body: 'hi',
         createdAt: DateTime(2026), status: 'sent');
