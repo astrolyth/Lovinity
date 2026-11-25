@@ -73,6 +73,42 @@ final partnerSharedCycleProvider = StreamProvider<List<CycleRecord>>((ref) {
       .map((records) => filterPartnerShared(records, selfId: selfId));
 });
 
+/// Recent mood days for the couple: hers, or her shared ones for him (RLS).
+final cycleMoodsProvider = StreamProvider<List<CycleMood>>((ref) {
+  final coupleId = ref.watch(
+    currentCoupleProvider.select((c) => c.asData?.value?.id),
+  );
+  if (coupleId == null) return Stream.value(const []);
+  return ref.read(cycleRepositoryProvider).watchMoods(coupleId: coupleId);
+});
+
+/// Her moods for her own local day.
+final ownTodayMoodsProvider = Provider<Set<String>>((ref) {
+  final self = ref.watch(authSessionProvider).asData?.value?.user.id;
+  final today = ref.watch(todayKeyProvider);
+  final rows = ref.watch(cycleMoodsProvider).asData?.value ?? const [];
+  return rows
+          .where((m) => m.userId == self && m.day == today)
+          .firstOrNull
+          ?.moods ??
+      const {};
+});
+
+/// The partner's newest shared mood day, if it is from the last two days.
+final partnerLatestMoodProvider = Provider<CycleMood?>((ref) {
+  final self = ref.watch(authSessionProvider).asData?.value?.user.id;
+  final rows = ref.watch(cycleMoodsProvider).asData?.value ?? const [];
+  final newest = rows
+      .where((m) => m.userId != self && m.moods.isNotEmpty)
+      .fold<CycleMood?>(
+        null,
+        (a, m) => a == null || m.day.compareTo(a.day) > 0 ? m : a,
+      );
+  if (newest == null) return null;
+  final age = DateTime.now().difference(DateTime.parse(newest.day)).inDays;
+  return age <= 1 ? newest : null;
+});
+
 /// Whether the partner currently has an active (ongoing) shared cycle
 /// record, mirroring how `activeCycleProvider` derives the viewer's own.
 final partnerActiveCycleProvider = Provider<CycleRecord?>((ref) {

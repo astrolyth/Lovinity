@@ -7,9 +7,13 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/lov_kit.dart';
 import '../../auth/domain/auth_controller.dart';
+import '../../calendar/data/calendar_repository.dart';
 import '../../calendar/domain/calendar_providers.dart';
+import '../../home/domain/home_providers.dart';
+import '../../pairing/domain/pairing_providers.dart';
 import '../data/meal_plan_repository.dart';
 import '../domain/planning_providers.dart';
+import 'week_sheets.dart';
 
 /// "This week": pick a day to see its plans and dinner; the shared grocery
 /// list sits underneath. Each section opens its full screen.
@@ -43,13 +47,29 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
     final dinner = plan?.mealFor(_day.weekday - 1, MealSlot.dinner);
     final groceries = ref.watch(activeGroceryItemsProvider);
     final left = groceries.where((g) => !g.checked).length;
+    final spouseId = self == null
+        ? null
+        : ref.watch(currentCoupleProvider).asData?.value?.spouseOf(self);
+    final ownName =
+        ref.watch(ownProfileProvider).asData?.value?.displayName ?? 'You';
+    final spouseName =
+        ref.watch(spouseProfileProvider).asData?.value?.displayName ??
+        'Spouse';
+    // Together and "you" plans are gold; the spouse's are rose.
+    Color colorOf(CalendarEvent e) =>
+        e.assigneeId != null && e.assigneeId != self ? p.partner : p.accent;
+    final cook = cookLabel(
+      plan?.slots[dinnerCookKey(_day.weekday - 1)],
+      self: self,
+      spouseName: spouseName,
+    );
 
     return LovPage(
       title: 'This week',
       action: LovIconButton(
         icon: Icons.add_rounded,
-        label: 'Add event',
-        onTap: () => context.push('/home/calendar'),
+        label: 'New plan',
+        onTap: () => showNewPlanSheet(context, week: week, day: _day),
       ),
       slivers: [
         SliverToBoxAdapter(
@@ -67,7 +87,7 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
                           events: events,
                           date: d,
                         ).take(3))
-                          e.event.createdBy == self ? p.accent : p.partner,
+                          colorOf(e.event),
                       ],
                       onTap: () {
                         HapticFeedback.selectionClick();
@@ -105,9 +125,7 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
                                   width: 4,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: e.event.createdBy == self
-                                        ? p.accent
-                                        : p.partner,
+                                    color: colorOf(e.event),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                 ),
@@ -126,11 +144,17 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        e.event.allDay
-                                            ? 'All day'
-                                            : DateFormat.jm().format(
-                                                e.event.startsAt.toLocal(),
-                                              ),
+                                        [
+                                          e.event.allDay
+                                              ? 'All day'
+                                              : DateFormat.jm().format(
+                                                  e.event.startsAt.toLocal(),
+                                                ),
+                                          if (e.event.assigneeId == self)
+                                            'You'
+                                          else if (e.event.assigneeId != null)
+                                            spouseName,
+                                        ].join(' · '),
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: p.muted,
@@ -159,7 +183,7 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
             child: LovSurface(
               radius: 20,
               padding: const EdgeInsets.all(16),
-              onTap: () => context.push('/home/plan'),
+              onTap: () => showDinnerSheet(context, day: _day),
               child: Row(
                 children: [
                   Container(
@@ -188,7 +212,7 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
                         const SizedBox(height: 2),
                         Text(
                           dinner?.trim().isNotEmpty == true
-                              ? 'From your week plan'
+                              ? cook ?? 'From your week plan'
                               : 'Pick something together',
                           style: TextStyle(fontSize: 12, color: p.muted),
                         ),
@@ -229,6 +253,46 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
                           CheckboxListTile(
                             value: g.checked,
                             controlAffinity: ListTileControlAffinity.leading,
+                            // Who's buying it; tap to hand it to the other.
+                            secondary: Semantics(
+                              button: true,
+                              label: g.buyer == self
+                                  ? 'You are buying it. Tap to give it to $spouseName'
+                                  : '$spouseName is buying it. Tap to take it',
+                              excludeSemantics: true,
+                              child: LovPressable(
+                                onTap: self == null || spouseId == null
+                                    ? null
+                                    : () {
+                                        HapticFeedback.selectionClick();
+                                        ref
+                                            .read(groceryRepositoryProvider)
+                                            .setBuyer(
+                                              itemId: g.id,
+                                              buyerId: g.buyer == self
+                                                  ? spouseId
+                                                  : self,
+                                            )
+                                            .catchError((_) {
+                                              if (context.mounted) {
+                                                showLovToast(
+                                                  context,
+                                                  "Couldn't update the list",
+                                                  icon: Icons
+                                                      .error_outline_rounded,
+                                                );
+                                              }
+                                            });
+                                      },
+                                child: LovAvatar(
+                                  initial: g.buyer == self
+                                      ? ownName
+                                      : spouseName,
+                                  size: 28,
+                                  partner: g.buyer != self,
+                                ),
+                              ),
+                            ),
                             title: Text(
                               [g.name, ?g.qty].join(' · '),
                               style: TextStyle(

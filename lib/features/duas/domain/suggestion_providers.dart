@@ -4,10 +4,32 @@ import '../../../shared/providers/supabase_provider.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../calendar/domain/calendar_providers.dart';
 import '../../home/domain/home_providers.dart';
+import '../../pairing/domain/pairing_providers.dart';
+import '../data/ameen_repository.dart';
 import '../data/mood_store.dart';
 import 'adhkar_providers.dart';
 import 'dua_library_providers.dart';
 import 'dua_suggestions.dart';
+
+final ameenRepositoryProvider = Provider<AmeenRepository>(
+  (ref) => AmeenRepository(ref.read(supabaseClientProvider)),
+);
+
+/// Who said Ameen today (this device's local day), keyed by user id.
+final todayAmeensProvider = StreamProvider<Map<String, DateTime>>((ref) {
+  final coupleId = ref.watch(
+    currentCoupleProvider.select((c) => c.asData?.value?.id),
+  );
+  final today = ref.watch(adhkarTodayKeyProvider);
+  if (coupleId == null || today == null) return Stream.value(const {});
+  return ref
+      .read(ameenRepositoryProvider)
+      .watch(coupleId)
+      .map((all) => {
+            for (final a in all)
+              if (a.day == today) a.userId: a.saidAt,
+          });
+});
 
 final moodStoreProvider =
     Provider<MoodStore>((ref) => MoodStore(ref.read(secureStorageProvider)));

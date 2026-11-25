@@ -29,6 +29,8 @@ void main() {
   testWidgets('wife: shows Start button when no active cycle', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        ownTodayMoodsProvider.overrideWithValue(const {}),
+        partnerLatestMoodProvider.overrideWithValue(null),
         ownProfileProvider.overrideWith((ref) async => _wifeProfile),
         ownCycleHistoryProvider.overrideWith((ref) => Stream.value(const [])),
       ],
@@ -47,6 +49,8 @@ void main() {
       endedOn: null, visibility: 'private');
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        ownTodayMoodsProvider.overrideWithValue(const {}),
+        partnerLatestMoodProvider.overrideWithValue(null),
         ownProfileProvider.overrideWith((ref) async => _wifeProfile),
         ownCycleHistoryProvider.overrideWith((ref) => Stream.value([active])),
       ],
@@ -61,6 +65,8 @@ void main() {
   testWidgets('husband: never sees Start/End period controls', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        ownTodayMoodsProvider.overrideWithValue(const {}),
+        partnerLatestMoodProvider.overrideWithValue(null),
         ownProfileProvider.overrideWith((ref) async => _husbandProfile),
         partnerSharedCycleProvider.overrideWith((ref) => Stream.value(const [])),
       ],
@@ -76,6 +82,8 @@ void main() {
       (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        ownTodayMoodsProvider.overrideWithValue(const {}),
+        partnerLatestMoodProvider.overrideWithValue(null),
         ownProfileProvider.overrideWith((ref) async => _husbandProfile),
         partnerSharedCycleProvider.overrideWith((ref) => Stream.value(const [])),
       ],
@@ -94,6 +102,8 @@ void main() {
       endedOn: null, visibility: 'shared');
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        ownTodayMoodsProvider.overrideWithValue(const {}),
+        partnerLatestMoodProvider.overrideWithValue(null),
         ownProfileProvider.overrideWith((ref) async => _husbandProfile),
         partnerSharedCycleProvider.overrideWith((ref) => Stream.value([active])),
       ],

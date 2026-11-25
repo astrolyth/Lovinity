@@ -52,10 +52,14 @@ class CalendarEvent {
     this.endsAt,
     this.recurrence,
     this.hijriAnchor,
+    this.assigneeId,
   });
 
   final String id;
   final String createdBy;
+
+  /// Who the plan is for: null = together, else one spouse's id.
+  final String? assigneeId;
   final String title;
   final String? description;
 
@@ -117,6 +121,7 @@ class CalendarEvent {
         recurrence: row['recurrence'] as String?,
         hijriAnchor: HijriDay.parse(row['hijri_anchor'] as String?),
         kind: CalendarEventKindX.fromDb(row['kind'] as String?),
+        assigneeId: row['assignee_id'] as String?,
         reminderOffsets: [
           for (final o in (row['reminder_offsets'] as List? ?? const []))
             (o as num).toInt(),
@@ -160,11 +165,13 @@ class CalendarRepository {
     HijriDay? hijriAnchor,
     CalendarEventKind kind = CalendarEventKind.event,
     List<int> reminderOffsets = const [],
+    String? assigneeId,
   }) async {
     await _client.from('calendar_events').insert({
       'couple_id': coupleId,
       'created_by': userId,
       'title': title,
+      'assignee_id': ?assigneeId,
       if (description != null && description.isNotEmpty)
         'description': description,
       'starts_at': _encodeStart(startsAt, allDay),

@@ -50,6 +50,7 @@ String? routeForTap(NotificationTap tap) {
   if (tap.type == 'pairing') return '/home';
   if (tap.type == 'wall') return '/wall';
   if (tap.type == 'moment') return '/moments';
+  if (tap.type == 'dua') return '/home/duas';
   // The hourly nudge opens straight into the camera.
   if (tap.type == 'moment_nudge') return '/moments/camera';
   return null;

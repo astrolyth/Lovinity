@@ -59,4 +59,60 @@ class CycleRepository {
         .map((rows) =>
             [for (final r in rows) CycleRecord.fromRow(Map<String, dynamic>.from(r))]);
   }
+
+  /// Replaces [userId]'s moods for [day] (her local day key, `YYYY-MM-DD`).
+  Future<void> setMoods({
+    required String userId,
+    required String coupleId,
+    required String day,
+    required Set<String> moods,
+    required bool shared,
+  }) => _client.from('cycle_moods').upsert({
+    'user_id': userId,
+    'couple_id': coupleId,
+    'day': day,
+    'moods': moods.toList(),
+    'shared': shared,
+    'updated_at': DateTime.now().toUtc().toIso8601String(),
+  }, onConflict: 'user_id,day');
+
+  /// Recent mood days: her own, or the shared ones for her husband (RLS).
+  Stream<List<CycleMood>> watchMoods({required String coupleId}) => _client
+      .from('cycle_moods')
+      .stream(primaryKey: ['id'])
+      .eq('couple_id', coupleId)
+      .order('day')
+      .limit(30)
+      .map((rows) => [for (final r in rows) CycleMood.fromRow(r)]);
 }
+
+/// Mood chips for one day. Values are the db keys in [cycleMoodLabels].
+class CycleMood {
+  const CycleMood({
+    required this.userId,
+    required this.day,
+    required this.moods,
+    required this.shared,
+  });
+  final String userId;
+  final String day;
+  final Set<String> moods;
+  final bool shared;
+
+  factory CycleMood.fromRow(Map<String, dynamic> r) => CycleMood(
+    userId: r['user_id'] as String,
+    day: r['day'] as String,
+    moods: {for (final m in r['moods'] as List? ?? const []) m as String},
+    shared: r['shared'] as bool? ?? false,
+  );
+}
+
+/// Db key -> chip label, in the design's order.
+const cycleMoodLabels = {
+  'calm': 'Calm',
+  'energetic': 'Energetic',
+  'tired': 'Tired',
+  'cramps': 'Cramps',
+  'headache': 'Headache',
+  'low': 'Low mood',
+};

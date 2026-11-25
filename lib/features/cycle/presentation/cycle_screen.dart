@@ -1,16 +1,19 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/time/local_day.dart';
 import '../../../core/widgets/lov_kit.dart';
 import '../../../shared/models/cycle_record.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../../settings/domain/settings_providers.dart';
+import '../data/cycle_repository.dart';
 import '../domain/cycle_providers.dart';
 
 class CycleScreen extends ConsumerWidget {
@@ -126,6 +129,30 @@ class _WifeCycleView extends ConsumerWidget {
     final cycle = prediction.avgCycleLength ?? 28;
     final period = prediction.avgPeriodLength ?? 5;
     final day = _cycleDay(history);
+    final moods = ref.watch(ownTodayMoodsProvider);
+    void saveMoods(Set<String> next, bool shared) {
+      final self = ref.read(authSessionProvider).asData?.value?.user.id;
+      final coupleId = ref.read(currentCoupleProvider).asData?.value?.id;
+      if (self == null || coupleId == null) return;
+      ref
+          .read(cycleRepositoryProvider)
+          .setMoods(
+            userId: self,
+            coupleId: coupleId,
+            day: ref.read(todayKeyProvider),
+            moods: next,
+            shared: shared,
+          )
+          .catchError((_) {
+            if (context.mounted) {
+              showLovToast(
+                context,
+                "Couldn't save your mood",
+                icon: Icons.error_outline_rounded,
+              );
+            }
+          });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -217,6 +244,33 @@ class _WifeCycleView extends ConsumerWidget {
             ),
           ),
         ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 24, 20, 10),
+          child: LovEyebrow('How are you today?'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final MapEntry(key: k, value: label)
+                  in cycleMoodLabels.entries)
+                FilterChip(
+                  label: Text(label),
+                  selected: moods.contains(k),
+                  showCheckmark: false,
+                  onSelected: (on) {
+                    HapticFeedback.selectionClick();
+                    saveMoods(
+                      on ? {...moods, k} : ({...moods}..remove(k)),
+                      shareDefault,
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
           child: LovSurface(
@@ -238,7 +292,7 @@ class _WifeCycleView extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         shareDefault
-                            ? 'They see your period days, nothing else.'
+                            ? 'They see your period days and mood, never your notes.'
                             : 'They only see that your score is resting.',
                         style: TextStyle(fontSize: 12, color: p.muted),
                       ),
@@ -268,6 +322,8 @@ class _WifeCycleView extends ConsumerWidget {
                             visibility: v ? 'shared' : 'private',
                           );
                     }
+                    // Today's mood follows the same choice.
+                    if (moods.isNotEmpty) saveMoods(moods, v);
                     ref.invalidate(preferencesProvider);
                   },
                 ),
@@ -292,6 +348,7 @@ class _PartnerCycleView extends ConsumerWidget {
     final active = ref.watch(partnerActiveCycleProvider);
     final history =
         ref.watch(partnerSharedCycleProvider).asData?.value ?? const [];
+    final mood = ref.watch(partnerLatestMoodProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -315,6 +372,23 @@ class _PartnerCycleView extends ConsumerWidget {
                       : "She'll share an update here if she chooses to.",
                   style: TextStyle(fontSize: 14, height: 1.5, color: p.text2),
                 ),
+                if (mood != null) ...[
+                  const SizedBox(height: 14),
+                  LovEyebrow(
+                    mood.day == dayKey(DateTime.now())
+                        ? 'How she feels today'
+                        : 'How she felt yesterday',
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final m in mood.moods)
+                        LovPill(label: cycleMoodLabels[m] ?? m),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

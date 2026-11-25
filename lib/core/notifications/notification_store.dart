@@ -86,6 +86,14 @@ class NotificationStore {
         .write(AppNotificationsCompanion(readAt: Value(DateTime.now())));
   }
 
+  Future<void> delete(String id) => (_db.delete(
+    _db.appNotifications,
+  )..where((t) => t.id.equals(id))).go();
+
+  /// Puts back a row removed by [delete] (swipe-to-clear undo).
+  Future<void> restore(NotificationRow row) =>
+      _db.into(_db.appNotifications).insertOnConflictUpdate(row);
+
   Future<void> markAllRead() {
     return (_db.update(_db.appNotifications)
           ..where((t) => t.readAt.isNull()))

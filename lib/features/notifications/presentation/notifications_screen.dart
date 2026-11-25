@@ -1,5 +1,6 @@
 // lib/features/notifications/presentation/notifications_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -127,6 +128,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
+  void _clear(NotificationRow n) {
+    HapticFeedback.lightImpact();
+    final store = ref.read(notificationStoreProvider);
+    store.delete(n.id).catchError((Object e) {
+      debugPrint('NotificationsScreen: failed to clear: $e');
+    });
+    showLovToast(
+      context,
+      'Notification cleared',
+      onUndo: () => store.restore(n).catchError((Object e) {
+        debugPrint('NotificationsScreen: failed to restore: $e');
+      }),
+    );
+  }
+
   Widget _label(String t) => SliverToBoxAdapter(
     child: Padding(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
@@ -147,9 +163,27 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             children: [
               for (final (j, n) in rows.indexed) ...[
                 if (j > 0) Divider(height: 1, color: context.lov.surface2),
-                _NotificationTile(
-                  item: n,
-                  fresh: _fresh?.contains(n.id) ?? false,
+                Dismissible(
+                  key: ValueKey(n.id),
+                  direction: DismissDirection.endToStart,
+                  background: ColoredBox(
+                    color: context.lov.surface2,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 22),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: context.lov.muted,
+                        ),
+                      ),
+                    ),
+                  ),
+                  onDismissed: (_) => _clear(n),
+                  child: _NotificationTile(
+                    item: n,
+                    fresh: _fresh?.contains(n.id) ?? false,
+                  ),
                 ),
               ],
             ],

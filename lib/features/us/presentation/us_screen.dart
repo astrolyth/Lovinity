@@ -10,6 +10,7 @@ import '../../dates/domain/date_providers.dart';
 import '../../home/domain/home_providers.dart';
 import '../../lovemap/domain/lovemap_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
+import '../../planning/presentation/week_sheets.dart';
 
 /// "Us": the two of you, your love map, gentle care and date ideas.
 /// Each card opens its full screen.
@@ -310,12 +311,23 @@ class _DateStrip extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  Text(
-                    'Plan it',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: p.accent,
+                  Semantics(
+                    button: true,
+                    label: 'Plan ${d.title}',
+                    excludeSemantics: true,
+                    child: LovPressable(
+                      onTap: () => showNewPlanSheet(context, title: d.title),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          'Plan it',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: p.accent,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
