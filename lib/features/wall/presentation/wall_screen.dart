@@ -672,6 +672,9 @@ class _ConnectedCard extends ConsumerWidget {
       item: item,
       sharerName: sharerName,
       isMine: item.addedBy == self,
+      avatarName: item.addedBy == self
+          ? ref.watch(ownProfileProvider).asData?.value?.displayName
+          : null,
       reactions: reactions,
       commentCount: comments.length,
       lastComment: last == null

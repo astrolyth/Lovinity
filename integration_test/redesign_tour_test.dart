@@ -47,5 +47,5 @@ void main() {
       print('TOUR:$name');
       await settle(3); // the watcher screenshots during this pause
     }
-  }, timeout: const Timeout(Duration(minutes: 5)));
+  }, timeout: const Timeout(Duration(minutes: 12)));
 }

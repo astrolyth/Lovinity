@@ -152,7 +152,7 @@ class LovTheme {
         backgroundColor: p.accent,
         foregroundColor: p.onAccent,
         elevation: 0,
-        shape: const CircleBorder(),
+        shape: const StadiumBorder(),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.all(const Color(0xFFFFFDF8)),

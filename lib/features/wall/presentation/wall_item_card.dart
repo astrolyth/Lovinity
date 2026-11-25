@@ -30,6 +30,7 @@ class WallItemCard extends StatefulWidget {
     required this.onOpen,
     this.onOpenLink,
     this.isMine = false,
+    this.avatarName,
     this.lastComment,
     this.onReact,
     this.onTogglePin,
@@ -44,6 +45,9 @@ class WallItemCard extends StatefulWidget {
   final VoidCallback onOpen;
   final VoidCallback? onOpenLink;
   final bool isMine;
+
+  /// Name for the avatar initial (the card may label your own posts "You").
+  final String? avatarName;
   final WallCommentPreview? lastComment;
   final ValueChanged<WallReactionKind>? onReact;
   final VoidCallback? onTogglePin;
@@ -123,7 +127,7 @@ class _WallItemCardState extends State<WallItemCard> {
                 Row(
                   children: [
                     LovAvatar(
-                      initial: widget.sharerName,
+                      initial: widget.avatarName ?? widget.sharerName,
                       size: 36,
                       partner: !widget.isMine,
                     ),

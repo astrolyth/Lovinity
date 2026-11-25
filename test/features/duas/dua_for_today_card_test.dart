@@ -72,12 +72,12 @@ void main() {
 
   testWidgets('empty library renders nothing', (tester) async {
     await _pump(tester, const []);
-    expect(find.text('A dua for you today'), findsNothing);
+    expect(find.text('DUA FOR TODAY · FOR THE TWO OF YOU'), findsNothing);
   });
 
   testWidgets('mood chip writes, re-renders, and clears', (tester) async {
     final mem = await _pump(tester, [_d('a', 'distress'), _d('b', 'dhikr')]);
-    expect(find.text('A dua for you today'), findsOneWidget);
+    expect(find.text('DUA FOR TODAY · FOR THE TWO OF YOU'), findsOneWidget);
     await tester.tap(find.text('Anxious'));
     await tester.pumpAndSettle();
     expect(mem.data['mood:2026-11-17'], 'anxious');

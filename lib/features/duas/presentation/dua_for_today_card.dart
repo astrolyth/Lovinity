@@ -27,13 +27,7 @@ class DuaForTodayCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'A dua for you today',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              letterSpacing: 1.2,
-            ),
-          ),
+          const LovEyebrow('Dua for today · for the two of you'),
           const SizedBox(height: LovSpace.md),
           InkWell(
             onTap: () => showLibraryDuaSheet(context, s.dua),
@@ -42,14 +36,19 @@ class DuaForTodayCard extends ConsumerWidget {
               children: [
                 Text(s.dua.title, style: theme.textTheme.titleMedium),
                 const SizedBox(height: LovSpace.xs),
-                Text(s.reason,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.primary)),
+                Text(
+                  s.reason,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
                 const SizedBox(height: LovSpace.xs),
-                Text(s.dua.translation,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
+                Text(
+                  s.dua.translation,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                ),
               ],
             ),
           ),
@@ -63,8 +62,8 @@ class DuaForTodayCard extends ConsumerWidget {
                   selected: mood == m,
                   onSelected: ready
                       ? (_) => ref
-                          .read(todayMoodProvider.notifier)
-                          .set(mood == m ? null : m)
+                            .read(todayMoodProvider.notifier)
+                            .set(mood == m ? null : m)
                       : null,
                 ),
             ],

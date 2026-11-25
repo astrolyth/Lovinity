@@ -463,10 +463,12 @@ class _Cell extends StatelessWidget {
       child: SizedBox(
         height: 22,
         child: Column(
+          // Childless ColoredBoxes have no width of their own: stretch them.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: ColoredBox(color: you ? p.accent : p.surface2)),
+            Expanded(child: ColoredBox(color: you ? p.accent : p.line)),
             const SizedBox(height: 2),
-            Expanded(child: ColoredBox(color: her ? p.partner : p.surface2)),
+            Expanded(child: ColoredBox(color: her ? p.partner : p.line)),
           ],
         ),
       ),
