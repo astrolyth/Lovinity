@@ -131,10 +131,8 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    // Only clear the auth session. The Signal identity + local data are NOT
-    // wiped here so the SAME user signing back in keeps their history and
-    // device registration; a DIFFERENT user is detected and wiped by the
-    // account-switch guard in ensureRegisteredProvider.
+    // Only clear the auth session. Local chat history and Signal keys are
+    // stored per account, so nothing needs wiping on sign-out.
     await _client.auth.signOut();
   }
 }

@@ -99,24 +99,78 @@ final nextPrayerProvider = Provider<ScheduledPrayer?>((ref) {
   return nextPrayer(now: DateTime.now(), loc: loc, config: config);
 });
 
+/// The prayer before [nextPrayerProvider] (today's, or yesterday's Isha before
+/// Fajr), so Home's ring can show how much of the gap has passed.
+final previousPrayerProvider = Provider<ScheduledPrayer?>((ref) {
+  final profile = ref.watch(ownProfileProvider).asData?.value;
+  ref.watch(nowTickerProvider);
+  if (profile == null ||
+      profile.latitude == null ||
+      profile.longitude == null) {
+    return null;
+  }
+  final loc = PrayerLocation(
+    latitude: profile.latitude!,
+    longitude: profile.longitude!,
+    timezone: profile.timezone,
+  );
+  final config = PrayerConfig(
+    madhab: profile.madhhab == 'hanafi' ? Madhab.hanafi : Madhab.shafi,
+    method: calcMethodFromDb(profile.calcMethod),
+  );
+  final now = DateTime.now();
+  final times = [
+    ...prayerTimesForDay(
+      date: now.subtract(const Duration(days: 1)),
+      loc: loc,
+      config: config,
+    ),
+    ...prayerTimesForDay(date: now, loc: loc, config: config),
+  ];
+  return times.where((p) => !p.at.isAfter(now)).lastOrNull;
+});
+
+/// Today's five prayer times where this user is (null without a location).
+final ownPrayerTimesProvider = Provider<List<ScheduledPrayer>?>((ref) {
+  final profile = ref.watch(ownProfileProvider).asData?.value;
+  ref.watch(todayKeyProvider);
+  if (profile == null ||
+      profile.latitude == null ||
+      profile.longitude == null) {
+    return null;
+  }
+  return prayerTimesForDay(
+    date: DateTime.now(),
+    loc: PrayerLocation(
+      latitude: profile.latitude!,
+      longitude: profile.longitude!,
+      timezone: profile.timezone,
+    ),
+    config: PrayerConfig(
+      madhab: profile.madhhab == 'hanafi' ? Madhab.hanafi : Madhab.shafi,
+      method: calcMethodFromDb(profile.calcMethod),
+    ),
+  );
+});
+
 /// Maps a `users.calc_method` value to its enum. Public because the prayer log
 /// computes the SPOUSE's prayer times too — to tell "she hasn't prayed Isha"
 /// apart from "Isha isn't due where she is yet" — and that needs HER method,
 /// not this device's.
 CalcMethod calcMethodFromDb(String s) => switch (s) {
-      'egyptian' => CalcMethod.egyptian,
-      'karachi' => CalcMethod.karachi,
-      'umm_al_qura' => CalcMethod.ummAlQura,
-      'dubai' => CalcMethod.dubai,
-      'moon_sighting_committee' => CalcMethod.moonsightingCommittee,
-      'north_america' => CalcMethod.northAmerica,
-      'kuwait' => CalcMethod.kuwait,
-      'qatar' => CalcMethod.qatar,
-      'singapore' => CalcMethod.singapore,
-      'turkey' => CalcMethod.turkey,
-      'tehran' => CalcMethod.tehran,
-      _ => CalcMethod.muslimWorldLeague,
-    };
+  'egyptian' => CalcMethod.egyptian,
+  'karachi' => CalcMethod.karachi,
+  'umm_al_qura' => CalcMethod.ummAlQura,
+  'dubai' => CalcMethod.dubai,
+  'moon_sighting_committee' => CalcMethod.moonsightingCommittee,
+  'north_america' => CalcMethod.northAmerica,
+  'kuwait' => CalcMethod.kuwait,
+  'qatar' => CalcMethod.qatar,
+  'singapore' => CalcMethod.singapore,
+  'turkey' => CalcMethod.turkey,
+  'tehran' => CalcMethod.tehran,
+  _ => CalcMethod.muslimWorldLeague,
+};
 
 /// Compose "Fajr in 2h 14m" style label for a scheduled prayer.
 String nextPrayerLabel(ScheduledPrayer? sp) {

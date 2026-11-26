@@ -5,11 +5,15 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   emoji_picker_flutter
+  ffmpeg_kit_flutter_new_min
   file_selector_windows
   firebase_core
   flutter_secure_storage_windows
   flutter_timezone
+  gal
   geolocator_windows
+  local_auth_windows
+  record_windows
   url_launcher_windows
 )
 

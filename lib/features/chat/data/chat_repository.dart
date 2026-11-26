@@ -63,6 +63,10 @@ class ChatRepository {
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('couple_id', coupleId)
+        // shortcut: receipts only track the newest 500 messages; older ones
+        // keep their last status. Raise if couples reply to very old messages.
+        .order('created_at')
+        .limit(500)
         .map((rows) => [for (final r in rows) Map<String, dynamic>.from(r)]);
   }
 
@@ -72,8 +76,8 @@ class ChatRepository {
   Future<void> markDelivered(String messageId) =>
       _client.rpc('mark_delivered', params: {'p_message_id': messageId});
 
-  Future<void> markRead(String messageId) =>
-      _client.rpc('mark_read', params: {'p_message_id': messageId});
+  Future<void> markRead(List<String> messageIds) =>
+      _client.rpc('mark_read_many', params: {'p_message_ids': messageIds});
 
   static const _attachmentBucket = 'chat-media';
 

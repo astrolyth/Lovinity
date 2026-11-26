@@ -56,7 +56,7 @@ void main() {
     ));
     await tester.pump();
 
-    expect(find.text('No notifications yet'), findsOneWidget);
+    expect(find.text('All quiet for now'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

@@ -71,6 +71,7 @@ begin
   end if;
   raise notice 'PASS: one answer does not advance the queue';
 
+  perform set_config('request.jwt.claim.sub','99999999-3000-0000-0000-00000000000b',true);
   insert into public.question_answers (couple_id, question_id, author_id, answer)
   values ('99999999-3000-0000-0000-0000000000c1', first_q,
           '99999999-3000-0000-0000-00000000000b', 'b answer');
@@ -92,8 +93,10 @@ begin
   select id into remaining from public.get_current_question();
   insert into public.question_answers (couple_id, question_id, author_id, answer)
   values ('99999999-3000-0000-0000-0000000000c1', remaining,
-          '99999999-3000-0000-0000-00000000000a', 'a'),
-         ('99999999-3000-0000-0000-0000000000c1', remaining,
+          '99999999-3000-0000-0000-00000000000a', 'a');
+  perform set_config('request.jwt.claim.sub','99999999-3000-0000-0000-00000000000b',true);
+  insert into public.question_answers (couple_id, question_id, author_id, answer)
+  values ('99999999-3000-0000-0000-0000000000c1', remaining,
           '99999999-3000-0000-0000-00000000000b', 'b');
 
   select count(*) into n from public.get_current_question();

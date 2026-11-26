@@ -28,6 +28,28 @@ void main() {
     expect((await store.reactionsFor('m1')).length, 0);
   });
 
+  test('live-location updates move the pin, not the bubble', () async {
+    await store.upsertLocation(id: 's1', senderId: 'a', json: '{"lat":1}',
+        createdAt: DateTime(2026, 1, 1), status: 'delivered');
+    await store.upsertLocation(id: 's1', senderId: 'a', json: '{"lat":2}',
+        createdAt: DateTime(2026, 1, 5), status: 'delivered');
+    final row = (await store.watchConversation().first).single;
+    expect(row.body, '{"lat":2}');
+    expect(row.createdAt, DateTime(2026, 1, 1));
+    expect(row.attachmentKind, 'location');
+  });
+
+  test('deleteMessage removes only that message and its reactions', () async {
+    await store.upsertMessage(id: 'm1', senderId: 'a', body: 'hi',
+        createdAt: DateTime(2026), status: 'sent');
+    await store.upsertMessage(id: 'm2', senderId: 'a', body: 'yo',
+        createdAt: DateTime(2026, 1, 2), status: 'sent');
+    await store.applyReaction(messageId: 'm1', reactorId: 'b', emoji: '❤️', add: true);
+    await store.deleteMessage('m1');
+    expect((await store.watchConversation().first).map((r) => r.id), ['m2']);
+    expect(await store.reactionsFor('m1'), isEmpty);
+  });
+
   test('watchConversation orders by createdAt', () async {
     await store.upsertMessage(id: 'm2', senderId: 'a', body: '2',
         createdAt: DateTime(2026, 1, 2), status: 'sent');
@@ -53,7 +75,20 @@ void main() {
     expect(await store.messageExists('ghost'), isFalse);
   });
 
-  test('watchUnreadCount counts only incoming unread; markIncomingRead clears',
+  test('applyReceipt writes nothing when the status is already applied', () async {
+    await store.upsertMessage(id: 'm1', senderId: 'me', body: 'hi',
+        createdAt: DateTime(2026), status: 'sent');
+    expect(await store.applyReceipt(id: 'm1', deliveredAt: DateTime(2026, 1, 2)), 1);
+    expect(await store.applyReceipt(id: 'm1', deliveredAt: DateTime(2026, 1, 2)), 0);
+    expect(await store.applyReceipt(id: 'm1', readAt: DateTime(2026, 1, 3)), 1);
+    expect(await store.applyReceipt(
+        id: 'm1', deliveredAt: DateTime(2026, 1, 2), readAt: DateTime(2026, 1, 3)), 0);
+    // A late "delivered" must not downgrade a read message.
+    expect(await store.applyReceipt(id: 'm1', deliveredAt: DateTime(2026, 1, 4)), 0);
+    expect((await store.watchConversation().first).single.status, 'read');
+  });
+
+  test('watchUnreadCount counts only incoming unread; markRead clears',
       () async {
     const me = 'me';
     // Incoming (from spouse), unread.
@@ -72,7 +107,7 @@ void main() {
     expect(await store.watchUnreadCount(me).first, 2);
     expect((await store.incomingUnreadIds(me)).toSet(), {'in1', 'in2'});
 
-    await store.markIncomingRead(me);
+    await store.markRead(['in1', 'in2']);
     expect(await store.watchUnreadCount(me).first, 0);
     expect(await store.incomingUnreadIds(me), isEmpty);
   });

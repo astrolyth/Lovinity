@@ -43,7 +43,7 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Must match the contract from Task 1's dispatch_push() callers.
-const ALLOWED_TYPES = new Set(["chat", "pairing"]);
+const ALLOWED_TYPES = new Set(["chat", "pairing", "wall"]);
 
 const MAX_TITLE_LEN = 200;
 const MAX_BODY_LEN = 1000;
@@ -65,7 +65,7 @@ export function parseDispatchBody(json: unknown): DispatchBody {
     throw new Error("user_id must be a UUID string");
   }
   if (typeof type !== "string" || !ALLOWED_TYPES.has(type)) {
-    throw new Error("type must be one of 'chat' | 'pairing'");
+    throw new Error("type must be one of 'chat' | 'pairing' | 'wall'");
   }
   if (typeof title !== "string" || title.length === 0 || title.length > MAX_TITLE_LEN) {
     throw new Error(`title must be a non-empty string (max ${MAX_TITLE_LEN} chars)`);
@@ -237,8 +237,31 @@ export async function signOAuthJwt(
   return `${signingInput}.${base64UrlEncode(new Uint8Array(signature))}`;
 }
 
+export interface CachedToken {
+  value: string;
+  clientEmail: string;
+  expiresAt: number; // epoch seconds
+}
+
+/** The cached token if it belongs to this service account and has >60s left. */
+export function reusableToken(
+  cache: CachedToken | null,
+  clientEmail: string,
+  now: number,
+): string | null {
+  if (!cache || cache.clientEmail !== clientEmail) return null;
+  return cache.expiresAt - 60 > now ? cache.value : null;
+}
+
+// Lives as long as the edge worker, so warm invocations skip the OAuth round
+// trip and JWT signing (Google tokens last an hour).
+let tokenCache: CachedToken | null = null;
+
 export async function fetchAccessToken(serviceAccount: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
+  const cached = reusableToken(tokenCache, serviceAccount.client_email, now);
+  if (cached) return cached;
+
   const assertion = await signOAuthJwt(serviceAccount, now);
 
   const resp = await fetch("https://oauth2.googleapis.com/token", {
@@ -259,5 +282,11 @@ export async function fetchAccessToken(serviceAccount: ServiceAccount): Promise<
   if (typeof json.access_token !== "string") {
     throw new Error("OAuth token exchange response missing access_token");
   }
+  const expiresIn = typeof json.expires_in === "number" ? json.expires_in : 3600;
+  tokenCache = {
+    value: json.access_token,
+    clientEmail: serviceAccount.client_email,
+    expiresAt: now + expiresIn,
+  };
   return json.access_token;
 }

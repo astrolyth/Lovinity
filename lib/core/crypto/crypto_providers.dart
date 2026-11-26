@@ -1,21 +1,28 @@
 // lib/core/crypto/crypto_providers.dart
 import 'dart:developer' as developer;
 
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/domain/auth_controller.dart'
     show authSessionProvider, authRepositoryProvider, keyVaultProvider;
 import '../../shared/providers/supabase_provider.dart';
 import '../notifications/notification_providers.dart';
-import '../storage/media_cache.dart';
 import '../storage/signal_db.dart';
 import 'prekey_bundle_source.dart';
 import 'signal_registration.dart';
 import 'signal_session_service.dart';
 
-/// One SignalDb for the app's lifetime (opens the on-disk `lovinity_signal` db).
-final signalDbProvider = Provider<SignalDb>((ref) {
-  final db = SignalDb();
+/// The local database for ONE account, keyed by user id (its own on-disk
+/// file — see [SignalDb.forUser]). Kept alive for the app's lifetime, so an
+/// account that signs out and back in reopens nothing and loses nothing.
+final signalDbProvider = Provider.family<SignalDb, String>((ref, userId) {
+  // Drift warns when a database class is instantiated more than once, because
+  // two instances over the SAME file race. Here every instance is a different
+  // file (one per account) and the family never builds two for the same
+  // user, so the warning doesn't apply.
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  final db = SignalDb.forUser(userId);
   ref.onDispose(db.close);
   return db;
 });
@@ -47,14 +54,8 @@ final signalSessionServiceProvider =
   final selfUserId = session?.user.id;
   if (selfUserId == null) return null;
 
-  final db = ref.read(signalDbProvider);
-  final vault = ref.read(keyVaultProvider);
-
-  // Account-switch guard: also runs at sign-in via ensureRegisteredProvider
-  // (before navigation), but enforced here too so a restored/rebuilt session
-  // can never build a service over another user's local data.
-  await guardAccountSwitch(
-      db: db, vault: vault, cache: FileMediaCache(), selfUserId: selfUserId);
+  final db = ref.watch(signalDbProvider(selfUserId));
+  final vault = ref.read(keyVaultProvider(selfUserId));
 
   // If this device isn't registered yet, register it now. That happens for a
   // session restored on launch or if the first registration failed.
@@ -70,7 +71,7 @@ final signalSessionServiceProvider =
       );
 
   return SignalSessionService(
-    db: ref.watch(signalDbProvider),
+    db: db,
     vault: vault,
     bundles: ref.read(preKeyBundleSourceProvider),
     selfUserId: selfUserId,
@@ -78,10 +79,9 @@ final signalSessionServiceProvider =
   );
 });
 
-/// Sign out. Does NOT wipe the device-local data: the SAME user signing back
-/// in must keep their chat history and Signal identity/device. A DIFFERENT
-/// user signing in is detected and wiped by [ensureRegisteredProvider]'s
-/// account-switch guard, so this only needs to clear the auth session.
+/// Sign out. Wipes nothing: each account's local data lives in its own
+/// database file and key namespace, so signing back in (as the same or a
+/// different account) needs no cleanup and loses no history.
 final signOutProvider = Provider<Future<void> Function()>((ref) {
   return () async {
     // Unregister the push token BEFORE clearing the session: it needs the
@@ -106,24 +106,23 @@ final signOutProvider = Provider<Future<void> Function()>((ref) {
   };
 });
 
-/// Registers this device (idempotent) + tops up prekeys. Call after auth.
+/// Registers this device for the signed-in account (idempotent) + tops up
+/// prekeys. Call after auth.
 ///
-/// Runs the account-switch guard first: the local DB (chat history + Signal
-/// state) is device-global and survives sign-out, so if it belongs to a
-/// DIFFERENT user than the one now signed in, wipe it (and the identity)
-/// before registering — otherwise the new user would see the previous user's
-/// messages and reuse their sessions. The SAME user re-logging keeps
-/// everything (steady-state path in ensureRegistered).
+/// Uses the account's OWN database and key namespace, so an account that was
+/// already registered on this device keeps its device number — messages
+/// addressed to it while another account was signed in still arrive.
 final ensureRegisteredProvider = Provider<Future<int> Function()>((ref) {
   return () async {
-    final db = ref.read(signalDbProvider);
-    final vault = ref.read(keyVaultProvider);
+    // Read the user straight from the auth client, not the session stream:
+    // this runs immediately after sign-in, possibly before the stream has
+    // emitted the new session.
     final selfUserId = ref.read(authRepositoryProvider).currentUser?.id;
-
-    if (selfUserId != null) {
-      await guardAccountSwitch(
-          db: db, vault: vault, cache: FileMediaCache(), selfUserId: selfUserId);
+    if (selfUserId == null) {
+      throw StateError('ensureRegistered called with no signed-in user');
     }
+    final db = ref.read(signalDbProvider(selfUserId));
+    final vault = ref.read(keyVaultProvider(selfUserId));
 
     final deviceNum = await ensureRegistered(
       db: db,

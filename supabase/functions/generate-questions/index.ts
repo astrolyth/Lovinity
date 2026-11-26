@@ -44,7 +44,7 @@ const BATCH = 20;
 
 // Tone quality is the entire point of this function -- it runs at most monthly,
 // so there is nothing to gain by generating on a cheaper model.
-const MODEL = "claude-opus-5";
+const MODEL = "claude-opus-5-5";
 // Thinking is on by default on this model and shares the ceiling with the
 // response text, so leave room for both: a truncated response would fail
 // JSON.parse and waste the whole call.
@@ -175,6 +175,8 @@ Deno.serve(async (req: Request) => {
         // so the payload is parseable JSON by construction. Never string-parse
         // the response instead.
         output_config: {
+          // Opus 5.5 defaults to medium; keep the depth Opus 5 used.
+          effort: "high",
           format: { type: "json_schema", schema: QUESTION_SCHEMA },
         },
         messages: [{

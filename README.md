@@ -8,7 +8,7 @@ A private, two-person Flutter app helping a Muslim husband and wife grow closer 
 
 Design docs live in [`docs/superpowers/specs/`](docs/superpowers/specs/).
 
-> **Platforms:** iOS, Android, and macOS. **Web is not supported** — the local database (Drift/`sqlite3`) uses `dart:ffi`, which the web compiler forbids. **Windows/Linux desktop builds aren't a supported target** — untested, and one dependency (`mobile_scanner`, currently unused in-app) has no desktop-Windows implementation. A **Windows PC works fine as a dev machine** targeting an Android emulator/device; see [Windows setup](#windows-setup-dev-machine--android-target).
+> **Platforms:** iOS, Android, and macOS. **Web is not supported** — the local database (Drift/`sqlite3`) uses `dart:ffi`, which the web compiler forbids. **Windows/Linux desktop builds aren't a supported target** — they are untested. A **Windows PC works fine as a dev machine** targeting an Android emulator/device; see [Windows setup](#windows-setup-dev-machine--android-target).
 
 ---
 
@@ -48,7 +48,7 @@ Run `flutter doctor` after installing and resolve anything it flags before conti
 
 ## Windows setup (dev machine → Android target)
 
-This repo doesn't have a working Windows **desktop** build — it's untested, and `mobile_scanner` (a declared dependency, currently unused in-app) has no Windows implementation, so `flutter run -d windows` isn't guaranteed to build. A Windows PC is a fully supported **development machine** for building and running the app on **Android** though; these steps get you there. (macOS/Linux developers can skip to [Installation from scratch](#installation-from-scratch).)
+This repo doesn't have a working Windows **desktop** build — it's untested, so `flutter run -d windows` isn't guaranteed to build. A Windows PC is a fully supported **development machine** for building and running the app on **Android** though; these steps get you there. (macOS/Linux developers can skip to [Installation from scratch](#installation-from-scratch).)
 
 1. **Flutter** — [install for Windows](https://docs.flutter.dev/get-started/install/windows), add `flutter\bin` to `PATH`, then run `flutter doctor`.
 2. **Android Studio** — install it, then in *SDK Manager* install **Android SDK 34+**, and in *Device Manager* create at least one virtual device (emulator). `flutter doctor` should show the Android toolchain as ✅.
@@ -343,7 +343,29 @@ See [`supabase/functions/push-dispatch/README.md`](supabase/functions/push-dispa
 - `dispatch_push()` calls out over `pg_net` from Postgres; reaching a deployed edge function from the **local Docker stack (path A)** can be finicky depending on your network. Push is primarily exercised as a **cloud feature (path B)** — set up path B (or point local dev at a cloud project's `push-dispatch` function) if you want to see real notifications end-to-end.
 - Until `private.push_config` is seeded, `dispatch_push()` is a silent no-op and chat/pairing behave exactly as they do without any of this setup.
 
+### Redeploying after updates
+
+The `push-dispatch` function validates the notification type. When a release adds a new type (Our Wall added `wall`), redeploy it once, otherwise those pushes are rejected:
+
+```bash
+supabase functions deploy push-dispatch
+```
+
 ---
+
+## Our Wall (shared feed)
+
+A private two-person feed for links and notes (`lib/features/wall/`). Items, reactions and comments live in `feed_items` / `feed_reactions` / `feed_comments`, protected by RLS: both spouses can read, pin and file items, but only the author can delete. **The Wall is not end-to-end encrypted** (unlike chat) — it follows the same server-readable, RLS-protected model as prayer logs. Link previews are fetched on the phone, never by our server.
+
+**Android Share menu:** Lovinity appears as a share target for links and text. Sharing opens the "Add to our Wall" sheet pre-filled (signed-in, paired accounts only). Test it without other apps:
+
+```bash
+adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "https://youtu.be/dQw4w9WgXcQ" -n com.lovinity.lovinity/.MainActivity
+```
+
+iPhone share-sheet support is not built yet (it needs a Share Extension target and an App Group in Xcode).
+
+New Wall pushes use the `wall` type — redeploy `push-dispatch` once (see *Redeploying after updates* above).
 
 ## Project layout
 

@@ -2,22 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/motion/motion.dart';
 import '../../../core/platform/haptics.dart';
-import '../../../core/theme/tokens.dart';
-import '../../../core/theme/typography.dart';
+import '../../../core/theme/theme.dart';
 import '../../../core/time/prayer_engine.dart';
-import '../../../core/widgets/widgets.dart';
+import '../../../core/widgets/lov_kit.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../cycle/domain/cycle_providers.dart';
+import '../../../core/time/local_day.dart';
 import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../domain/prayer_log_providers.dart';
 import '../../../shared/models/cycle_record.dart';
 import '../../../shared/models/prayer_log.dart';
+import 'qibla_sheet.dart';
 
 /// Whether the CURRENT USER's prayer tiles are excused for [selectedDate].
 ///
@@ -37,14 +37,21 @@ bool isSelectedDateExemptForCurrentUser({
   return ownCycleHistory.any((r) => r.isActiveOn(selectedDate));
 }
 
+const _arabic = {
+  Prayer.fajr: 'الفجر',
+  Prayer.dhuhr: 'الظهر',
+  Prayer.asr: 'العصر',
+  Prayer.maghrib: 'المغرب',
+  Prayer.isha: 'العشاء',
+};
+
 class PrayerLogScreen extends ConsumerWidget {
   const PrayerLogScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final p = context.lov;
     final offset = ref.watch(prayerLogDayOffsetProvider);
-    final summary = ref.watch(prayerDaySummaryProvider);
     final view = ref.watch(prayerDayViewProvider);
     final ownProfile = ref.watch(ownProfileProvider).asData?.value;
     final spouseProfile = ref.watch(spouseProfileProvider).asData?.value;
@@ -53,18 +60,17 @@ class PrayerLogScreen extends ConsumerWidget {
     final ownCycleHistory =
         ref.watch(ownCycleHistoryProvider).asData?.value ?? const [];
     final spouseSchedule = ref.watch(spousePrayerTimesProvider);
+    final ownTimes = ref.watch(ownPrayerTimesProvider);
+    final next = ref.watch(nextPrayerProvider);
     final now = ref.watch(nowTickerProvider).asData?.value ?? DateTime.now();
+    final spouseName = _first(spouseProfile?.displayName) ?? 'Your spouse';
 
     // The day anchor is unknown until the device timezone resolves. Showing a
     // skeleton beats rendering a day that might be wrong for a frame.
     if (view == null) {
-      return LovScaffold(
+      return const LovPage(
         title: 'Prayer log',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        child: const _LogSkeleton(),
+        slivers: [SliverToBoxAdapter(child: _LogSkeleton())],
       );
     }
 
@@ -74,103 +80,167 @@ class PrayerLogScreen extends ConsumerWidget {
       ownCycleHistory: ownCycleHistory,
       selectedDate: view.ownDay,
     );
-    final spouseName = spouseProfile?.displayName ?? 'Your spouse';
 
-    return LovScaffold(
+    return LovPage(
       title: 'Prayer log',
-      subtitle: Text(
-        offset == 0
-            ? DateFormat('EEEE, d MMMM').format(view.ownDay)
-            : DateFormat('EEEE, d MMM y').format(view.ownDay),
+      action: LovIconButton(
+        icon: Icons.explore_outlined,
+        label: 'Qibla direction',
+        onTap: () => showQiblaSheet(context),
       ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => context.pop(),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: () =>
-              ref.read(prayerLogDayOffsetProvider.notifier).goBack(),
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right),
-          onPressed: offset == 0
-              ? null
-              : () =>
-                  ref.read(prayerLogDayOffsetProvider.notifier).goForward(),
-        ),
-      ],
-      child: logsAsync.when(
-        loading: () => const _LogSkeleton(),
-        error: (e, _) => Center(
-          child: Text('Could not load prayer log',
-              style: theme.textTheme.bodyMedium),
-        ),
-        data: (logs) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: LovSpace.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _DayToggle(
-                offset: offset,
-                onSelect: (o) =>
-                    ref.read(prayerLogDayOffsetProvider.notifier).set(o),
-              ),
-              const SizedBox(height: LovSpace.lg),
-              LovEnter(
-                child: _TogetherStrip(
-                  summary: summary,
-                  view: view,
-                  offset: offset,
-                  ownName: ownProfile?.displayName ?? 'You',
-                  spouseName: spouseName,
-                ),
-              ),
-              if (isExempt) ...[
-                const SizedBox(height: LovSpace.lg),
-                const _ExemptionNote(),
-              ],
-              const SizedBox(height: LovSpace.xl),
-              LovStagger(
-                initialDelay: const Duration(milliseconds: 80),
-                stagger: const Duration(milliseconds: 50),
-                children: [
-                  for (final p in Prayer.values)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: LovSpace.md),
-                      child: _PrayerRow(
-                        prayer: p,
-                        isEditable: loggable && !isExempt,
-                        ownExempt: isExempt,
-                        ownLog: _findLog(logs, ownProfile?.id, p),
-                        spouseLog: _findLog(logs, spouseProfile?.id, p),
-                        spouseName: spouseName,
-                        // Only meaningful for the current day; a past day is
-                        // entirely in the past for both of them.
-                        spouseDue: offset != 0 ||
-                            isPrayerDueForSpouse(
-                              prayer: p,
-                              schedule: spouseSchedule,
-                              now: now,
-                            ),
-                        onOwnToggle: (newStatus) async {
-                          await _toggleOwn(
-                            ref: ref,
-                            prayer: p,
-                            date: view.ownDay,
-                            newStatus: newStatus,
-                          );
-                        },
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: LovSpace.xxxl),
-            ],
+      slivers: [
+        SliverToBoxAdapter(
+          child: LovRise(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: _WeekCard(ownId: ownProfile?.id, spouseName: spouseName),
+            ),
           ),
         ),
-      ),
+        SliverToBoxAdapter(
+          child: LovRise(
+            delay: const Duration(milliseconds: 100),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 8, 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: LovEyebrow(
+                      '${offset == 0 ? 'Today' : 'Yesterday'} · '
+                      '${DateFormat('EEEE d MMMM').format(view.ownDay)}',
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Earlier day',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () =>
+                        ref.read(prayerLogDayOffsetProvider.notifier).goBack(),
+                    icon: Icon(Icons.chevron_left_rounded, color: p.muted),
+                  ),
+                  IconButton(
+                    tooltip: 'Later day',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: offset == 0
+                        ? null
+                        : () => ref
+                              .read(prayerLogDayOffsetProvider.notifier)
+                              .goForward(),
+                    icon: const Icon(Icons.chevron_right_rounded),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (view.zonesDiffer)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              child: Text(
+                [
+                  spouseOffsetSentence(view),
+                  spouseDayProgressLabel(view: view, offset: offset),
+                ].where((s) => s.isNotEmpty).join(' · '),
+                style: TextStyle(fontSize: 12, color: p.muted),
+              ),
+            ),
+          ),
+        SliverToBoxAdapter(
+          child: LovRise(
+            delay: const Duration(milliseconds: 150),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: logsAsync.when(
+                loading: () => const _LogSkeleton(),
+                error: (_, _) => const LovSurface(
+                  child: Text('Could not load the prayer log'),
+                ),
+                data: (logs) => LovSurface(
+                  padding: EdgeInsets.zero,
+                  clip: true,
+                  child: Column(
+                    children: [
+                      for (final (i, pr) in Prayer.values.indexed) ...[
+                        if (i > 0) Divider(height: 1, color: p.surface2),
+                        _PrayerRow(
+                          prayer: pr,
+                          time: offset == 0
+                              ? ownTimes
+                                    ?.where((t) => t.prayer == pr)
+                                    .firstOrNull
+                                    ?.at
+                              : null,
+                          isNext: offset == 0 && next?.prayer == pr,
+                          ownLog: _findLog(logs, ownProfile?.id, pr),
+                          spouseLog: _findLog(logs, spouseProfile?.id, pr),
+                          spouseName: spouseName,
+                          isEditable: loggable && !isExempt,
+                          ownExempt: isExempt,
+                          spouseDue:
+                              offset != 0 ||
+                              isPrayerDueForSpouse(
+                                prayer: pr,
+                                schedule: spouseSchedule,
+                                now: now,
+                              ),
+                          onOwnToggle: (status) => _toggleOwn(
+                            context: context,
+                            ref: ref,
+                            prayer: pr,
+                            date: view.ownDay,
+                            newStatus: status,
+                            spouseName: spouseName,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: LovRise(
+            delay: const Duration(milliseconds: 250),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: LovSurface(
+                radius: 20,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      isExempt
+                          ? Icons.favorite_border_rounded
+                          : Icons.info_outline_rounded,
+                      size: 20,
+                      color: p.accent,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        isExempt
+                            ? 'Resting — your prayers are excused today 🤍. '
+                                  'The week counts only the prayers that apply.'
+                            : 'Cycle-aware scoring: on excused days, the week '
+                                  'counts only the prayers that apply, so the '
+                                  'score stays whole.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                          color: p.muted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -187,277 +257,251 @@ class PrayerLogScreen extends ConsumerWidget {
   }
 
   Future<void> _toggleOwn({
+    required BuildContext context,
     required WidgetRef ref,
     required Prayer prayer,
     required DateTime date,
     required PrayerStatus? newStatus,
+    required String spouseName,
   }) async {
     final couple = ref.read(currentCoupleProvider).asData?.value;
     final session = ref.read(authSessionProvider).asData?.value;
     if (couple == null || session == null) return;
     final repo = ref.read(prayerLogRepositoryProvider);
     // Distinct haptic per direction: heavier for a log, light for an unlog.
-    if (newStatus == null) {
-      unawaited(LovHaptics.light());
-    } else {
-      unawaited(LovHaptics.medium());
-    }
-    if (newStatus == null) {
-      await repo.unlogPrayer(
-        coupleId: couple.id,
-        userId: session.user.id,
-        date: date,
-        prayer: prayer,
-      );
-    } else {
-      await repo.logPrayer(
-        coupleId: couple.id,
-        userId: session.user.id,
-        date: date,
-        prayer: prayer,
-        status: newStatus,
-      );
+    unawaited(newStatus == null ? LovHaptics.light() : LovHaptics.medium());
+    Future<void> unlog() => repo.unlogPrayer(
+      coupleId: couple.id,
+      userId: session.user.id,
+      date: date,
+      prayer: prayer,
+    );
+    try {
+      if (newStatus == null) {
+        await unlog();
+      } else {
+        await repo.logPrayer(
+          coupleId: couple.id,
+          userId: session.user.id,
+          date: date,
+          prayer: prayer,
+          status: newStatus,
+        );
+        if (context.mounted) {
+          showLovToast(
+            context,
+            '${prayer.displayName} logged. $spouseName will see it.',
+            onUndo: () async {
+              await unlog();
+              ref.read(prayerLogRefreshTickProvider.notifier).state++;
+            },
+          );
+        }
+      }
+    } catch (_) {
+      if (context.mounted) {
+        showLovToast(
+          context,
+          "Couldn't save that — check your connection",
+          icon: Icons.error_outline_rounded,
+        );
+      }
     }
     ref.read(prayerLogRefreshTickProvider.notifier).state++;
   }
 }
 
-class _DayToggle extends StatelessWidget {
-  const _DayToggle({required this.offset, required this.onSelect});
-
-  final int offset;
-  final ValueChanged<int> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Expanded(
-          child: _DayToggleButton(
-            label: 'Today',
-            selected: offset == 0,
-            onTap: () => onSelect(0),
-            theme: theme,
-          ),
-        ),
-        const SizedBox(width: LovSpace.sm),
-        Expanded(
-          child: _DayToggleButton(
-            label: 'Yesterday',
-            selected: offset == 1,
-            onTap: () => onSelect(1),
-            theme: theme,
-          ),
-        ),
-      ],
-    );
-  }
+String? _first(String? name) {
+  final n = name?.trim();
+  if (n == null || n.isEmpty) return null;
+  return n.split(RegExp(r'\s+')).first;
 }
 
-class _DayToggleButton extends StatelessWidget {
-  const _DayToggleButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.theme,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: selected ? null : onTap,
-      child: AnimatedContainer(
-        duration: LovMotion.standard,
-        curve: LovMotion.enter,
-        padding: const EdgeInsets.symmetric(vertical: LovSpace.sm),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(LovRadius.md),
-          border: selected
-              ? null
-              : Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Text(
-          label,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: selected
-                ? theme.colorScheme.onPrimary
-                : theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Counts for both spouses, and — when their zones disagree — the dual clock
-/// that explains those counts.
-///
-/// The clock is adaptive rather than always-on: same-zone couples (the common
-/// case) see exactly the layout they always have, and the extra chrome appears
-/// only when there is a real discrepancy to account for. Without it, "0 of 5"
-/// for a partner whose day started an hour ago reads as neglect instead of as
-/// an early hour.
-class _TogetherStrip extends StatelessWidget {
-  const _TogetherStrip({
-    required this.summary,
-    required this.view,
-    required this.offset,
-    required this.ownName,
-    required this.spouseName,
-  });
-
-  final PrayerDaySummary summary;
-  final PrayerDayView view;
-  final int offset;
-  final String ownName;
+/// This week as a grid: one cell per prayer per day, gold top half for you,
+/// rose bottom half for your spouse.
+class _WeekCard extends ConsumerWidget {
+  const _WeekCard({required this.ownId, required this.spouseName});
+  final String? ownId;
   final String spouseName;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSec = theme.colorScheme.onSecondary;
-    final dual = view.zonesDiffer;
-    final progress = spouseDayProgressLabel(view: view, offset: offset);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = context.lov;
+    final logs = ref.watch(prayerWeekLogsProvider).asData?.value ?? const [];
+    final today = DateTime.now();
+    final days = [
+      for (var i = 6; i >= 0; i--)
+        DateTime(today.year, today.month, today.day - i),
+    ];
+    // Each row is that person's own last 7 days: a spouse in another zone can
+    // be a day ahead or behind, and her prayers are filed under her own day.
+    final spouseTz = ref.watch(spouseProfileProvider).asData?.value?.timezone;
+    final herToday = spouseTz == null || spouseTz.isEmpty
+        ? today
+        : localDayAt(spouseTz, today);
+    final herDays = [
+      for (var i = 6; i >= 0; i--)
+        DateTime(herToday.year, herToday.month, herToday.day - i),
+    ];
+    bool did(bool mine, int i, Prayer pr) {
+      final d = mine ? days[i] : herDays[i];
+      return logs.any(
+        (e) =>
+            (mine ? e.userId == ownId : e.userId != ownId) &&
+            e.prayer == pr &&
+            e.status == PrayerStatus.prayed &&
+            e.date.year == d.year &&
+            e.date.month == d.month &&
+            e.date.day == d.day,
+      );
+    }
 
-    return Container(
-      padding: const EdgeInsets.all(LovSpace.lg),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondary,
-        borderRadius: BorderRadius.circular(LovRadius.lg),
-      ),
+    var you = 0, her = 0, both = 0;
+    for (var i = 0; i < days.length; i++) {
+      for (final pr in Prayer.values) {
+        final a = did(true, i, pr), b = did(false, i, pr);
+        if (a) you++;
+        if (b) her++;
+        if (a && b) both++;
+      }
+    }
+    Widget legend(Color c, String label) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: c,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: TextStyle(fontSize: 12, color: p.muted)),
+      ],
+    );
+
+    return LovSurface(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            // Centred rather than top-aligned with fixed padding: the dual
-            // clock adds a line to each side, so any fixed offset would drift
-            // out of alignment exactly when the layout expands.
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: _SideColumn(
-                  name: ownName,
-                  count: summary.ownCount,
-                  clock: dual ? view.ownLocalTime : null,
-                  day: dual ? view.ownDay : null,
-                  alignEnd: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const LovEyebrow('This week, together'),
+                    const SizedBox(height: 6),
+                    Text.rich(
+                      TextSpan(
+                        text: '$both',
+                        children: [
+                          TextSpan(
+                            text: ' / ${days.length * 5}',
+                            style: lovDisplay(
+                              context,
+                              size: 18,
+                              color: p.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      style: lovDisplay(context, size: 36),
+                    ),
+                  ],
                 ),
               ),
-              Icon(
-                summary.matchedCount > 0
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_outline_rounded,
-                color: onSec,
-                size: 20,
-              ),
-              Expanded(
-                child: _SideColumn(
-                  name: spouseName,
-                  count: summary.spouseCount,
-                  clock: dual ? view.spouseLocalTime : null,
-                  day: dual ? view.spouseDay : null,
-                  alignEnd: true,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  legend(p.accent, 'You · $you'),
+                  const SizedBox(height: 4),
+                  legend(p.partner, '$spouseName · $her'),
+                ],
               ),
             ],
           ),
-          if (dual) ...[
-            const SizedBox(height: LovSpace.md),
-            Text(
-              [spouseOffsetSentence(view), progress]
-                  .where((s) => s.isNotEmpty)
-                  .join(' · '),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: onSec.withValues(alpha: 0.75),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              const SizedBox(width: 52),
+              for (final (i, d) in days.indexed)
+                Expanded(
+                  child: Text(
+                    DateFormat.E().format(d).substring(0, 1),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: i == days.length - 1 ? p.text : p.muted,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          for (final pr in Prayer.values)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 52,
+                    child: Text(
+                      pr.displayName,
+                      style: TextStyle(fontSize: 12, color: p.muted),
+                    ),
+                  ),
+                  for (var i = 0; i < days.length; i++)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: _Cell(
+                          you: did(true, i, pr),
+                          her: did(false, i, pr),
+                          today: i == days.length - 1,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Cell extends StatelessWidget {
+  const _Cell({required this.you, required this.her, required this.today});
+  final bool you, her, today;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.lov;
+    final cell = ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        height: 22,
+        child: Column(
+          // Childless ColoredBoxes have no width of their own: stretch them.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: ColoredBox(color: you ? p.accent : p.line)),
+            const SizedBox(height: 2),
+            Expanded(child: ColoredBox(color: her ? p.partner : p.line)),
           ],
-        ],
+        ),
       ),
     );
-  }
-}
-
-class _SideColumn extends StatelessWidget {
-  const _SideColumn({
-    required this.name,
-    required this.count,
-    required this.clock,
-    required this.day,
-    required this.alignEnd,
-  });
-
-  final String name;
-  final int count;
-  final DateTime? clock;
-  final DateTime? day;
-  final bool alignEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSec = theme.colorScheme.onSecondary;
-    return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        Text(
-          name,
-          style: theme.textTheme.labelMedium
-              ?.copyWith(color: onSec.withValues(alpha: 0.7)),
-        ),
-        if (clock != null && day != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            '${DateFormat('EEE d MMM').format(day!)} · '
-            '${DateFormat.jm().format(clock!)}',
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: onSec.withValues(alpha: 0.6)),
-          ),
-        ],
-        const SizedBox(height: 2),
-        LovDigitRow(
-          value: count,
-          minDigits: 1,
-          style: theme.textTheme.displaySmall?.copyWith(
-            color: onSec,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ExemptionNote extends StatelessWidget {
-  const _ExemptionNote();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return LovCard(
-      variant: LovCardVariant.tonal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: LovSpace.lg,
-        vertical: LovSpace.md,
+    if (!today) return cell;
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: p.text, width: 1.5),
       ),
-      child: Text(
-        'Resting — prayers are excused 🤍',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-        ),
-      ),
+      child: cell,
     );
   }
 }
@@ -465,6 +509,8 @@ class _ExemptionNote extends StatelessWidget {
 class _PrayerRow extends StatelessWidget {
   const _PrayerRow({
     required this.prayer,
+    required this.time,
+    required this.isNext,
     required this.ownLog,
     required this.spouseLog,
     required this.isEditable,
@@ -475,6 +521,8 @@ class _PrayerRow extends StatelessWidget {
   });
 
   final Prayer prayer;
+  final DateTime? time;
+  final bool isNext;
   final PrayerLogEntry? ownLog;
   final PrayerLogEntry? spouseLog;
   final bool isEditable;
@@ -487,21 +535,26 @@ class _PrayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final p = context.lov;
     final ownDone = ownLog?.status == PrayerStatus.prayed;
     final spouseDone = spouseLog?.status == PrayerStatus.prayed;
+    final when = time == null
+        ? null
+        : DateFormat.jm().format(time!).toLowerCase();
+    final sub = [
+      ?when,
+      if (isNext && !ownDone) 'next',
+      _footerLabel(),
+    ].join(' · ');
 
-    return LovCard(
-      variant: LovCardVariant.plain,
-      padding: const EdgeInsets.symmetric(
-        horizontal: LovSpace.lg,
-        vertical: LovSpace.md,
-      ),
+    return Container(
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Expanded(
             child: Opacity(
-              opacity: ownExempt ? 0.4 : 1.0,
+              opacity: ownExempt ? .45 : 1,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -511,59 +564,81 @@ class _PrayerRow extends StatelessWidget {
                     children: [
                       Text(
                         prayer.displayName,
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const SizedBox(width: LovSpace.sm),
-                      Text(
-                        _arabicName(prayer),
-                        style: LovTypography.arabicText(
-                          fontSize: 18,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.55),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _arabic[prayer]!,
+                        style: lovArabic(
+                          context,
+                          size: 16,
+                          color: p.muted,
+                        ).copyWith(height: 1.2),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _footerLabel(),
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  const SizedBox(height: 2),
+                  Text(sub, style: TextStyle(fontSize: 12, color: p.muted)),
                 ],
               ),
             ),
           ),
-          if (spouseDone)
-            Container(
-              margin: const EdgeInsets.only(right: LovSpace.sm),
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary,
-                shape: BoxShape.circle,
+          if (isNext && !ownDone && isEditable) ...[
+            LovPressable(
+              onTap: () => onOwnToggle(PrayerStatus.prayed),
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: p.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Mark prayed',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: p.onAccent,
+                  ),
+                ),
               ),
             ),
-          Opacity(
-            opacity: ownExempt ? 0.4 : 1.0,
-            child: _CheckToggle(
-              checked: ownDone,
-              enabled: isEditable,
-              onChanged: () =>
-                  onOwnToggle(ownDone ? null : PrayerStatus.prayed),
+            const SizedBox(width: 10),
+          ] else ...[
+            Semantics(
+              button: isEditable,
+              label: ownDone ? 'You prayed. Tap to undo' : 'You, not yet',
+              excludeSemantics: true,
+              child: LovPressable(
+                onTap: isEditable
+                    ? () => onOwnToggle(ownDone ? null : PrayerStatus.prayed)
+                    : null,
+                scale: .85,
+                child: Padding(
+                  // A 44pt target around the 26pt dot.
+                  padding: const EdgeInsets.all(9),
+                  child: _Dot(
+                    on: ownDone,
+                    color: p.accent,
+                    onColor: p.onAccent,
+                  ),
+                ),
+              ),
             ),
+          ],
+          Semantics(
+            label: spouseDone ? '$spouseName prayed' : '$spouseName, not yet',
+            excludeSemantics: true,
+            child: _Dot(on: spouseDone, color: p.partner, onColor: p.onPartner),
           ),
         ],
       ),
     );
   }
-
-  String _arabicName(Prayer p) => switch (p) {
-        Prayer.fajr => 'ٱلْفَجْر',
-        Prayer.dhuhr => 'ٱلظُّهْر',
-        Prayer.asr => 'ٱلْعَصْر',
-        Prayer.maghrib => 'ٱلْمَغْرِب',
-        Prayer.isha => 'ٱلْعِشَاء',
-      };
 
   /// States only what the data supports.
   ///
@@ -577,13 +652,13 @@ class _PrayerRow extends StatelessWidget {
 
     if (ownDone && spouseDone) {
       final gap = _gapLabel();
-      return gap == null ? 'Both prayed' : 'Both prayed · $gap';
+      return gap == null ? 'both prayed' : 'both prayed · $gap';
     }
     if (ownDone) {
-      return notDue.isEmpty ? "You've prayed" : "You've prayed · $notDue";
+      return notDue.isEmpty ? "you've prayed" : "you've prayed · $notDue";
     }
     if (spouseDone) return '$spouseName prayed';
-    return notDue.isEmpty ? 'Not yet' : _capitalise(notDue);
+    return notDue.isEmpty ? 'not yet' : notDue;
   }
 
   /// Real elapsed time between the two check-ins, shown only when it is small
@@ -599,130 +674,60 @@ class _PrayerRow extends StatelessWidget {
     if (gap.inMinutes < 1) return 'within a minute';
     return '${gap.inMinutes}m apart';
   }
-
-  String _capitalise(String s) =>
-      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
-class _CheckToggle extends StatefulWidget {
-  const _CheckToggle({
-    required this.checked,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final bool checked;
-  final bool enabled;
-  final VoidCallback onChanged;
+/// Filled dot with a check when prayed, dashed ring when not.
+class _Dot extends StatelessWidget {
+  const _Dot({required this.on, required this.color, required this.onColor});
+  final bool on;
+  final Color color;
+  final Color onColor;
 
   @override
-  State<_CheckToggle> createState() => _CheckToggleState();
-}
-
-class _CheckToggleState extends State<_CheckToggle>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-  bool _pressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 320),
+  Widget build(BuildContext context) {
+    final p = context.lov;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      switchInCurve: LovMotion.springOut,
+      transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+      child: on
+          ? Container(
+              key: const ValueKey(true),
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Icon(Icons.check_rounded, size: 16, color: onColor),
+            )
+          : SizedBox(
+              key: const ValueKey(false),
+              width: 26,
+              height: 26,
+              child: CustomPaint(painter: _DashedCircle(p.line2)),
+            ),
     );
   }
+}
+
+class _DashedCircle extends CustomPainter {
+  _DashedCircle(this.color);
+  final Color color;
 
   @override
-  void didUpdateWidget(covariant _CheckToggle old) {
-    super.didUpdateWidget(old);
-    if (old.checked != widget.checked) {
-      _pulse.forward(from: 0);
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..color = color;
+    final path = Path()..addOval((Offset.zero & size).deflate(.75));
+    for (final m in path.computeMetrics()) {
+      for (var d = 0.0; d < m.length; d += 5) {
+        canvas.drawPath(m.extractPath(d, d + 3), paint);
+      }
     }
   }
 
   @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return GestureDetector(
-      onTapDown:
-          widget.enabled ? (_) => setState(() => _pressed = true) : null,
-      onTapCancel:
-          widget.enabled ? () => setState(() => _pressed = false) : null,
-      onTapUp: widget.enabled
-          ? (_) {
-              setState(() => _pressed = false);
-              widget.onChanged();
-            }
-          : null,
-      child: AnimatedBuilder(
-        animation: _pulse,
-        builder: (context, child) {
-          final t = _pulse.value;
-          // Spring-out overshoot: quickly to 1.18 then settle to 1.0.
-          final bounce = t == 0
-              ? 1.0
-              : 1.0 +
-                  0.18 *
-                      (1 - t) *
-                      (t < 0.4
-                          ? (t / 0.4)
-                          : 1 - ((t - 0.4) / 0.6) * 0.6);
-          final pressScale = _pressed && widget.enabled ? 0.92 : 1.0;
-          return Transform.scale(scale: bounce * pressScale, child: child);
-        },
-        child: AnimatedContainer(
-          duration: LovMotion.standard,
-          curve: LovMotion.enter,
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: widget.checked
-                ? scheme.primary
-                : scheme.surfaceContainerLow,
-            shape: BoxShape.circle,
-            border: widget.checked
-                ? null
-                : Border.all(color: scheme.outlineVariant, width: 1.5),
-            boxShadow: widget.checked
-                ? [
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.28),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          alignment: Alignment.center,
-          child: AnimatedSwitcher(
-            duration: LovMotion.standard,
-            switchInCurve: LovMotion.springOut,
-            switchOutCurve: LovMotion.enter,
-            transitionBuilder: (c, a) => ScaleTransition(
-              scale: Tween<double>(begin: 0.4, end: 1.0).animate(a),
-              child: FadeTransition(opacity: a, child: c),
-            ),
-            child: widget.checked
-                ? Icon(
-                    Icons.check_rounded,
-                    key: const ValueKey('checked'),
-                    size: 24,
-                    color: scheme.onPrimary,
-                  )
-                : const SizedBox.shrink(key: ValueKey('empty')),
-          ),
-        ),
-      ),
-    );
-  }
+  bool shouldRepaint(_DashedCircle old) => old.color != color;
 }
 
 class _LogSkeleton extends StatelessWidget {
@@ -731,20 +736,12 @@ class _LogSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: LovSpace.lg),
+      padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          LovShimmerBox(height: 88, radius: LovRadius.lg),
-          SizedBox(height: LovSpace.lg),
-          LovShimmerBox(height: 72, radius: LovRadius.lg),
-          SizedBox(height: LovSpace.md),
-          LovShimmerBox(height: 72, radius: LovRadius.lg),
-          SizedBox(height: LovSpace.md),
-          LovShimmerBox(height: 72, radius: LovRadius.lg),
-          SizedBox(height: LovSpace.md),
-          LovShimmerBox(height: 72, radius: LovRadius.lg),
-          SizedBox(height: LovSpace.md),
-          LovShimmerBox(height: 72, radius: LovRadius.lg),
+          LovShimmerBox(height: 220, radius: 24),
+          SizedBox(height: 24),
+          LovShimmerBox(height: 320, radius: 24),
         ],
       ),
     );

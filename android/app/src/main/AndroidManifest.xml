@@ -1,12 +1,27 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Runtime-requested on Android 13+ (API 33) before push notifications
          can be shown; PushService.init() calls requestPermission(). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Live location in chat keeps updating for an hour via geolocator's
+         foreground service (it shows a "Sharing your live location" notice). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Chat voice notes. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Adhan reminders are scheduled ahead; restore them after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- gal: saving vlogs to the gallery on Android 10 and below -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:replace="android:maxSdkVersion" />
     <application
         android:label="Lovinity"
         android:name="${applicationName}"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         <!-- Default FCM notification channel/icon, read by the platform for
              background/data-only messages shown outside PushService's own
@@ -20,10 +35,15 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="chat" />
+        <!-- singleTask: one MainActivity (one FlutterEngine / Dart isolate)
+             at a time. A share from another app (Our Wall) re-uses it via
+             onNewIntent instead of stacking a second activity and engine in
+             the sender's task; singleTop only re-used it when it was already
+             on top of the current task. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -40,6 +60,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Our Wall: appear in the OS Share menu for links/text. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
             </intent-filter>
         </activity>
         <!-- Home-screen widget: next prayer, both spouses' check-ins, verse.
@@ -61,6 +87,21 @@
                 android:resource="@xml/lovinity_widget_info" />
         </receiver>
 
+        <!-- flutter_local_notifications: fire scheduled adhan reminders and
+             reschedule them after boot / app update. -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -76,6 +117,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- url_launcher: lets the Wall open links in YouTube/Instagram/browser. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

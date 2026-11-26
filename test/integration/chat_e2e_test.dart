@@ -74,9 +74,6 @@ class _InMemoryMediaCache implements MediaCache {
     written[key] = bytes;
     return 'memory://$key';
   }
-
-  @override
-  Future<void> clear() async => written.clear();
 }
 
 Future<_Party> _makeParty(
@@ -215,7 +212,7 @@ void main() {
     expect(envAfterHandle, isEmpty);
 
     // --- Bob marks the message read -----------------------------------------
-    await bob.repo.markRead(messageId);
+    await bob.repo.markRead([messageId]);
 
     final afterReadRows =
         await aliceClient.from('messages').select().eq('id', messageId);

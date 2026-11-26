@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lovinity — Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap">
+<style>
+/* themes: every color on every screen comes from these tokens */
+:root,:root[data-theme="midnight"]{--bg:#0A0A0A;--bg-2:#050505;--surface:#141414;--surface-2:#1C1A16;--card-a:#181715;--card-b:#121211;--line:#2A2722;--line-2:#4A4234;--text:#F5F1E8;--text-2:#D4CBBA;--muted:#A79E8E;--faint:#6E6656;--accent:#F2C14E;--accent-hi:#F8D891;--accent-lo:#E3A93A;--accent-soft:#3A2E12;--accent-ink:#FCEACD;--on-accent:#1A1205;--partner:#E9A6A0;--partner-hi:#F6D5D1;--partner-lo:#D98A84;--partner-soft:#2A1C1C;--on-partner:#1A1010;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:242 193 78;--partner-rgb:233 166 160;--bg-rgb:10 10 10;--surface-rgb:20 20 20;color-scheme:dark}
+:root[data-theme="emerald"]{--bg:#06110D;--bg-2:#030A07;--surface:#0D1C16;--surface-2:#12251D;--card-a:#10211A;--card-b:#0B1813;--line:#1E3A2E;--line-2:#2F5444;--text:#EEF5EF;--text-2:#C6D8CC;--muted:#8FAE9F;--faint:#5E7A6D;--accent:#E3C26F;--accent-hi:#F1DA9C;--accent-lo:#C9A24B;--accent-soft:#2C2A14;--accent-ink:#F6E7BE;--on-accent:#14200F;--partner:#F0A9A0;--partner-hi:#F8D3CD;--partner-lo:#D9847A;--partner-soft:#2C1C1A;--on-partner:#2A1010;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:227 194 111;--partner-rgb:240 169 160;--bg-rgb:6 17 13;--surface-rgb:13 28 22;color-scheme:dark}
+:root[data-theme="lapis"]{--bg:#070B16;--bg-2:#03060D;--surface:#0F1626;--surface-2:#141D31;--card-a:#121A2C;--card-b:#0C1220;--line:#22304D;--line-2:#34466B;--text:#EEF2FA;--text-2:#C8D2E6;--muted:#8E9BB8;--faint:#5C6886;--accent:#8EC5FF;--accent-hi:#BFDEFF;--accent-lo:#5EA6F0;--accent-soft:#15304F;--accent-ink:#DCEBFF;--on-accent:#061224;--partner:#F2B6C9;--partner-hi:#FAD9E3;--partner-lo:#DB8EA6;--partner-soft:#2E1A24;--on-partner:#2A0F1A;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:142 197 255;--partner-rgb:242 182 201;--bg-rgb:7 11 22;--surface-rgb:15 22 38;color-scheme:dark}
+:root[data-theme="rose"]{--bg:#0C0809;--bg-2:#060404;--surface:#171012;--surface-2:#1F1517;--card-a:#1B1214;--card-b:#120C0E;--line:#33242A;--line-2:#50363F;--text:#F8EEF0;--text-2:#E0CCD1;--muted:#B39AA0;--faint:#7A626A;--accent:#F0A2B0;--accent-hi:#F8CCD5;--accent-lo:#DC7F92;--accent-soft:#3E1F27;--accent-ink:#FFE1E7;--on-accent:#2A0C14;--partner:#F2C14E;--partner-hi:#F8D891;--partner-lo:#E3A93A;--partner-soft:#3A2E12;--on-partner:#1A1205;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:240 162 176;--partner-rgb:242 193 78;--bg-rgb:12 8 9;--surface-rgb:23 16 18;color-scheme:dark}
+:root[data-theme="desert"]{--bg:#120C08;--bg-2:#0A0604;--surface:#1C140E;--surface-2:#241A12;--card-a:#20170F;--card-b:#160F0A;--line:#3A2A1E;--line-2:#5A412E;--text:#F7EDE3;--text-2:#E0CDBA;--muted:#B49F8B;--faint:#7D6A58;--accent:#E8875A;--accent-hi:#F4B08E;--accent-lo:#CF6A3E;--accent-soft:#3D2416;--accent-ink:#FFD9C2;--on-accent:#2A1004;--partner:#E9C46A;--partner-hi:#F4DD9E;--partner-lo:#CFA748;--partner-soft:#33290F;--on-partner:#2A1F04;--hi:255 255 255;--shadow:0 0 0;--accent-rgb:232 135 90;--partner-rgb:233 196 106;--bg-rgb:18 12 8;--surface-rgb:28 20 14;color-scheme:dark}
+:root[data-theme="sandstone"]{--bg:#F6F1E7;--bg-2:#EAE2D2;--surface:#FFFDF8;--surface-2:#EFE7D8;--card-a:#FFFEFA;--card-b:#F8F3E9;--line:#E2D7C3;--line-2:#CDBE9F;--text:#1E1A14;--text-2:#3E372B;--muted:#7A6F5E;--faint:#A39883;--accent:#B8862B;--accent-hi:#D9AE5C;--accent-lo:#9C6F1E;--accent-soft:#F3E4C2;--accent-ink:#5A4210;--on-accent:#FFFDF8;--partner:#C76B62;--partner-hi:#E3A39C;--partner-lo:#A9534B;--partner-soft:#F5DEDA;--on-partner:#FFFFFF;--hi:90 66 30;--shadow:90 70 40;--accent-rgb:184 134 43;--partner-rgb:199 107 98;--bg-rgb:246 241 231;--surface-rgb:255 253 248;color-scheme:light}
+:root[data-theme="pearl"]{--bg:#F3F6F4;--bg-2:#E5ECE8;--surface:#FFFFFF;--surface-2:#E9F0EB;--card-a:#FFFFFF;--card-b:#F6F9F7;--line:#D6E1DA;--line-2:#B7C9BE;--text:#10201A;--text-2:#2C3E35;--muted:#5F7469;--faint:#93A59B;--accent:#1F8A5B;--accent-hi:#4DB385;--accent-lo:#156B45;--accent-soft:#D7EFE2;--accent-ink:#0F4A30;--on-accent:#FFFFFF;--partner:#D9776B;--partner-hi:#EDB0A8;--partner-lo:#BC5B50;--partner-soft:#F8E1DE;--on-partner:#FFFFFF;--hi:20 60 40;--shadow:30 60 45;--accent-rgb:31 138 91;--partner-rgb:217 119 107;--bg-rgb:243 246 244;--surface-rgb:255 255 255;color-scheme:light}
+html{background:var(--bg-2)}
+html.theme-vt::view-transition-old(root){animation:none}
+html.theme-vt::view-transition-new(root){animation:themeIn .8s cubic-bezier(.2,.9,.25,1) both}
+@keyframes themeIn{from{clip-path:circle(0 at var(--vx,50%) var(--vy,40%))}to{clip-path:circle(160% at var(--vx,50%) var(--vy,40%))}}
+body{margin:0;background:var(--bg-2)}
+a{color:var(--accent);text-decoration:none}a:hover{color:var(--accent-ink)}
+.scr{width:390px;height:844px;box-sizing:border-box;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;position:relative;overflow:hidden}
+.scroll{position:absolute;inset:0;overflow-y:auto;padding-bottom:48px;scrollbar-width:none}
+.disp{font-family:'Space Grotesk',Inter,sans-serif;letter-spacing:-0.025em}
+.sub{color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:26px 20px 10px}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.iconbtn{width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--line);color:var(--text);box-sizing:border-box}
+.group{margin:0 16px;border-radius:20px;background:var(--surface);border:1px solid var(--line);overflow:hidden}
+.r{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px;box-sizing:border-box;color:var(--text)}
+a.r:hover{color:var(--text);background:var(--card-a)}
+.r + .r{border-top:1px solid var(--surface-2)}
+.r .lbl{flex:1;min-width:0;font-size:15px}
+.r .val{font-size:14px;color:var(--muted)}
+.chev{color:var(--faint)}
+.switch{width:52px;height:32px;border-radius:999px;border:0;padding:3px;background:var(--line);cursor:pointer;transition:background .25s;flex:none}
+.switch span{display:block;width:26px;height:26px;border-radius:999px;background:var(--text);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"] span{transform:translateX(20px)}
+.seg{flex:1;height:34px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:600 13px Inter,sans-serif;cursor:pointer;transition:background .25s,color .25s}
+.seg[aria-pressed="true"]{background:var(--line);color:var(--text)}
+.segs{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line)}
+.rise{animation:rise .6s cubic-bezier(.16,1,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* theme picker: one row in settings, a calm sheet with a live preview */
+.tsw{position:relative;width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid;box-sizing:border-box}
+.tsw svg{width:30px;height:20px;overflow:visible}
+.tprev{position:relative;height:148px;margin:8px 0 2px;border-radius:22px;overflow:hidden;background:var(--bg);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgb(var(--hi) / .05)}
+.tprev::before{content:"";position:absolute;left:-40px;top:-60px;width:220px;height:170px;border-radius:999px;background:var(--accent);opacity:.2;filter:blur(34px)}
+.tprev::after{content:"";position:absolute;right:-50px;top:-30px;width:160px;height:130px;border-radius:999px;background:var(--partner);opacity:.14;filter:blur(34px)}
+.tph{position:absolute;z-index:1;left:16px;right:16px;top:16px;display:flex;align-items:center;gap:10px}
+.tph .a1,.tph .a2{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 10px 'Space Grotesk',sans-serif;box-shadow:0 0 0 2px var(--bg)}
+.tph .a1{background:var(--accent);color:var(--on-accent)}.tph .a2{background:var(--partner);color:var(--on-partner);margin-left:-14px}
+.tph b{font:500 15px 'Space Grotesk',sans-serif;color:var(--text)}.tph i{margin-left:auto;font-style:normal;font-size:11px;color:var(--muted)}
+.thero{position:absolute;z-index:1;left:16px;right:16px;bottom:16px;height:68px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px 0 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.thero span{flex:1;min-width:0}
+.thero small{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.thero strong{display:block;font:500 18px 'Space Grotesk',sans-serif;color:var(--text);margin-top:2px}
+.thero em{font-style:normal;height:30px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font-size:12px;font-weight:600;background:var(--accent);color:var(--on-accent)}
+.tlab{margin:18px 2px 8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tt{display:flex;align-items:center;gap:10px;min-height:64px;padding:10px;box-sizing:border-box;border-radius:18px;border:1px solid var(--line);background:rgb(var(--hi) / .03);color:var(--text);text-align:left;font:inherit;cursor:pointer;transition:border-color .3s var(--ease),background-color .3s var(--ease),box-shadow .45s var(--spring);animation:tin .45s var(--bounce) backwards}
+.tt:nth-child(2){animation-delay:.03s}.tt:nth-child(3){animation-delay:.06s}.tt:nth-child(4){animation-delay:.09s}.tt:nth-child(5){animation-delay:.12s}
+@keyframes tin{from{opacity:0;transform:translateY(10px) scale(.96)}}
+.tt span{min-width:0}
+.tt b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt small{display:block;margin-top:2px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt[aria-checked="true"]{border-color:var(--accent);background:rgb(var(--accent-rgb) / .08);box-shadow:0 0 0 3px rgb(var(--accent-rgb) / .14)}
+.tck{position:absolute;right:-5px;bottom:-5px;width:18px;height:18px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface);animation:pop .45s var(--bounce)}
+@keyframes pop{from{transform:scale(0) rotate(-40deg)}}
+/* sheets shared by every screen */
+.scrim{position:absolute;inset:0;z-index:30;background:rgb(var(--shadow) / .5);animation:fade .3s backwards;transition:opacity .45s var(--spring)}
+@keyframes fade{from{opacity:0}}
+.sheet{position:absolute;z-index:31;left:0;right:0;bottom:0;padding:0 20px 36px;border-radius:30px 30px 0 0;background:rgb(var(--surface-rgb) / .92);backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);border-top:1px solid rgb(var(--hi) / .08);box-shadow:0 -20px 60px rgb(var(--shadow) / .5);animation:up .5s var(--spring) backwards;transition:transform .55s var(--bounce)}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet.dragging{transition:none}
+.grab{height:30px;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab}
+.grab span{width:36px;height:5px;border-radius:999px;background:var(--line-2)}
+.sheet h2{margin:2px 0 6px;font-size:21px;font-weight:500}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:54px;border:0;border-radius:999px;font:600 16px Inter,sans-serif;cursor:pointer}
+.btn.quiet{background:rgb(var(--hi) / .06);color:var(--text)}
+.btn.danger{background:#E5534B;color:#fff;box-shadow:0 12px 28px -12px rgba(229,83,75,.7)}
+.fld{width:100%;box-sizing:border-box;height:52px;padding:0 16px;border-radius:16px;border:1px solid var(--line);background:rgb(var(--hi) / .04);color:var(--text);font:16px Inter,sans-serif;outline:0;transition:border-color .3s,box-shadow .4s var(--spring)}
+.fld:focus{border-color:rgb(var(--accent-rgb) / .7);box-shadow:0 0 0 4px rgb(var(--accent-rgb) / .13)}
+.safety{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;font:500 17px 'Space Grotesk',sans-serif;letter-spacing:.04em;text-align:center}
+.safety span{padding:10px 0;border-radius:12px;background:rgb(var(--hi) / .05);animation:pop .5s var(--bounce) backwards}
+.shield{width:72px;height:72px;margin:8px auto 0;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--accent);background:radial-gradient(circle,rgb(var(--accent-rgb) / .25),rgb(var(--accent-rgb) / .04));position:relative}
+.shield::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1.5px solid rgb(var(--accent-rgb) / .5);animation:ring 2.2s ease-out infinite}
+@keyframes ring{to{transform:scale(1.5);opacity:0}}
+.toast{position:absolute;left:16px;right:16px;bottom:40px;z-index:40;display:flex;align-items:center;gap:10px;height:50px;padding:0 16px;border-radius:16px;border:1px solid rgb(var(--hi) / .09);font-size:14px}
+.r.dz .lbl{color:#E5534B}
+.switch span{background:#FFFDF8!important}
+/* Apple-style polish: springs, instant press, materials */
+:root{--spring:linear(0,0.043,0.14,0.258,0.376,0.487,0.584,0.667,0.736,0.793,0.838,0.874,0.903,0.925,0.943,0.956,0.967,0.975,0.981,0.986,0.989,0.992,0.994,0.995,1);--bounce:linear(0,0.042,0.141,0.267,0.399,0.526,0.639,0.735,0.813,0.875,0.922,0.957,0.981,0.997,1.007,1.012,1.015,1.015,1.014,1.012,1.01,1.008,1.007,1.005,1.004,1.002,1.002,1.001,1.001,1,1);--ease:cubic-bezier(.25,.1,.25,1)}
+body{-webkit-font-smoothing:antialiased;font-optical-sizing:auto}
+*{-webkit-tap-highlight-color:transparent}
+.scr :is(a,button){touch-action:manipulation;transition:transform .5s var(--spring),scale .6s var(--bounce),background-color .3s var(--ease),color .3s var(--ease),border-color .3s var(--ease),opacity .3s var(--ease),box-shadow .3s var(--ease)}
+.scr :is(a,button):active:not(:disabled){transform:none;scale:.965;transition-duration:.5s,80ms,.3s,.3s,.3s,.3s,.3s;transition-timing-function:var(--spring),ease-out,var(--ease)}
+.scr :is(a,button,input,textarea):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rise{animation-timing-function:var(--spring)!important;animation-duration:.55s!important;animation-fill-mode:backwards!important}
+.card{box-shadow:inset 0 1px 0 rgb(var(--hi) / .035)}
+.nav{background:rgb(var(--bg-rgb) / .66)!important;backdrop-filter:blur(24px) saturate(180%)!important;-webkit-backdrop-filter:blur(24px) saturate(180%)!important;border-top:1px solid rgb(var(--hi) / .07)!important}
+.scroll>header{position:sticky;top:0;z-index:5;padding-bottom:12px!important;background:rgb(var(--bg-rgb) / .7);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%)}
+.scroll>header::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;background:linear-gradient(rgb(var(--bg-rgb) / .7),rgb(var(--bg-rgb) / 0));pointer-events:none}
+/* v2 component layer. refs: Magic UI (shimmer button, border beam, marquee), Aceternity (aurora, blur-in), shadcn (surfaces), Vaul/Sonner (sheets, toasts), iOS 26 (floating tab bar) */
+@property --beam{syntax:'<angle>';inherits:false;initial-value:0deg}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .26s var(--ease) both}
+::view-transition-new(root){animation:vtIn .55s var(--spring) both}
+@keyframes vtOut{to{opacity:0;scale:.97;filter:blur(6px)}}
+@keyframes vtIn{from{opacity:0;scale:1.03;filter:blur(10px)}}
+::selection{background:rgb(var(--accent-rgb) / .3)}
+.scr{isolation:isolate}
+.scr::before{content:"";position:absolute;left:-30%;right:-30%;top:-25%;height:65%;z-index:-1;pointer-events:none;background:radial-gradient(38% 50% at 28% 45%,rgb(var(--accent-rgb) / .11),transparent 70%),radial-gradient(34% 44% at 78% 35%,rgb(var(--partner-rgb) / .09),transparent 70%);filter:blur(24px);animation:drift 26s ease-in-out infinite alternate}
+.scr::after{content:"";position:absolute;inset:0;z-index:60;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+@keyframes drift{to{transform:translate3d(7%,5%,0) rotate(9deg)}}
+/* surfaces: gradient hairline, lit top edge, soft depth */
+.card,.tile,.scr [style*="background: var(--surface)"][style*="border: 1px solid var(--line)"]{background:linear-gradient(180deg,var(--card-a),var(--card-b)) padding-box,linear-gradient(170deg,rgb(var(--hi) / .12),rgb(var(--hi) / .03) 42%,rgb(var(--accent-rgb) / .12)) border-box!important;border:1px solid transparent!important;box-shadow:inset 0 1px 0 rgb(var(--hi) / .045),0 1px 2px rgb(var(--shadow) / .45),0 14px 34px -18px rgb(var(--shadow) / .9)!important}
+.tile{position:relative;overflow:hidden}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120px circle at 20% 0%,color-mix(in srgb,var(--tint,var(--accent)) 14%,transparent),transparent 70%);opacity:.6;transition:opacity .4s var(--ease)}
+.tile:hover::after{opacity:1}
+.tile:hover{transform:translateY(-3px)!important;box-shadow:inset 0 1px 0 rgb(var(--hi) / .06),0 0 0 1px color-mix(in srgb,var(--tint,var(--accent)) 30%,transparent),0 18px 36px -16px color-mix(in srgb,var(--tint,var(--accent)) 35%,transparent)!important}
+.tile .glyph{color:var(--tint,var(--accent))!important;background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--tint,var(--accent)) 30%,transparent),color-mix(in srgb,var(--tint,var(--accent)) 6%,transparent) 75%)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tint,var(--accent)) 22%,transparent),0 8px 18px -8px color-mix(in srgb,var(--tint,var(--accent)) 55%,transparent);transition:transform .6s var(--bounce)}
+.tile:hover .glyph{transform:translateY(-2px) rotate(-8deg) scale(1.08)}
+/* controls */
+.iconbtn{background:rgb(var(--hi) / .045)!important;border-color:rgb(var(--hi) / .09)!important;backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);box-shadow:inset 0 1px 0 rgb(var(--hi) / .08),0 6px 16px -8px rgb(var(--shadow) / .8)}
+.primary{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,var(--accent-hi),var(--accent) 48%,var(--accent-lo))!important;color:var(--on-accent)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(110,70,0,.25),0 12px 30px -12px rgb(var(--accent-rgb) / .7)!important;letter-spacing:-.01em}
+.primary::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 38%,rgb(var(--hi) / .55) 50%,transparent 62%);transform:translateX(-130%);animation:sheen 5s var(--ease) 1.4s infinite}
+@keyframes sheen{0%{transform:translateX(-130%)}28%,100%{transform:translateX(130%)}}
+.primary:disabled{background:var(--surface-2)!important;color:var(--faint)!important;box-shadow:inset 0 0 0 1px var(--line)!important}
+.primary:disabled::after{display:none}
+.ghost{background:rgb(var(--hi) / .04)!important;border-color:rgb(var(--hi) / .1)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgb(var(--hi) / .07)}
+.field{background:rgb(var(--hi) / .035)!important;transition:border-color .3s var(--ease),box-shadow .4s var(--spring)}
+.field:focus{border-color:rgb(var(--accent-rgb) / .7)!important;box-shadow:0 0 0 4px rgb(var(--accent-rgb) / .13),0 8px 24px -12px rgb(var(--accent-rgb) / .4)}
+.chip{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgb(var(--hi) / .05)}
+.seg[aria-pressed="true"]{box-shadow:inset 0 1px 0 rgb(var(--hi) / .08),0 4px 14px -4px rgb(var(--shadow) / .6)}
+/* iOS switch: the thumb stretches while held */
+.switch span{box-shadow:0 2px 6px rgb(var(--shadow) / .4),inset 0 -1px 0 rgb(var(--shadow) / .08);transition:transform .5s var(--bounce),width .35s var(--spring)!important}
+.switch:active span{width:32px}
+.switch[aria-checked="true"]:active span{transform:translateX(14px)}
+.switch[aria-checked="true"]{box-shadow:0 0 20px -4px rgb(var(--accent-rgb) / .55),inset 0 1px 0 rgb(var(--hi) / .3)}
+/* floating glass tab bar */
+.nav{left:14px!important;right:14px!important;bottom:20px!important;height:64px!important;padding:0 6px!important;align-items:center!important;border-radius:999px!important;border:1px solid rgb(var(--hi) / .09)!important;box-shadow:inset 0 1px 0 rgb(var(--hi) / .09),0 20px 44px -14px rgb(var(--shadow) / .85)!important;z-index:20}
+.nav a{flex:1;min-width:0!important;padding:7px 0 6px!important;border-radius:999px;font-size:10.5px!important}
+.nav a.on{background:linear-gradient(180deg,rgb(var(--accent-rgb) / .18),rgb(var(--accent-rgb) / .05));box-shadow:inset 0 0 0 1px rgb(var(--accent-rgb) / .2),inset 0 1px 0 rgb(var(--hi) / .08)}
+.nav a.on svg{animation:navPop .7s var(--bounce) both}
+.nav .badge{top:3px!important;right:calc(50% - 24px)!important;box-shadow:0 0 0 2px var(--card-b)}
+@keyframes navPop{from{scale:.6;opacity:.4}}
+.toast{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgb(var(--surface-rgb) / .78)!important;box-shadow:0 18px 40px -14px rgb(var(--shadow) / .85),inset 0 1px 0 rgb(var(--hi) / .07);animation:toastIn .6s var(--bounce) both!important}
+@keyframes toastIn{from{opacity:0;transform:translateY(24px) scale(.94);filter:blur(6px)}}
+/* type */
+.scr h1.disp:not(.plain){background:linear-gradient(180deg,var(--text) 15%,var(--text-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.shine{background:linear-gradient(110deg,var(--accent) 30%,var(--accent-hi) 46%,var(--partner) 62%,var(--accent) 80%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:shine 7s linear infinite}
+@keyframes shine{from{background-position:120% 0}to{background-position:-130% 0}}
+/* border beam */
+.beam{position:relative}
+.beam::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;z-index:2;background:conic-gradient(from var(--beam),transparent 0 70%,rgb(var(--accent-rgb) / .9) 84%,var(--partner) 92%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:beam 7s linear infinite}
+@keyframes beam{to{--beam:360deg}}
+/* entrances blur in; scroll-driven reveal and header edge */
+@keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}}
+@supports (animation-timeline:view()){
+.scroll .card:not(.rise){animation:reveal linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+.scroll>header::after{animation:edge linear both;animation-timeline:scroll();animation-range:0 48px}
+}
+@keyframes reveal{from{opacity:0;transform:translateY(28px) scale(.97);filter:blur(6px)}}
+@keyframes edge{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:opacity .2s ease,background-color .2s ease,color .2s ease!important}.scr :is(a,button):active{scale:none!important}}
+@media (prefers-reduced-transparency:reduce){.nav,.scroll>header,.toast,.sheet,.tag{background:var(--surface)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@media (prefers-contrast:more){.card,.tile,.iconbtn{border-color:var(--faint)!important}.sub,.eyebrow{color:var(--text-2)!important}}
+</style>
+</helmet>
+<div class="scr">
+<div class="scroll">
+  <header style="padding: 58px 16px 0; display: flex; align-items: center; gap: 12px">
+    <a class="iconbtn" href="Main.dc.html" aria-label="Back to home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a>
+    <h1 class="disp" style="flex: 1; margin: 0; font-size: 20px; font-weight: 500; text-align: center">Settings</h1>
+    <span style="width: 44px"></span>
+  </header>
+
+  <section class="group rise" style="margin-top: 20px; padding: 16px; display: flex; align-items: center; gap: 14px">
+    <span style="width: 56px; height: 56px; border-radius: 999px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font: 600 22px 'Space Grotesk', sans-serif; flex: none">R</span>
+    <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{name}}</span><span class="sub" style="display: block; font-size: 13px; margin-top: 2px">Husband · paired with Naziha</span></span>
+    <button type="button" onClick="{{openProfile}}" style="border: 0; background: none; color: var(--accent); font: 600 14px Inter, sans-serif; min-height: 44px; cursor: pointer">Edit</button>
+  </section>
+
+  <div class="eyebrow">Your space</div>
+  <section class="group">
+    <a class="r" href="Us.dc.html"><span style="width: 28px; height: 28px; border-radius: 999px; background: var(--partner); color: var(--on-partner); display: flex; align-items: center; justify-content: center; font: 600 12px 'Space Grotesk', sans-serif">N</span><span class="lbl">Naziha</span><span class="val">since 15 Dec 2024</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    <button class="r" type="button" onClick="{{openSecurity}}" style="width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer"><svg class="ico" viewBox="0 0 24 24" style="color: var(--accent)" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.7 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg><span class="lbl">Encryption</span><span class="val">Verified</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+  </section>
+
+  <div class="eyebrow">Prayer</div>
+  <section class="group">
+    <a class="r" href="Onboarding.dc.html"><span class="lbl">Calculation method</span><span class="val">ISNA</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    <div class="r"><span class="lbl">Asr time</span><div class="segs" role="group" aria-label="Asr time" style="width: 170px"><button class="seg" type="button" aria-pressed="{{std}}" onClick="{{pickStd}}">Standard</button><button class="seg" type="button" aria-pressed="{{hanafi}}" onClick="{{pickHanafi}}">Hanafi</button></div></div>
+    <div class="r"><span class="lbl">Adhan reminders</span><button class="switch" type="button" role="switch" aria-checked="{{adhan}}" aria-label="Adhan reminders" onClick="{{tAdhan}}"><span></span></button></div>
+    <div class="r"><span class="lbl">Tell me when Naziha prays</span><button class="switch" type="button" role="switch" aria-checked="{{partner}}" aria-label="Tell me when Naziha prays" onClick="{{tPartner}}"><span></span></button></div>
+  </section>
+
+  <div class="eyebrow">Appearance</div>
+  <section class="group">
+    <button class="r" type="button" onClick="{{openTheme}}" style="width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer">
+      <span class="tsw" style="background: {{cur.bg}}; border-color: {{cur.ln}}"><svg viewBox="0 0 30 20" aria-hidden="true"><circle cx="11" cy="10" r="7" fill="none" stroke-width="2.2" style="stroke: {{cur.ac}}"></circle><circle cx="19" cy="10" r="7" fill="none" stroke-width="2.2" style="stroke: {{cur.pa}}"></circle></svg></span>
+      <span class="lbl">Theme<span class="sub" style="display: block; font-size: 12.5px; margin-top: 2px">{{cur.label}} · {{cur.mood}}</span></span>
+      <svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+    </button>
+  </section>
+
+  <div class="eyebrow">Privacy</div>
+  <section class="group">
+    <div class="r"><span class="lbl">Share my location for prayer times<span class="sub" style="display: block; font-size: 12px; margin-top: 2px">Only Naziha sees your city.</span></span><button class="switch" type="button" role="switch" aria-checked="{{loc}}" aria-label="Share my location" onClick="{{tLoc}}"><span></span></button></div>
+    <div class="r"><span class="lbl">Lock with Face ID</span><button class="switch" type="button" role="switch" aria-checked="{{lock}}" aria-label="Lock with Face ID" onClick="{{tLock}}"><span></span></button></div>
+  </section>
+
+  <section class="group" style="margin-top: 26px">
+    <button class="r" type="button" onClick="{{openAbout}}" style="width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer"><span class="lbl">About Lovinity</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+    <button class="r" type="button" onClick="{{openSignout}}" style="width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer"><span class="lbl">Sign out</span></button>
+    <button class="r dz" type="button" onClick="{{openLeave}}" style="width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer"><span class="lbl">Leave this space</span></button>
+  </section>
+  <p class="sub" style="margin: 14px 20px 0; font-size: 12px; line-height: 1.5">Leaving your space deletes its keys on this phone. Naziha keeps her copy of your history.</p>
+</div>
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}"><div class="toast" role="status"><svg class="ico" viewBox="0 0 24 24" style="color: var(--accent)" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{toast}}</div></sc-if>
+<sc-if value="{{sheetOpen}}" hint-placeholder-val="{{ false }}">
+  <div class="scrim" onClick="{{close}}" style="opacity: {{scrimOp}}"></div>
+  <div class="{{sheetCls}}" role="dialog" aria-modal="true" aria-label="{{sheetTitle}}" style="transform: translateY({{sdy}}px)">
+    <div class="grab" onPointerDown="{{sdown}}" onPointerMove="{{smove}}" onPointerUp="{{sup}}" onPointerCancel="{{sup}}" title="Drag down to close"><span></span></div>
+    <h2 class="disp plain">{{sheetTitle}}</h2>
+    <sc-if value="{{isTheme}}" hint-placeholder-val="{{ false }}">
+      <div class="tprev" aria-hidden="true">
+        <div class="tph"><span class="a1">R</span><span class="a2">N</span><b>You and Naziha</b><i>12 Jumada II</i></div>
+        <div class="thero"><svg width="44" height="30" viewBox="0 0 140 88" aria-hidden="true"><circle cx="50" cy="44" r="34" fill="none" stroke-width="7" style="stroke: var(--accent)"></circle><circle cx="90" cy="44" r="34" fill="none" stroke-width="7" style="stroke: var(--partner)"></circle></svg><span><small>Next prayer</small><strong>Maghrib</strong></span><em>1:42:08</em></div>
+      </div>
+      <div class="tlab">Dark</div>
+      <div class="tgrid" role="radiogroup" aria-label="Dark themes"><sc-for list="{{themesDark}}" as="t" hint-placeholder-count="5"><button class="tt" type="button" role="radio" aria-checked="{{t.on}}" onClick="{{t.pick}}"><span class="tsw" style="background: {{t.bg}}; border-color: {{t.ln}}"><svg viewBox="0 0 30 20" aria-hidden="true"><circle cx="11" cy="10" r="7" fill="none" stroke-width="2.2" style="stroke: {{t.ac}}"></circle><circle cx="19" cy="10" r="7" fill="none" stroke-width="2.2" style="stroke: {{t.pa}}"></circle></svg><sc-if value="{{t.isOn}}" hint-placeholder-val="{{ false }}"><span class="tck"><svg class="ico" viewBox="0 0 24 24" style="width: 11px; height: 11px; stroke-width: 3.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if></span><span><b>{{t.label}}</b><small>{{t.mood}}</small></span></button></sc-for></div>
+      <div class="tlab">Light</div>
+      <div class="tgrid" role="radiogroup" aria-label="Light themes"><sc-for list="{{themesLight}}" as="t" hint-placeholder-count="2"><button class="tt" type="button" role="radio" aria-checked="{{t.on}}" onClick="{{t.pick}}"><span class="tsw" style="background: {{t.bg}}; border-color: {{t.ln}}"><svg viewBox="0 0 30 20" aria-hidden="true"><circle cx="11" cy="10" r="7" fill="none" stroke-width="2.2" style="stroke: {{t.ac}}"></circle><circle cx="19" cy="10" r="7" fill="none" stroke-width="2.2" style="stroke: {{t.pa}}"></circle></svg><sc-if value="{{t.isOn}}" hint-placeholder-val="{{ false }}"><span class="tck"><svg class="ico" viewBox="0 0 24 24" style="width: 11px; height: 11px; stroke-width: 3.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if></span><span><b>{{t.label}}</b><small>{{t.mood}}</small></span></button></sc-for></div>
+      <button class="btn quiet" type="button" style="margin-top: 20px" onClick="{{close}}">Done</button>
+    </sc-if>
+    <sc-if value="{{isProfile}}" hint-placeholder-val="{{ false }}">
+      <label class="sub" for="pname" style="display: block; font-size: 13px; margin: 14px 0 8px">Your name</label>
+      <input id="pname" class="fld" value="{{draftName}}" onChange="{{onName}}" autocomplete="name">
+      <div class="sub" style="font-size: 13px; margin: 16px 0 8px">Naziha sees you as</div>
+      <div class="segs" role="group" aria-label="Role" style="width: 100%; box-sizing: border-box"><button class="seg" type="button" aria-pressed="true">Husband</button><button class="seg" type="button" aria-pressed="false">Just my name</button></div>
+      <button class="primary btn" type="button" style="margin-top: 22px" disabled="{{noName}}" onClick="{{saveProfile}}">Save</button>
+    </sc-if>
+    <sc-if value="{{isSecurity}}" hint-placeholder-val="{{ false }}">
+      <div class="shield"><svg class="ico" viewBox="0 0 24 24" style="width: 32px; height: 32px" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.7 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg></div>
+      <p class="sub" style="text-align: center; font-size: 14px; line-height: 1.5; margin: 14px 0 0">Your messages are end-to-end encrypted. Compare these numbers with Naziha's phone. If they match, no one is in between.</p>
+      <div class="safety" aria-label="Safety number"><sc-for list="{{safety}}" as="n" hint-placeholder-count="12"><span style="animation-delay: {{n.d}}">{{n.v}}</span></sc-for></div>
+      <button class="btn quiet" type="button" style="margin-top: 20px" onClick="{{close}}">Done</button>
+    </sc-if>
+    <sc-if value="{{isAbout}}" hint-placeholder-val="{{ false }}">
+      <p class="sub" style="font-size: 14px; line-height: 1.55; margin: 8px 0 0">Lovinity 1.0 · A private space for the two of you, built around your deen.</p>
+      <div class="group" style="margin: 16px 0 0"><div class="r"><span class="lbl">Privacy policy</span></div><div class="r"><span class="lbl">Terms</span></div><div class="r"><span class="lbl">Send feedback</span></div></div>
+      <button class="btn quiet" type="button" style="margin-top: 18px" onClick="{{close}}">Close</button>
+    </sc-if>
+    <sc-if value="{{isSignout}}" hint-placeholder-val="{{ false }}">
+      <p class="sub" style="font-size: 15px; line-height: 1.5; margin: 6px 0 0">Your space stays as it is. Sign in again any time with your email.</p>
+      <a class="btn quiet" href="Welcome.dc.html" style="margin-top: 22px; text-decoration: none">Sign out</a>
+      <button class="btn" type="button" style="margin-top: 8px; background: none; color: var(--accent)" onClick="{{close}}">Cancel</button>
+    </sc-if>
+    <sc-if value="{{isLeave}}" hint-placeholder-val="{{ false }}">
+      <p class="sub" style="font-size: 15px; line-height: 1.5; margin: 6px 0 0">This deletes the space's keys on this phone. Naziha keeps her copy of your history. This can't be undone.</p>
+      <label class="sub" for="lconf" style="display: block; font-size: 13px; margin: 16px 0 8px">Type LEAVE to confirm</label>
+      <input id="lconf" class="fld" value="{{leaveText}}" onChange="{{onLeave}}" autocomplete="off" style="text-transform: uppercase">
+      <a class="btn danger" href="Welcome.dc.html" aria-disabled="{{cantLeave}}" style="margin-top: 18px; text-decoration: none; {{leaveStyle}}">Leave space</a>
+      <button class="btn" type="button" style="margin-top: 8px; background: none; color: var(--accent)" onClick="{{close}}">Keep my space</button>
+    </sc-if>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props);
+    // theme: read the saved choice once per document and follow changes made on other screens
+    if (!window.__lvTheme) { window.__lvTheme = 1;
+      const apply = (t, x, y) => { const h = document.documentElement, go = () => h.setAttribute('data-theme', t || 'midnight');
+        if (h.hasAttribute('data-theme') && h.getAttribute('data-theme') !== t && document.startViewTransition) {
+          h.style.setProperty('--vx', (x == null ? innerWidth / 2 : x) + 'px'); h.style.setProperty('--vy', (y == null ? innerHeight * 0.4 : y) + 'px');
+          h.classList.add('theme-vt'); const vt = document.startViewTransition(go); vt.finished.finally(() => h.classList.remove('theme-vt'));
+        } else go(); };
+      window.__lvApply = apply;
+      let t = 'midnight'; try { t = localStorage.getItem('lovinity-theme') || 'midnight'; } catch (e) {}
+      apply(t);
+      window.addEventListener('storage', (e) => { if (e.key === 'lovinity-theme') apply(e.newValue); });
+    }
+ let theme = 'midnight'; try { theme = localStorage.getItem('lovinity-theme') || 'midnight'; } catch (e) {}
+    this.state = { asr: 'std', adhan: true, partner: true, loc: true, lock: false, theme, name: 'Ridwan', draftName: 'Ridwan', sheet: null, sdy: 0, sdrag: false, toast: null, leaveText: '' }; }
+  componentWillUnmount() { clearTimeout(this.t); clearTimeout(this.tt); }
+  open(sheet) { clearTimeout(this.t); this.setState({ sheet, sdy: 0, draftName: this.state.name, leaveText: '' }); }
+  dismiss() {
+    // shortcut: CSS spring can't inherit release velocity; use a JS spring in the real app
+    clearTimeout(this.t); this.setState({ sdy: 640, sdrag: false });
+    this.t = setTimeout(() => this.setState({ sheet: null, sdy: 0 }), 380);
+  }
+  toast(text) { clearTimeout(this.tt); this.setState({ toast: text }); this.tt = setTimeout(() => this.setState({ toast: null }), 2400); }
+  renderVals() {
+    const s = this.state;
+    const flip = (k) => () => this.setState((p) => ({ [k]: !p[k] }));
+    const themes = [
+        ['midnight', 'Midnight Gold', 'Black and gold', '#0A0A0A', '#141414', '#2A2722', '#F2C14E', '#E9A6A0', '#F5F1E8'],
+        ['emerald', 'Emerald Masjid', 'Deep green, gilded', '#06110D', '#0D1C16', '#1E3A2E', '#E3C26F', '#F0A9A0', '#EEF5EF'],
+        ['lapis', 'Lapis Night', 'Navy and sky', '#070B16', '#0F1626', '#22304D', '#8EC5FF', '#F2B6C9', '#EEF2FA'],
+        ['rose', 'Rose Noir', 'Ink and blush', '#0C0809', '#171012', '#33242A', '#F0A2B0', '#F2C14E', '#F8EEF0'],
+        ['desert', 'Desert Ember', 'Warm dusk', '#120C08', '#1C140E', '#3A2A1E', '#E8875A', '#E9C46A', '#F7EDE3'],
+        ['sandstone', 'Sandstone Day', 'Light, warm paper', '#F6F1E7', '#FFFDF8', '#E2D7C3', '#B8862B', '#C76B62', '#1E1A14'],
+        ['pearl', 'Pearl Mint', 'Light and fresh', '#F3F6F4', '#FFFFFF', '#D6E1DA', '#1F8A5B', '#D9776B', '#10201A']
+      ].map(([k, label, mood, bg, sf, ln, ac, pa, tx], idx) => ({ k, dark: idx < 5,
+        label, mood, bg, sf, ln, ac, pa, tx, on: s.theme === k ? 'true' : 'false', isOn: s.theme === k,
+        // the new theme spreads out from the swatch you touched
+        pick: (e) => {
+          if (this.state.theme === k) return;
+          try { localStorage.setItem('lovinity-theme', k); } catch (x) {}
+          try { if (navigator.vibrate) navigator.vibrate(10); } catch (x) {}
+          if (window.__lvApply) window.__lvApply(k, e.clientX || null, e.clientY || null);
+          this.setState({ theme: k });
+        }
+      }));
+    const vals = {
+      std: s.asr === 'std', hanafi: s.asr === 'hanafi',
+      pickStd: () => this.setState({ asr: 'std' }), pickHanafi: () => this.setState({ asr: 'hanafi' }),
+      adhan: s.adhan, partner: s.partner, loc: s.loc, lock: s.lock,
+      tAdhan: flip('adhan'), tPartner: flip('partner'), tLoc: flip('loc'), tLock: flip('lock'),
+      themes,
+      ...(() => {
+        const all = themes;
+        const cur = all.find((t) => t.isOn) || all[0];
+        return { cur, themesDark: all.filter((t) => t.dark), themesLight: all.filter((t) => !t.dark), openTheme: () => this.open('theme'), isTheme: s.sheet === 'theme' };
+      })(),
+      name: s.name, draftName: s.draftName, noName: !s.draftName.trim(), onName: (e) => this.setState({ draftName: e.target.value }),
+      saveProfile: () => { this.setState({ name: this.state.draftName.trim() }); this.dismiss(); this.toast('Profile updated'); },
+      hasToast: !!s.toast, toast: s.toast || '',
+      openProfile: () => this.open('profile'), openSecurity: () => this.open('security'), openAbout: () => this.open('about'),
+      openSignout: () => this.open('signout'), openLeave: () => this.open('leave'),
+      sheetOpen: !!s.sheet, isProfile: s.sheet === 'profile', isSecurity: s.sheet === 'security', isAbout: s.sheet === 'about', isSignout: s.sheet === 'signout', isLeave: s.sheet === 'leave',
+      sheetTitle: { theme: 'Choose a theme', profile: 'Edit profile', security: 'Verify encryption', about: 'About Lovinity', signout: 'Sign out?', leave: 'Leave this space?' }[s.sheet] || '',
+      safety: '48213 90217 55102 73390 11846 62905 30177 84462 27350 95518 40623 71189'.split(' ').map((v, i) => ({ v, d: (i * 0.03).toFixed(2) + 's' })),
+      leaveText: s.leaveText, onLeave: (e) => this.setState({ leaveText: e.target.value }),
+      cantLeave: s.leaveText.trim().toUpperCase() !== 'LEAVE' ? 'true' : 'false',
+      // the destructive action stays inert until it's typed out
+      leaveStyle: s.leaveText.trim().toUpperCase() === 'LEAVE' ? '' : 'opacity: .35; pointer-events: none',
+      close: () => this.dismiss(),
+      sdy: s.sdy.toFixed(1), scrimOp: Math.max(0, 1 - s.sdy / 420).toFixed(3), sheetCls: s.sdrag ? 'sheet dragging' : 'sheet',
+      sdown: (e) => { e.currentTarget.setPointerCapture(e.pointerId); this.sd = { y0: e.clientY - this.state.sdy, hist: [[e.timeStamp, e.clientY]] }; this.setState({ sdrag: true }); },
+      smove: (e) => { if (!this.sd) return; const raw = e.clientY - this.sd.y0; const sdy = raw >= 0 ? raw : -((-raw) * 400 * 0.55) / (400 + 0.55 * -raw); this.sd.hist.push([e.timeStamp, e.clientY]); if (this.sd.hist.length > 6) this.sd.hist.shift(); this.setState({ sdy }); },
+      sup: () => { if (!this.sd) return; const h = this.sd.hist, a = h[0], b = h[h.length - 1]; const v = b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) * 1000 : 0; this.sd = null; if (this.state.sdy + (v / 1000) * 0.998 / (1 - 0.998) > 180) this.dismiss(); else this.setState({ sdy: 0, sdrag: false }); }
+    };
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

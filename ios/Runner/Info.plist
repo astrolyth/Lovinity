@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>
@@ -66,19 +68,35 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Lovinity uses Face ID to keep your space locked when you're away.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Lovinity uses your location once to calculate accurate prayer times for where you are.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>Lovinity saves the daily vlogs you choose to keep to your photo library.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Lovinity needs access to your photo library to share photos and videos with your spouse.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Lovinity needs access to your camera to take photos and videos to share with your spouse.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Lovinity needs access to your microphone to record videos to share with your spouse.</string>
+		<string>Lovinity needs access to your microphone to record voice notes and videos for your spouse.</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.lovinity.lovinity</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>lovinity</string>
+				</array>
+			</dict>
+		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>remote-notification</string>
+			<string>location</string>
 		</array>
 	</dict>
 </plist>

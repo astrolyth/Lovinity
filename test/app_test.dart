@@ -11,10 +11,7 @@ void main() {
     });
 
     test("'message' routes to /home/chat", () {
-      expect(
-        routeForTap(const NotificationTap(type: 'message')),
-        '/home/chat',
-      );
+      expect(routeForTap(const NotificationTap(type: 'message')), '/home/chat');
     });
 
     test("'reaction' routes to /home/chat", () {
@@ -26,6 +23,18 @@ void main() {
 
     test("'pairing' routes to /home", () {
       expect(routeForTap(const NotificationTap(type: 'pairing')), '/home');
+    });
+
+    test("'wall' routes to /wall", () {
+      expect(routeForTap(const NotificationTap(type: 'wall')), '/wall');
+    });
+
+    test("'moment' routes to /moments, the nudge to the camera", () {
+      expect(routeForTap(const NotificationTap(type: 'moment')), '/moments');
+      expect(
+        routeForTap(const NotificationTap(type: 'moment_nudge')),
+        '/moments/camera',
+      );
     });
 
     test('an unrecognized type routes nowhere', () {

@@ -15,10 +15,16 @@ final pushServiceProvider = Provider<PushService>((ref) {
   return service;
 });
 
-/// Singleton [NotificationStore] over the same local DB chat uses, so it's
-/// covered by the same account-switch wipe (`SignalDb.wipeAll()`).
+/// [NotificationStore] over the signed-in account's own local DB (the same one
+/// chat uses), so each account sees only its own notification history.
+/// Every reader already checks for a signed-in user first.
 final notificationStoreProvider = Provider<NotificationStore>((ref) {
-  return NotificationStore(ref.watch(signalDbProvider));
+  final selfId =
+      ref.watch(authSessionProvider.select((s) => s.asData?.value?.user.id));
+  if (selfId == null) {
+    throw StateError('notificationStoreProvider read while signed out');
+  }
+  return NotificationStore(ref.watch(signalDbProvider(selfId)));
 });
 
 /// Live count of unread in-app notifications, for the home bell badge.

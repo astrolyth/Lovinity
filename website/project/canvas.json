@@ -1,0 +1,214 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-22T22:50:00Z"
+  },
+  "title": "Lovinity Redesign",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Home — hero",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Prayer.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Prayer log",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Duas.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Duas & adhkar",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Tasbih.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Tasbih together",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Chat.dc.html": {
+      "x": 0,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Private chat",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Moments.dc.html": {
+      "x": 470,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Moments",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Wall.dc.html": {
+      "x": 940,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Our wall",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Letters.dc.html": {
+      "x": 1410,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Letters",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Daily.dc.html": {
+      "x": 0,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "Daily verse & question",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Cycle.dc.html": {
+      "x": 470,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "Cycle",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Plan.dc.html": {
+      "x": 940,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "Plan — week, meals, groceries",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Us.dc.html": {
+      "x": 1410,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "Us — love map, dates, care",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Welcome.dc.html": {
+      "x": 0,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "Welcome & sign in",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Onboarding.dc.html": {
+      "x": 940,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "Onboarding",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Pair.dc.html": {
+      "x": 1410,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "Pair — your space of two",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Notifications.dc.html": {
+      "x": 1880,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "Notifications",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Settings.dc.html": {
+      "x": 2350,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "Settings",
+      "is_interactive": true,
+      "radius": 44
+    },
+    "Auth.dc.html": {
+      "x": 470,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "Sign in · Sign up · Forgot password",
+      "is_interactive": true,
+      "radius": 44
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Prayer.dc.html",
+    "Duas.dc.html",
+    "Tasbih.dc.html",
+    "Chat.dc.html",
+    "Moments.dc.html",
+    "Wall.dc.html",
+    "Letters.dc.html",
+    "Daily.dc.html",
+    "Cycle.dc.html",
+    "Plan.dc.html",
+    "Us.dc.html",
+    "Welcome.dc.html",
+    "Auth.dc.html",
+    "Onboarding.dc.html",
+    "Pair.dc.html",
+    "Notifications.dc.html",
+    "Settings.dc.html"
+  ],
+  "notes": {
+    "title": {
+      "x": 0,
+      "y": -300,
+      "text": "Lovinity — redesign",
+      "kind": "title1",
+      "maxW": 1800
+    },
+    "why": {
+      "x": 1900,
+      "y": 0,
+      "w": 380,
+      "fill": "orange",
+      "size": "s",
+      "text": "Direction\n\n• Dark hero, one lit color: gold. Depth comes from surface steps (#0A0A0A → #141414 → #1C1A16), not gradients.\n• Each person keeps one color everywhere: you = gold, your spouse = rose. Paired pips, avatars, chat bubbles and the tasbih ring all use it.\n• Home replaces the 12-card stack with one hero (next prayer + today's shared pips) and a Deen / Us / Home switcher that reaches all 18 features in one tap.\n• Every motion has a cause: the ring counts down live, pips fill when a prayer is logged, tiles rise when you switch groups. Reduced motion turns it all off.\n• Type unchanged: Space Grotesk display, Inter body, Amiri for Arabic.\n\nPress Play on any frame: tabs, toggles, the tasbih and checklists work, and tiles link between screens."
+    }
+  },
+  "designSystems": []
+}

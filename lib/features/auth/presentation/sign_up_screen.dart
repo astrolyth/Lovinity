@@ -3,13 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/failures.dart';
+import '../../../core/theme/theme.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
 import '../domain/auth_controller.dart';
 
-/// Minimum password length. Stricter than the server's current floor (6);
-/// raise `minimum_password_length` to match when convenient.
+/// Mirrors supabase/config.toml: `minimum_password_length = 8`,
+/// `password_requirements = "letters_digits"`.
 const int kMinPasswordLength = 8;
+
+/// The password rule's error message, or null when [password] passes.
+String? passwordProblem(String password) {
+  if (password.length < kMinPasswordLength) {
+    return 'Password must be at least $kMinPasswordLength characters.';
+  }
+  if (!password.contains(RegExp(r'[A-Za-z]')) ||
+      !password.contains(RegExp(r'[0-9]'))) {
+    return 'Password must include both letters and numbers.';
+  }
+  return null;
+}
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -27,6 +40,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   String? _gender;
   String _madhhab = 'shafi';
   bool _busy = false;
+  bool _agree = false;
   String? _error;
 
   @override
@@ -46,10 +60,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return 'Please enter a valid email.';
     }
     if (_gender == null) return 'Please select whether you are a man or woman.';
-    if (_password.text.length < kMinPasswordLength) {
-      return 'Password must be at least $kMinPasswordLength characters.';
-    }
+    final passwordError = passwordProblem(_password.text);
+    if (passwordError != null) return passwordError;
     if (_password.text != _confirm.text) return 'Passwords do not match.';
+    if (!_agree) return 'Please agree to the Terms and Privacy Policy.';
     return null;
   }
 
@@ -65,7 +79,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
     final email = _email.text.trim();
     try {
-      await ref.read(authRepositoryProvider).signUpWithProfile(
+      await ref
+          .read(authRepositoryProvider)
+          .signUpWithProfile(
             email: email,
             password: _password.text,
             displayName: _name.text.trim(),
@@ -93,7 +109,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final theme = Theme.of(context);
     return LovScaffold(
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
+        tooltip: 'Back',
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
         onPressed: () => context.pop(),
       ),
       child: Center(
@@ -103,12 +120,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const SizedBox(height: 22),
+                Text('Create your space', style: lovDisplay(context, size: 34)),
+                const SizedBox(height: 8),
                 Text(
-                  'Create your account',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.displaySmall,
+                  'A private space for the two of you. Your spouse joins '
+                  'with a code once you are in.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: context.lov.muted,
+                  ),
                 ),
-                const SizedBox(height: LovSpace.xxl),
+                const SizedBox(height: 24),
                 TextField(
                   controller: _name,
                   textCapitalization: TextCapitalization.words,
@@ -161,7 +185,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   items: const [
                     DropdownMenuItem(
-                        value: 'shafi', child: Text('Shāfiʿī / other')),
+                      value: 'shafi',
+                      child: Text('Shāfiʿī / other'),
+                    ),
                     DropdownMenuItem(value: 'hanafi', child: Text('Ḥanafī')),
                   ],
                   onChanged: (v) => setState(() => _madhhab = v ?? 'shafi'),
@@ -177,6 +203,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     prefixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
                 ),
+                ListenableBuilder(
+                  listenable: _password,
+                  builder: (context, _) =>
+                      _StrengthMeter(password: _password.text),
+                ),
                 const SizedBox(height: LovSpace.md),
                 TextField(
                   controller: _confirm,
@@ -188,6 +219,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     prefixIcon: Icon(Icons.lock_outline, size: 20),
                   ),
                   onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: LovSpace.sm),
+                CheckboxListTile(
+                  value: _agree,
+                  onChanged: (v) => setState(() => _agree = v ?? false),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'I agree to the Terms and Privacy Policy. '
+                    'We never read your messages.',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: LovSpace.md),
@@ -248,9 +291,79 @@ class _GenderChip extends StatelessWidget {
             color: selected ? scheme.primary : scheme.outlineVariant,
             width: selected ? 2 : 1,
           ),
-          color: selected ? scheme.primaryContainer.withValues(alpha: 0.4) : null,
+          color: selected
+              ? scheme.primaryContainer.withValues(alpha: 0.4)
+              : null,
         ),
         child: Text(label),
+      ),
+    );
+  }
+}
+
+/// Four bars and a word, from the same rules the server enforces.
+class _StrengthMeter extends StatelessWidget {
+  const _StrengthMeter({required this.password});
+  final String password;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.lov;
+    if (password.isEmpty) return const SizedBox(height: 8);
+    var score = 0;
+    if (password.length >= kMinPasswordLength) score++;
+    if (password.contains(RegExp(r'[A-Za-z]')) &&
+        password.contains(RegExp(r'[0-9]'))) {
+      score++;
+    }
+    if (password.length >= 12) score++;
+    if (password.contains(RegExp(r'[^A-Za-z0-9]'))) score++;
+    final (label, color) = switch (score) {
+      <= 1 => ('Weak', const Color(0xFFE5534B)),
+      2 => ('Okay', p.accentLo),
+      3 => ('Good', p.accent),
+      _ => ('Strong', const Color(0xFF7BD88F)),
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 10, 2, 0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              for (var i = 0; i < 4; i++) ...[
+                if (i > 0) const SizedBox(width: 4),
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: i < score ? color : p.line,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                'Password strength',
+                style: TextStyle(fontSize: 12, color: p.muted),
+              ),
+              const Spacer(),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

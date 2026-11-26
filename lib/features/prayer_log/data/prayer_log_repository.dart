@@ -58,6 +58,10 @@ class PrayerLogRepository {
         .from('prayer_logs')
         .stream(primaryKey: ['id'])
         .eq('couple_id', coupleId)
+        // Newest ~50 days for both spouses; without order+limit the server
+        // returns an arbitrary 1000 rows (max_rows) and drops recent days.
+        .order('date')
+        .limit(500)
         .map((rows) => [
               for (final r in rows)
                 PrayerLogEntry.fromRow(Map<String, dynamic>.from(r)),

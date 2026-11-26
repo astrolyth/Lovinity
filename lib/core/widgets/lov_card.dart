@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/theme.dart';
 import '../theme/tokens.dart';
+import 'lov_kit.dart';
 
 enum LovCardVariant { plain, tonal, outlined }
 
@@ -22,38 +24,32 @@ class LovCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final radius = borderRadius ?? LovRadius.lg;
-
-    final bg = switch (variant) {
-      LovCardVariant.plain => theme.colorScheme.surface,
-      LovCardVariant.tonal => theme.colorScheme.surfaceContainerLow,
-      LovCardVariant.outlined => Colors.transparent,
-    };
-
-    final border = variant == LovCardVariant.outlined
-        ? Border.all(color: theme.colorScheme.outlineVariant)
-        : (variant == LovCardVariant.plain
-            ? Border.all(
-                color: isDark ? LovColors.dividerDark : LovColors.divider,
-                width: 0.5,
-              )
-            : null);
-
+    final p = context.lov;
+    final radius = borderRadius ?? 24.0;
+    if (variant == LovCardVariant.plain) {
+      // The redesign's card: gradient fill, lit hairline, soft depth.
+      return LovSurface(
+        radius: radius,
+        padding: padding,
+        onTap: onTap,
+        child: child,
+      );
+    }
+    final r = BorderRadius.circular(radius);
     return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(radius),
+      color: variant == LovCardVariant.tonal
+          ? p.hi.withValues(alpha: .05)
+          : Colors.transparent,
+      borderRadius: r,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: r,
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            border: border,
-            boxShadow: variant == LovCardVariant.plain
-                ? (isDark ? LovElevation.cardDark : LovElevation.card)
+            borderRadius: r,
+            border: variant == LovCardVariant.outlined
+                ? Border.all(color: p.line)
                 : null,
           ),
           child: child,

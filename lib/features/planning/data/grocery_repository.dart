@@ -17,7 +17,12 @@ class GroceryItem {
     this.qty,
     this.checkedBy,
     this.checkedAt,
+    this.buyerId,
   });
+
+  /// Who is buying it; defaults to whoever added it.
+  final String? buyerId;
+  String get buyer => buyerId ?? createdBy;
 
   final String id;
   final String listId;
@@ -45,6 +50,7 @@ class GroceryItem {
             : DateTime.parse(row['checked_at'] as String),
         position: (row['position'] as num?)?.toInt() ?? 0,
         createdBy: row['created_by'] as String,
+        buyerId: row['buyer_id'] as String?,
       );
 }
 
@@ -145,6 +151,12 @@ class GroceryRepository {
           checked ? DateTime.now().toUtc().toIso8601String() : null,
     }).eq('id', itemId);
   }
+
+  Future<void> setBuyer({required String itemId, required String buyerId}) =>
+      _client
+          .from('grocery_items')
+          .update({'buyer_id': buyerId})
+          .eq('id', itemId);
 
   Future<void> deleteItem(String itemId) async {
     await _client.from('grocery_items').delete().eq('id', itemId);

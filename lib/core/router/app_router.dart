@@ -8,20 +8,30 @@ import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_screen.dart';
+import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
 import '../../features/care/presentation/care_screen.dart';
+import '../../features/chat/domain/chat_providers.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/cycle/presentation/cycle_screen.dart';
 import '../../features/dates/presentation/dates_screen.dart';
 import '../../features/learning/presentation/lesson_screen.dart';
 import '../../features/lovemap/presentation/lovemap_screen.dart';
+import '../../features/daily/presentation/daily_screen.dart';
 import '../../features/daily/presentation/question_screen.dart';
 import '../../features/daily/presentation/verse_reader.dart';
 import '../../features/duas/presentation/dua_list_screen.dart';
+import '../../features/duas/presentation/tasbih_list_screen.dart';
+import '../../features/duas/presentation/tasbih_session_screen.dart';
 import '../../features/gratitude/presentation/gratitude_screen.dart';
 import '../../features/home/domain/home_providers.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/letters/presentation/letters_screen.dart';
+import '../../features/moments/domain/moments_providers.dart';
+import '../../features/moments/presentation/moment_camera_screen.dart';
+import '../../features/moments/presentation/moment_viewer_screen.dart';
+import '../../features/moments/presentation/moment_vlog_screen.dart';
+import '../../features/moments/presentation/moments_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pairing/domain/pairing_providers.dart';
@@ -29,15 +39,24 @@ import '../../features/pairing/presentation/pair_screen.dart';
 import '../../features/planning/presentation/grocery_list_screen.dart';
 import '../../features/planning/presentation/recipe_list_screen.dart';
 import '../../features/planning/presentation/week_plan_screen.dart';
+import '../../features/planning/presentation/week_screen.dart';
 import '../../features/prayer_log/presentation/prayer_log_screen.dart';
 import '../../features/settings/presentation/about_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/us/presentation/us_screen.dart';
+import '../../features/wall/domain/wall_providers.dart';
+import '../../features/wall/presentation/wall_item_screen.dart';
+import '../../features/wall/presentation/wall_screen.dart';
 import '../motion/motion.dart';
+import '../widgets/lov_tab_bar.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 
+final _rootKey = GlobalKey<NavigatorState>();
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: _rootKey,
     initialLocation: '/splash',
     refreshListenable: _RouterRefresh(ref),
     errorBuilder: (context, state) => _RouteErrorScreen(error: state.error),
@@ -63,7 +82,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (!signedIn) {
-        return isAuthRoute ? null : '/auth/sign-in';
+        return isAuthRoute ? null : '/auth/welcome';
       }
 
       // Recovery session in progress: the password isn't saved yet, so let the
@@ -100,18 +119,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (_, _) => const _SplashScreen(),
-      ),
-      GoRoute(
-        path: '/auth/sign-in',
-        builder: (_, _) => const SignInScreen(),
-      ),
-      GoRoute(
-        path: '/auth/sign-up',
-        builder: (_, _) => const SignUpScreen(),
-      ),
+      GoRoute(path: '/splash', builder: (_, _) => const _SplashScreen()),
+      GoRoute(path: '/auth/welcome', builder: (_, _) => const WelcomeScreen()),
+      GoRoute(path: '/auth/sign-in', builder: (_, _) => const SignInScreen()),
+      GoRoute(path: '/auth/sign-up', builder: (_, _) => const SignUpScreen()),
       GoRoute(
         path: '/auth/forgot-password',
         builder: (_, _) => const ForgotPasswordScreen(),
@@ -133,101 +144,254 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return OtpScreen(email: email, purpose: purpose);
         },
       ),
-      GoRoute(
-        path: '/onboarding',
-        builder: (_, _) => const OnboardingScreen(),
-      ),
-      GoRoute(
-        path: '/pair',
-        builder: (_, _) => const PairScreen(),
-      ),
-      GoRoute(
-        path: '/home',
-        builder: (_, _) => const HomeScreen(),
-        routes: [
-          GoRoute(
-            path: 'prayer',
-            builder: (_, _) => const PrayerLogScreen(),
-          ),
-          GoRoute(
-            path: 'verse',
-            builder: (_, _) => const VerseReaderScreen(),
-          ),
-          GoRoute(
-            path: 'question',
-            builder: (_, _) => const QuestionScreen(),
-          ),
-          GoRoute(
-            path: 'gratitude',
-            builder: (_, _) => const GratitudeScreen(),
-          ),
-          GoRoute(
-            path: 'duas',
-            builder: (_, _) => const DuaListScreen(),
-          ),
-          GoRoute(
-            path: 'cycle',
-            builder: (_, _) => const CycleScreen(),
-          ),
-          GoRoute(
-            path: 'calendar',
-            builder: (_, _) => const CalendarScreen(),
-          ),
-          GoRoute(
-            path: 'plan',
-            builder: (_, _) => const WeekPlanScreen(),
-          ),
-          GoRoute(
-            path: 'groceries',
-            builder: (_, _) => const GroceryListScreen(),
-          ),
-          GoRoute(
-            path: 'recipes',
-            builder: (_, _) => const RecipeListScreen(),
-          ),
-          GoRoute(
-            path: 'letters',
-            builder: (_, _) => const LettersScreen(),
-          ),
-          GoRoute(
-            path: 'learn',
-            builder: (_, _) => const LessonListScreen(),
-          ),
-          GoRoute(
-            path: 'lovemap',
-            builder: (_, _) => const LoveMapScreen(),
-          ),
-          GoRoute(
-            path: 'dates',
-            builder: (_, _) => const DatesScreen(),
-          ),
-          GoRoute(
-            path: 'care',
-            builder: (_, _) => const CareScreen(),
-          ),
-          GoRoute(
-            path: 'settings',
-            builder: (_, _) => const SettingsScreen(),
+      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
+      GoRoute(path: '/pair', builder: (_, _) => const PairScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => _TabShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
             routes: [
               GoRoute(
-                path: 'about',
-                builder: (_, _) => const AboutScreen(),
+                path: '/home',
+                builder: (_, _) => const HomeScreen(),
+                routes: [
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'prayer',
+                    builder: (_, _) => const PrayerLogScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'week',
+                    builder: (_, _) => const WeekScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'us',
+                    builder: (_, _) => const UsScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'today',
+                    builder: (_, _) => const DailyScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'verse',
+                    builder: (_, _) => const VerseReaderScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'question',
+                    builder: (_, _) => const QuestionScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'gratitude',
+                    builder: (_, _) => const GratitudeScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'duas',
+                    builder: (_, _) => const DuaListScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'tasbih',
+                    builder: (_, _) => const TasbihListScreen(),
+                    routes: [
+                      GoRoute(
+                        parentNavigatorKey: _rootKey,
+                        path: ':id',
+                        builder: (_, state) => TasbihSessionScreen(
+                          counterId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'cycle',
+                    builder: (_, _) => const CycleScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'calendar',
+                    builder: (_, _) => const CalendarScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'plan',
+                    builder: (_, _) => const WeekPlanScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'groceries',
+                    builder: (_, _) => const GroceryListScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'recipes',
+                    builder: (_, _) => const RecipeListScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'letters',
+                    builder: (_, _) => const LettersScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'learn',
+                    builder: (_, _) => const LessonListScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'lovemap',
+                    builder: (_, _) => const LoveMapScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'dates',
+                    builder: (_, _) => const DatesScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'care',
+                    builder: (_, _) => const CareScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'settings',
+                    builder: (_, _) => const SettingsScreen(),
+                    routes: [
+                      GoRoute(
+                        parentNavigatorKey: _rootKey,
+                        path: 'about',
+                        builder: (_, _) => const AboutScreen(),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'chat',
+                    builder: (_, _) => const ChatScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'notifications',
+                    builder: (_, _) => const NotificationsScreen(),
+                  ),
+                ],
               ),
             ],
           ),
-          GoRoute(
-            path: 'chat',
-            builder: (_, _) => const ChatScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/moments',
+                builder: (_, _) => const MomentsScreen(),
+                routes: [
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'camera',
+                    builder: (_, _) => const MomentCameraScreen(),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: 'vlog/:day',
+                    builder: (_, state) =>
+                        MomentVlogScreen(day: state.pathParameters['day']!),
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: ':id',
+                    builder: (_, state) => MomentViewerScreen(
+                      momentId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          GoRoute(
-            path: 'notifications',
-            builder: (_, _) => const NotificationsScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/wall',
+                builder: (_, _) => const WallScreen(),
+                routes: [
+                  GoRoute(
+                    parentNavigatorKey: _rootKey,
+                    path: ':id',
+                    builder: (_, state) =>
+                        WallItemScreen(itemId: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
     ],
   );
 });
+
+/// The floating glass tab bar: Home, Moments, Chat, Wall. Chat opens the
+/// conversation full-screen (the design gives it a back button, not the bar).
+class _TabShell extends ConsumerWidget {
+  const _TabShell({required this.shell});
+  final StatefulNavigationShell shell;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final self = ref.watch(wallSelfIdProvider);
+    final unseenMoments =
+        ref
+            .watch(momentsProvider)
+            .asData
+            ?.value
+            .where((m) => m.senderId != self && m.viewedAt == null)
+            .length ??
+        0;
+    final unreadChat = ref.watch(unreadChatCountProvider).asData?.value ?? 0;
+    // Branch index -> bar index (Chat sits between Moments and Wall).
+    final selected = const [0, 1, 3][shell.currentIndex];
+    return Scaffold(
+      extendBody: true,
+      body: shell,
+      bottomNavigationBar: LovTabBar(
+        selected: selected,
+        onSelect: (i) {
+          if (i == 2) {
+            context.push('/home/chat');
+            return;
+          }
+          final branch = i == 3 ? 2 : i;
+          shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
+        },
+        items: [
+          const LovTabItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
+          LovTabItem(
+            Icons.photo_camera_outlined,
+            Icons.photo_camera_rounded,
+            'Moments',
+            badge: unseenMoments,
+          ),
+          LovTabItem(
+            Icons.chat_bubble_outline_rounded,
+            Icons.chat_bubble_rounded,
+            'Chat',
+            badge: unreadChat,
+          ),
+          const LovTabItem(
+            Icons.dashboard_outlined,
+            Icons.dashboard_rounded,
+            'Wall',
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Splash: the calligraphy fades and slightly rises. A hero tag ties the
 /// mark to the sign-in screen so it flies across the transition.
@@ -244,10 +408,8 @@ class _SplashScreenState extends State<_SplashScreen>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: LovMotion.slow,
-    )..forward();
+    _controller = AnimationController(vsync: this, duration: LovMotion.slow)
+      ..forward();
   }
 
   @override
@@ -259,8 +421,7 @@ class _SplashScreenState extends State<_SplashScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final anim =
-        CurvedAnimation(parent: _controller, curve: LovMotion.enter);
+    final anim = CurvedAnimation(parent: _controller, curve: LovMotion.enter);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
@@ -322,13 +483,13 @@ class _RouteErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded,
-                  size: 32, color: theme.colorScheme.error),
-              const SizedBox(height: LovSpace.md),
-              Text(
-                "Something went wrong",
-                style: theme.textTheme.titleLarge,
+              Icon(
+                Icons.error_outline_rounded,
+                size: 32,
+                color: theme.colorScheme.error,
               ),
+              const SizedBox(height: LovSpace.md),
+              Text("Something went wrong", style: theme.textTheme.titleLarge),
               const SizedBox(height: LovSpace.xs),
               Text(
                 error?.toString() ?? 'Unknown route error',

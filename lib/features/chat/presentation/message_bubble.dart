@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../core/theme/theme.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../core/widgets/lov_kit.dart';
 import '../data/chat_store.dart';
 import 'photo_viewer_screen.dart';
 import 'video_viewer_screen.dart';
+import 'location_card.dart';
+import 'voice_note.dart';
 
 /// One chat bubble: aligns right for the current user, left for the spouse.
 ///
@@ -17,6 +22,8 @@ class MessageBubble extends StatelessWidget {
     required this.onReact,
     required this.onReply,
     required this.onDownloadAttachment,
+    this.onSaveToWall,
+    this.onDeleteForMe,
   });
 
   final ChatMessageRow message;
@@ -24,15 +31,18 @@ class MessageBubble extends StatelessWidget {
   final ValueChanged<String> onReact;
   final VoidCallback onReply;
   final ValueChanged<String> onDownloadAttachment;
+  final VoidCallback? onSaveToWall;
+  final VoidCallback? onDeleteForMe;
 
-  static const _reactionEmojis = ['❤️', '👍', '😊'];
+  static const _reactionEmojis = ['❤️', '🤲', '😂', '😮', '🥹', '👍'];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final bg = isOwn ? scheme.primary : scheme.surfaceContainerLow;
-    final fg = isOwn ? scheme.onPrimary : scheme.onSurface;
+    final p = context.lov;
+    final bg = isOwn ? p.accentSoft : p.surface2;
+    final fg = isOwn ? p.accentInk : p.text;
+    const r = Radius.circular(20);
+    const tail = Radius.circular(6);
 
     return Align(
       alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
@@ -40,19 +50,18 @@ class MessageBubble extends StatelessWidget {
         onLongPress: () => _showActions(context),
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.sizeOf(context).width * 0.75,
+            maxWidth: MediaQuery.sizeOf(context).width * 0.76,
           ),
-          margin: const EdgeInsets.symmetric(
-            horizontal: LovSpace.lg,
-            vertical: LovSpace.xs,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: LovSpace.md,
-            vertical: LovSpace.sm,
-          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(LovRadius.lg),
+            borderRadius: BorderRadius.only(
+              topLeft: r,
+              topRight: r,
+              bottomLeft: isOwn ? r : tail,
+              bottomRight: isOwn ? tail : r,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,22 +72,37 @@ class MessageBubble extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: LovSpace.xs),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: LovSpace.sm,
-                      vertical: LovSpace.xxs,
+                      horizontal: 10,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: fg.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(LovRadius.xs),
+                      color: p.accent.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Replying to a message',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: fg.withValues(alpha: 0.8),
-                      ),
+                      style: TextStyle(fontSize: 13, color: p.text2),
                     ),
                   ),
                 ),
-              if (message.attachmentKind != null)
+              if (message.attachmentKind == 'location')
+                LocationCard(
+                  messageId: message.id,
+                  json: message.body ?? '',
+                  isOwn: isOwn,
+                  color: fg,
+                )
+              else if (message.attachmentKind == 'audio')
+                VoiceNotePlayer(
+                  path: message.downloadStatus == 'downloaded'
+                      ? message.localMediaPath
+                      : null,
+                  durationMs: message.durationMs,
+                  color: fg,
+                  downloading: message.downloadStatus == 'downloading',
+                  onDownload: () => onDownloadAttachment(message.id),
+                )
+              else if (message.attachmentKind != null)
                 _AttachmentContent(
                   message: message,
                   onDownloadAttachment: onDownloadAttachment,
@@ -86,14 +110,16 @@ class MessageBubble extends StatelessWidget {
               if (message.attachmentKind == null)
                 Text(
                   message.body ?? '',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+                  style: TextStyle(fontSize: 15, height: 1.4, color: fg),
                 )
-              else if (message.body != null && message.body!.isNotEmpty)
+              else if (message.attachmentKind != 'location' &&
+                  message.body != null &&
+                  message.body!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: LovSpace.xs),
                   child: Text(
                     message.body!,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+                    style: TextStyle(fontSize: 15, height: 1.4, color: fg),
                   ),
                 ),
               if (isOwn) ...[
@@ -111,40 +137,110 @@ class MessageBubble extends StatelessWidget {
   }
 
   void _showActions(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    HapticFeedback.selectionClick();
+    // A location row's body is its coordinates, not text to copy or save.
+    final text = message.attachmentKind == 'location'
+        ? ''
+        : (message.body ?? '').trim();
+    showLovSheet<void>(
+      context,
+      title: 'Message',
+      builder: (sheet) {
+        final p = sheet.lov;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: LovSpace.md),
+            if (text.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.fromLTRB(0, 6, 0, 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: p.hi.withValues(alpha: .05),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  text.length > 140 ? '${text.substring(0, 140)}…' : text,
+                  style: const TextStyle(fontSize: 15, height: 1.45),
+                ),
+              ),
+            Container(
+              margin: const EdgeInsets.fromLTRB(0, 10, 0, 6),
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: p.hi.withValues(alpha: .05),
+                borderRadius: BorderRadius.circular(999),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   for (final emoji in _reactionEmojis)
-                    IconButton(
-                      iconSize: 28,
-                      onPressed: () {
-                        Navigator.of(sheetContext).pop();
-                        onReact(emoji);
-                      },
-                      icon: Text(emoji, style: const TextStyle(fontSize: 24)),
+                    Semantics(
+                      button: true,
+                      label: 'React $emoji',
+                      child: LovPressable(
+                        scale: .85,
+                        onTap: () {
+                          Navigator.of(sheet).pop();
+                          onReact(emoji);
+                        },
+                        child: SizedBox(
+                          width: 46,
+                          height: 46,
+                          child: Center(
+                            child: Text(
+                              emoji,
+                              style: const TextStyle(fontSize: 26),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.reply_outlined),
-              title: const Text('Reply'),
+            LovSheetRow(
+              icon: Icons.reply_rounded,
+              title: 'Reply',
               onTap: () {
-                Navigator.of(sheetContext).pop();
+                Navigator.of(sheet).pop();
                 onReply();
               },
             ),
+            if (text.isNotEmpty)
+              LovSheetRow(
+                icon: Icons.copy_rounded,
+                title: 'Copy',
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: text));
+                  Navigator.of(sheet).pop();
+                  showLovToast(context, 'Copied');
+                },
+              ),
+            if (text.isNotEmpty && onSaveToWall != null)
+              LovSheetRow(
+                icon: Icons.push_pin_outlined,
+                title: 'Save to wall',
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  onSaveToWall!();
+                },
+              ),
+            if (onDeleteForMe != null)
+              LovSheetRow(
+                icon: Icons.delete_outline_rounded,
+                title: 'Delete for me',
+                danger: true,
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  onDeleteForMe!();
+                },
+              ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -226,17 +322,26 @@ class _AttachmentContent extends StatelessWidget {
                   // surfacing a framework error overlay.
                   errorBuilder: (context, error, stackTrace) {
                     debugPrint(
-                        'MessageBubble: failed to decode thumbnail: $error');
+                      'MessageBubble: failed to decode thumbnail: $error',
+                    );
                     return Container(color: Colors.black12);
                   },
                 )
               else
                 Container(color: Colors.black12),
               if (isVideo && status != 'downloading')
-                const Icon(Icons.play_circle_fill, size: 48, color: Colors.white),
+                const Icon(
+                  Icons.play_circle_fill,
+                  size: 48,
+                  color: Colors.white,
+                ),
               if (status == 'downloading') const CircularProgressIndicator(),
               if (status == 'failed')
-                const Icon(Icons.error_outline, color: LovColors.error, size: 32),
+                const Icon(
+                  Icons.error_outline,
+                  color: LovColors.error,
+                  size: 32,
+                ),
             ],
           ),
         ),
@@ -246,7 +351,8 @@ class _AttachmentContent extends StatelessWidget {
 
   void _handleTap(BuildContext context) {
     if (message.downloadStatus == 'downloading') return;
-    if (message.downloadStatus == 'downloaded' && message.localMediaPath != null) {
+    if (message.downloadStatus == 'downloaded' &&
+        message.localMediaPath != null) {
       _openViewer(context, message.localMediaPath!);
       return;
     }
@@ -255,11 +361,13 @@ class _AttachmentContent extends StatelessWidget {
 
   void _openViewer(BuildContext context, String path) {
     if (message.attachmentKind == 'video') {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => VideoViewerScreen(filePath: path)));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => VideoViewerScreen(filePath: path)),
+      );
     } else {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => PhotoViewerScreen(filePath: path)));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PhotoViewerScreen(filePath: path)),
+      );
     }
   }
 }

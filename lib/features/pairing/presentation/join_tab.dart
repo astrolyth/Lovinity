@@ -67,7 +67,7 @@ class _JoinTabState extends ConsumerState<JoinTab> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.qr_code_2_rounded,
+                    Icons.dialpad_rounded,
                     color: theme.colorScheme.onSecondary,
                     size: 32,
                   ),

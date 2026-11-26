@@ -40,6 +40,7 @@ Future<void> _fill(
   String password = 'password123',
   String confirm = 'password123',
   bool pickGender = true,
+  bool agree = true,
 }) async {
   await tester.enterText(find.byType(TextField).at(0), name);
   await tester.enterText(find.byType(TextField).at(1), email);
@@ -49,6 +50,11 @@ Future<void> _fill(
   }
   await tester.enterText(find.byType(TextField).at(2), password);
   await tester.enterText(find.byType(TextField).at(3), confirm);
+  if (agree) {
+    await tester.ensureVisible(find.byType(Checkbox));
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+  }
 }
 
 Future<void> _submit(WidgetTester tester) async {
@@ -99,11 +105,26 @@ void main() {
     expect(find.textContaining('at least $kMinPasswordLength'), findsOneWidget);
   });
 
+  testWidgets('rejects a password without both letters and numbers',
+      (tester) async {
+    await tester.pumpWidget(_app(repo));
+    await _fill(tester, password: 'onlyletters', confirm: 'onlyletters');
+    await _submit(tester);
+    expect(find.textContaining('letters and numbers'), findsOneWidget);
+  });
+
   testWidgets('rejects mismatched passwords', (tester) async {
     await tester.pumpWidget(_app(repo));
     await _fill(tester, password: 'password123', confirm: 'password124');
     await _submit(tester);
     expect(find.textContaining('do not match'), findsOneWidget);
+  });
+
+  testWidgets('requires agreeing to the terms', (tester) async {
+    await tester.pumpWidget(_app(repo));
+    await _fill(tester, agree: false);
+    await _submit(tester);
+    expect(find.textContaining('agree to the Terms'), findsWidgets);
   });
 
   testWidgets('valid form signs up with the captured profile and goes to OTP',

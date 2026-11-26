@@ -11,6 +11,15 @@ void main() {
   });
   tearDown(() => db.close());
 
+  test('delete removes a row and restore puts the same row back', () async {
+    await store.insert(kind: 'chat', title: 'hi', route: '/home/chat');
+    final row = (await store.watchAll().first).single;
+    await store.delete(row.id);
+    expect(await store.watchAll().first, isEmpty);
+    await store.restore(row);
+    expect((await store.watchAll().first).single, row);
+  });
+
   test('insert then watchAll returns newest first, deterministically even within the same second',
       () async {
     // No artificial delay between inserts: two notifications created in the

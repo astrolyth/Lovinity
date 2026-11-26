@@ -25,7 +25,7 @@ class _FakeMediaPicker implements MediaPicker {
   Future<PickedPhoto?> pickPhoto(MediaSource source) async => nextPhoto;
 
   @override
-  Future<PickedVideo?> pickVideo(MediaSource source) async => null;
+  Future<PickedVideo?> pickVideo(MediaSource source, {int thumbnailMaxWidth = 200}) async => null;
 }
 
 class _NoopBundles implements PreKeyBundleSource {
@@ -38,9 +38,6 @@ class _NoopBundles implements PreKeyBundleSource {
 class _NoopMediaCache implements MediaCache {
   @override
   Future<String> write(String key, Uint8List bytes) async => 'noop/$key';
-
-  @override
-  Future<void> clear() async {}
 }
 
 /// A ChatService whose crypto/network dependencies are never actually

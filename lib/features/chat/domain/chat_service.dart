@@ -158,6 +158,53 @@ class ChatService {
     );
   }
 
+  /// One live-location update. Each update is its own envelope (fresh message
+  /// id, so the server never dedupes it away), but every update of a share
+  /// lands on the same local row, keyed by the share's session.
+  Future<bool> sendLocation(LocationPayload p) async {
+    try {
+      await store.upsertLocation(
+        id: p.session,
+        senderId: selfUserId,
+        json: locationJson(p),
+        createdAt: DateTime.now(),
+        status: 'sent',
+      );
+      final copies = await session.encryptFor(
+        recipientUserId: spouseUserId,
+        plaintext: encodePayload(p),
+      );
+      await repo.sendEnvelopes(
+        senderDeviceNum: selfDeviceNum,
+        copies: copies,
+        messageId: const Uuid().v4(),
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// An AAC (.m4a) voice note; same encrypted path as photos and videos,
+  /// with no thumbnail.
+  Future<void> sendVoiceNote({
+    required Uint8List bytes,
+    required int durationMs,
+    String? replyToMessageId,
+  }) {
+    return _sendAttachment(
+      kind: AttachmentKind.audio,
+      bytes: bytes,
+      mimeType: 'audio/mp4',
+      width: null,
+      height: null,
+      durationMs: durationMs,
+      thumbnailBytes: Uint8List(0),
+      caption: null,
+      replyToMessageId: replyToMessageId,
+    );
+  }
+
   Future<void> _sendAttachment({
     required AttachmentKind kind,
     required Uint8List bytes,
@@ -301,19 +348,18 @@ class ChatService {
   }
 
   /// Mark every unread incoming message read: locally (clears the unread badge)
-  /// and on the server (so the spouse's sent messages flip to "read"). Server
-  /// calls are best-effort — a failure doesn't block the local badge clearing.
+  /// and on the server (so the spouse's sent messages flip to "read"), in one
+  /// request. If the server call fails (offline), nothing is marked locally,
+  /// so the next chat open retries instead of losing the receipts.
   Future<void> markConversationRead() async {
     final ids = await store.incomingUnreadIds(selfUserId);
     if (ids.isEmpty) return;
-    await store.markIncomingRead(selfUserId);
-    for (final id in ids) {
-      try {
-        await repo.markRead(id);
-      } catch (_) {
-        // best-effort; retried next time the chat is opened
-      }
+    try {
+      await repo.markRead(ids);
+    } catch (_) {
+      return;
     }
+    await store.markRead(ids);
   }
 
   Future<void> _inboxLock = Future<void>.value();
@@ -435,6 +481,14 @@ class ChatService {
         if (senderId != selfUserId && payload.coupleId == coupleId) {
           await letterKeys?.write(coupleId, payload.letterKey);
         }
+      case LocationPayload():
+        await store.upsertLocation(
+          id: payload.session,
+          senderId: senderId,
+          json: locationJson(payload),
+          createdAt: DateTime.parse(env['created_at'] as String),
+          status: senderId == selfUserId ? 'sent' : 'delivered',
+        );
       case UnsupportedPayload():
         break; // skip, still delete the envelope below
     }

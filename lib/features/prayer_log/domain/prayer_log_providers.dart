@@ -12,6 +12,7 @@ import '../../../shared/providers/supabase_provider.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
+import '../../settings/domain/settings_providers.dart';
 import '../data/prayer_log_repository.dart';
 
 final prayerLogRepositoryProvider = Provider<PrayerLogRepository>((ref) {
@@ -132,6 +133,23 @@ final prayerLogsForDayProvider = StreamProvider<List<PrayerLogEntry>>((ref) {
   return ref
       .read(prayerLogRepositoryProvider)
       .watchDays(coupleId: coupleId, dayKeyByUserId: keys.byUserId);
+});
+
+/// Both spouses' check-ins for the last seven days (by each entry's own
+/// day), for the week overview grid. Shares the couple-wide stream.
+final prayerWeekLogsProvider = StreamProvider<List<PrayerLogEntry>>((ref) {
+  final coupleId = ref.watch(
+    currentCoupleProvider.select((c) => c.asData?.value?.id),
+  );
+  ref.watch(todayKeyProvider);
+  if (coupleId == null) return const Stream.empty();
+  final now = DateTime.now();
+  // One extra day: a spouse a day behind still has her full 7 days in range.
+  final from = DateTime(now.year, now.month, now.day - 7);
+  return ref
+      .read(prayerLogRepositoryProvider)
+      .watchCouple(coupleId: coupleId)
+      .map((all) => [for (final e in all) if (!e.date.isBefore(from)) e]);
 });
 
 /// A gap between two check-ins is only described as shared time when it is
@@ -380,6 +398,7 @@ final prayerNotificationPumpProvider = Provider<void>((ref) {
     onNew: (entry) {
       if (entry.userId == selfId) return;
       if (entry.status != PrayerStatus.prayed) return;
+      if (!ref.read(partnerPrayerAlertsProvider)) return;
       unawaited(store.insertBestEffort(
         kind: 'prayer',
         title: 'Your partner logged ${entry.prayer.displayName}',

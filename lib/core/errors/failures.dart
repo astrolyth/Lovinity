@@ -20,6 +20,7 @@ class PairingFailure extends AppFailure {
 
   factory PairingFailure.fromRpcCode(String code) => switch (code) {
         'invite_not_found' => const PairingFailure('That code isn\'t valid.'),
+        'too_many_attempts' => const PairingFailure('Too many wrong codes. Please wait an hour and try again.'),
         'invite_expired' => const PairingFailure('That code has expired. Ask your spouse for a fresh one.'),
         'invite_already_used' => const PairingFailure('That code has already been used.'),
         'cannot_pair_with_self' => const PairingFailure('You can\'t pair with your own code.'),

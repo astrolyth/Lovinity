@@ -21,6 +21,7 @@ import {
   buildOAuthJwtClaims,
   isDeadTokenError,
   parseDispatchBody,
+  reusableToken,
   timingSafeEqual,
 } from "./logic.ts";
 
@@ -45,6 +46,17 @@ Deno.test("parseDispatchBody: accepts a well-formed pairing payload", () => {
     type: "pairing",
     title: "You're connected",
     body: "You and your partner are now paired",
+  };
+  const result = parseDispatchBody(input);
+  assertEquals(result, input);
+});
+
+Deno.test("parseDispatchBody: accepts a well-formed wall payload", () => {
+  const input = {
+    user_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    type: "wall",
+    title: "Aisha shared something",
+    body: "New on your Wall 💛",
   };
   const result = parseDispatchBody(input);
   assertEquals(result, input);
@@ -75,7 +87,7 @@ Deno.test("parseDispatchBody: rejects a type outside the allow-list", () => {
   assertThrows(() =>
     parseDispatchBody({
       user_id: "11111111-2222-3333-4444-555555555555",
-      type: "marketing", // not 'chat' | 'pairing'
+      type: "marketing", // not 'chat' | 'pairing' | 'wall'
       title: "t",
       body: "b",
     })
@@ -269,4 +281,20 @@ Deno.test("timingSafeEqual: false for different strings, including different len
   assert(!timingSafeEqual("Bearer abc123", "Bearer abc124"));
   assert(!timingSafeEqual("Bearer abc123", "Bearer abc12"));
   assert(!timingSafeEqual("", "Bearer abc123"));
+});
+
+// ---------------------------------------------------------------------------
+// reusableToken
+// ---------------------------------------------------------------------------
+
+Deno.test("reusableToken: reuses a fresh token for the same account", () => {
+  const cache = { value: "tok", clientEmail: "a@x", expiresAt: 1000 };
+  assertEquals(reusableToken(cache, "a@x", 900), "tok");
+});
+
+Deno.test("reusableToken: refetches within 60s of expiry, for another account, or with no cache", () => {
+  const cache = { value: "tok", clientEmail: "a@x", expiresAt: 1000 };
+  assertEquals(reusableToken(cache, "a@x", 940), null);
+  assertEquals(reusableToken(cache, "b@x", 900), null);
+  assertEquals(reusableToken(null, "a@x", 900), null);
 });

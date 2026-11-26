@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -12,6 +14,10 @@ plugins {
 // Firebase.initializeApp) until the operator drops the file in.
 if (project.file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+}
+
+val keystoreProperties = rootProject.file("key.properties").takeIf { it.exists() }?.let { f ->
+    Properties().apply { f.inputStream().use { load(it) } }
 }
 
 android {
@@ -38,11 +44,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (keystoreProperties != null) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // android/key.properties holds the upload key (gitignored, like
+            // google-services.json). Without it a fresh clone still builds
+            // release locally on the debug key, but that APK can't ship.
+            signingConfig = if (keystoreProperties != null) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("android/key.properties missing: release is debug-signed and cannot be published")
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

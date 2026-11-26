@@ -4,10 +4,12 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   emoji_picker_flutter
+  ffmpeg_kit_flutter_new_min
   file_selector_linux
   flutter_secure_storage_linux
   flutter_timezone
   gtk
+  record_linux
   url_launcher_linux
 )
 
