@@ -8,6 +8,7 @@ import '../../../core/config/env.dart';
 import '../../../core/crypto/crypto_providers.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/platform/haptics.dart';
+import '../../../core/security/face_id_login.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/widgets.dart';
 import '../domain/auth_controller.dart';
@@ -28,6 +29,55 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   String? _error;
   _Mode _mode = _Mode.password;
   bool _obscure = true;
+  bool _canFaceId = false;
+  bool _rememberFaceId = false;
+  late String? _faceIdEmail = ref.read(faceIdLoginProvider).savedEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(faceIdLoginProvider).deviceSupports().then((ok) {
+      if (mounted) setState(() => _canFaceId = ok);
+    });
+  }
+
+  /// Signs in with the email + password saved behind Face ID.
+  Future<void> _signInWithFaceId() async {
+    final faceId = ref.read(faceIdLoginProvider);
+    final creds = await faceId.read();
+    if (creds == null || !mounted) return; // cancelled
+    final (email, password) = creds;
+    final repo = ref.read(authRepositoryProvider);
+    final register = ref.read(ensureRegisteredProvider);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await repo.signInWithPassword(email: email, password: password);
+      await register();
+      unawaited(LovHaptics.medium());
+    } on AuthFailure catch (e) {
+      // The password changed since it was saved: forget it.
+      if (e.message.toLowerCase().contains('invalid')) {
+        await faceId.clear();
+        if (mounted) {
+          setState(() {
+            _faceIdEmail = null;
+            _error =
+                'Your password has changed. Sign in with it once to turn '
+                'Face ID back on.';
+          });
+        }
+      } else if (mounted) {
+        setState(() => _error = e.message);
+      }
+    } on AppFailure catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -51,11 +101,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       _busy = true;
       _error = null;
     });
+    // Read up front: a successful sign-in can navigate away mid-flight.
+    final faceId = ref.read(faceIdLoginProvider);
+    final register = ref.read(ensureRegisteredProvider);
+    final remember = _rememberFaceId;
     try {
       await ref
           .read(authRepositoryProvider)
           .signInWithPassword(email: email, password: password);
-      await ref.read(ensureRegisteredProvider)();
+      if (remember) await faceId.save(email, password);
+      await register();
       unawaited(LovHaptics.medium());
     } on AppFailure catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -172,6 +227,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     const SizedBox(height: 12),
                     LovInlineError(message: _error!),
                   ],
+                  if (password && _canFaceId && _faceIdEmail == null)
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _rememberFaceId,
+                      onChanged: (v) => setState(() => _rememberFaceId = v),
+                      title: const Text(
+                        'Use Face ID to sign in next time',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
                   if (password)
                     Align(
                       alignment: Alignment.centerRight,
@@ -190,6 +255,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         ? null
                         : (password ? _signInWithPassword : _sendOtp),
                   ),
+                  if (_canFaceId && _faceIdEmail != null) ...[
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _signInWithFaceId,
+                      icon: const Icon(Icons.face_rounded, size: 20),
+                      label: Text('Sign in with Face ID · $_faceIdEmail'),
+                    ),
+                  ],
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Row(

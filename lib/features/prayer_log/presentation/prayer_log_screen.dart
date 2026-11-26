@@ -11,6 +11,7 @@ import '../../../core/time/prayer_engine.dart';
 import '../../../core/widgets/lov_kit.dart';
 import '../../auth/domain/auth_controller.dart';
 import '../../cycle/domain/cycle_providers.dart';
+import '../../../core/time/local_day.dart';
 import '../../home/domain/home_providers.dart';
 import '../../pairing/domain/pairing_providers.dart';
 import '../domain/prayer_log_providers.dart';
@@ -332,19 +333,33 @@ class _WeekCard extends ConsumerWidget {
       for (var i = 6; i >= 0; i--)
         DateTime(today.year, today.month, today.day - i),
     ];
-    bool did(bool mine, DateTime d, Prayer pr) => logs.any(
-      (e) =>
-          (mine ? e.userId == ownId : e.userId != ownId) &&
-          e.prayer == pr &&
-          e.status == PrayerStatus.prayed &&
-          e.date.year == d.year &&
-          e.date.month == d.month &&
-          e.date.day == d.day,
-    );
+    // Each row is that person's own last 7 days: a spouse in another zone can
+    // be a day ahead or behind, and her prayers are filed under her own day.
+    final spouseTz = ref.watch(spouseProfileProvider).asData?.value?.timezone;
+    final herToday = spouseTz == null || spouseTz.isEmpty
+        ? today
+        : localDayAt(spouseTz, today);
+    final herDays = [
+      for (var i = 6; i >= 0; i--)
+        DateTime(herToday.year, herToday.month, herToday.day - i),
+    ];
+    bool did(bool mine, int i, Prayer pr) {
+      final d = mine ? days[i] : herDays[i];
+      return logs.any(
+        (e) =>
+            (mine ? e.userId == ownId : e.userId != ownId) &&
+            e.prayer == pr &&
+            e.status == PrayerStatus.prayed &&
+            e.date.year == d.year &&
+            e.date.month == d.month &&
+            e.date.day == d.day,
+      );
+    }
+
     var you = 0, her = 0, both = 0;
-    for (final d in days) {
+    for (var i = 0; i < days.length; i++) {
       for (final pr in Prayer.values) {
-        final a = did(true, d, pr), b = did(false, d, pr);
+        final a = did(true, i, pr), b = did(false, i, pr);
         if (a) you++;
         if (b) her++;
         if (a && b) both++;
@@ -437,13 +452,13 @@ class _WeekCard extends ConsumerWidget {
                       style: TextStyle(fontSize: 12, color: p.muted),
                     ),
                   ),
-                  for (final (i, d) in days.indexed)
+                  for (var i = 0; i < days.length; i++)
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 3),
                         child: _Cell(
-                          you: did(true, d, pr),
-                          her: did(false, d, pr),
+                          you: did(true, i, pr),
+                          her: did(false, i, pr),
                           today: i == days.length - 1,
                         ),
                       ),

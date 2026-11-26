@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/crypto/crypto_providers.dart';
 import '../../../core/crypto/safety_number.dart';
 import '../../../core/security/app_lock.dart';
+import '../../../core/security/face_id_login.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/widgets/lov_kit.dart';
@@ -295,6 +296,28 @@ class SettingsScreen extends ConsumerWidget {
                     }
                   },
                 ),
+              ),
+              // Saved by opting in on the sign-in screen; forget it here.
+              StatefulBuilder(
+                builder: (context, setState) {
+                  final faceId = ref.read(faceIdLoginProvider);
+                  final email = faceId.savedEmail;
+                  if (email == null) return const SizedBox.shrink();
+                  return _Row(
+                    label: 'Sign in with Face ID',
+                    hint: 'Saved for $email on this phone.',
+                    trailing: TextButton(
+                      onPressed: () async {
+                        await faceId.clear();
+                        setState(() {});
+                        if (context.mounted) {
+                          showLovToast(context, 'Face ID sign-in turned off');
+                        }
+                      },
+                      child: const Text('Forget'),
+                    ),
+                  );
+                },
               ),
             ],
           ),

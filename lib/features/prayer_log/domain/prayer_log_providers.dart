@@ -144,7 +144,8 @@ final prayerWeekLogsProvider = StreamProvider<List<PrayerLogEntry>>((ref) {
   ref.watch(todayKeyProvider);
   if (coupleId == null) return const Stream.empty();
   final now = DateTime.now();
-  final from = DateTime(now.year, now.month, now.day - 6);
+  // One extra day: a spouse a day behind still has her full 7 days in range.
+  final from = DateTime(now.year, now.month, now.day - 7);
   return ref
       .read(prayerLogRepositoryProvider)
       .watchCouple(coupleId: coupleId)
