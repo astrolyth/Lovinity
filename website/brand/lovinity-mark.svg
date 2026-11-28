@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 126" width="176" height="126" role="img" aria-label="Lovinity">
+<g transform="translate(-32 -17)"><defs>
+<linearGradient id="gdark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="rdark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="ldark" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="cdark"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mdark"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#ldark)" clip-path="url(#cdark)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gdark)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rdark)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mdark)"/></g>
+</svg>

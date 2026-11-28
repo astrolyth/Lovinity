@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 126" width="176" height="126" role="img" aria-label="Lovinity">
+<g transform="translate(-32 -17)"><defs>
+<linearGradient id="glight" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9AE5C"/><stop offset="1" stop-color="#9C6F1E"/></linearGradient>
+<linearGradient id="rlight" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E3A39C"/><stop offset="1" stop-color="#A9534B"/></linearGradient>
+<radialGradient id="llight" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D9AE5C" stop-opacity=".95"/><stop offset=".6" stop-color="#9C6F1E" stop-opacity=".5"/><stop offset="1" stop-color="#9C6F1E" stop-opacity=".3"/></radialGradient>
+<clipPath id="clight"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mlight"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#llight)" clip-path="url(#clight)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#glight)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rlight)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#F6F1E7" mask="url(#mlight)"/></g>
+</svg>

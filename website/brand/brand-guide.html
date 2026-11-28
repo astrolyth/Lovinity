@@ -1,0 +1,351 @@
+<title>Lovinity Brand Book</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=Amiri:wght@400;700&display=swap">
+<style>
+/* Layout: one calm column on midnight; each section a chapter with a gold eyebrow. Dark-first, Sandstone for light. */
+:root{
+  --bg:#0A0A0A;--bg2:#050505;--surface:#141414;--surface2:#1C1A16;--line:#2A2722;--line2:#4A4234;
+  --text:#F5F1E8;--text2:#D4CBBA;--muted:#A79E8E;--faint:#6E6656;
+  --gold:#F2C14E;--goldhi:#F8D891;--goldlo:#E3A93A;--rose:#E9A6A0;--onGold:#1A1205;
+  --display:'Space Grotesk',Inter,system-ui,sans-serif;--body:Inter,system-ui,-apple-system,sans-serif;--arabic:Amiri,'Times New Roman',serif;
+  color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#F6F1E7;--bg2:#EAE2D2;--surface:#FFFDF8;--surface2:#EFE7D8;--line:#E2D7C3;--line2:#CDBE9F;
+  --text:#1E1A14;--text2:#3E372B;--muted:#7A6F5E;--faint:#A39883;
+  --gold:#B8862B;--goldhi:#D9AE5C;--goldlo:#9C6F1E;--rose:#C76B62;--onGold:#FFFDF8;color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#F6F1E7;--bg2:#EAE2D2;--surface:#FFFDF8;--surface2:#EFE7D8;--line:#E2D7C3;--line2:#CDBE9F;
+  --text:#1E1A14;--text2:#3E372B;--muted:#7A6F5E;--faint:#A39883;
+  --gold:#B8862B;--goldhi:#D9AE5C;--goldlo:#9C6F1E;--rose:#C76B62;--onGold:#FFFDF8;color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;padding-block:0 96px}
+.dark-only{display:block}.light-only{display:none}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .dark-only{display:none}:root:not([data-theme="dark"]) .light-only{display:block}}
+:root[data-theme="light"] .dark-only{display:none}:root[data-theme="light"] .light-only{display:block}
+h1,h2,h3{font-family:var(--display);font-weight:500;letter-spacing:-.025em;text-wrap:balance;margin:0}
+h2{font-size:clamp(1.7rem,3.4vw,2.4rem);line-height:1.15}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0;max-width:62ch;color:var(--text2)}
+.eyebrow{font:600 .72rem/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+section{display:grid;gap:22px;padding-block:72px;border-top:1px solid var(--line)}
+section:first-of-type{border-top:0}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;display:grid;gap:10px;min-width:0}
+.muted{color:var(--muted);font-size:.9rem}
+/* Hero */
+.hero{display:grid;gap:26px;justify-items:start;padding-block:96px 64px;position:relative}
+.hero .verse{font-family:var(--arabic);font-size:clamp(1.6rem,4vw,2.3rem);color:var(--goldhi);direction:rtl;line-height:1.6}
+.hero .logo svg{width:min(100%,520px);height:auto}
+.hero .tag{font-family:var(--display);font-size:clamp(1.5rem,3vw,2rem);letter-spacing:-.02em;color:var(--text)}
+.glow{position:absolute;inset:-80px auto auto -120px;width:520px;height:520px;max-width:100%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--gold) 16%,transparent),transparent);pointer-events:none;z-index:-1}
+/* Meaning diagram */
+.meaning{display:grid;gap:24px;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:center}
+.meaning svg{width:100%;height:auto;max-width:360px}
+.legend{display:grid;gap:14px}
+.legend div{display:grid;grid-template-columns:14px 1fr;gap:12px;align-items:start}
+.dot{width:14px;height:14px;border-radius:50%;margin-top:5px}
+@media (max-width:720px){.meaning{grid-template-columns:1fr}}
+/* Logo stage */
+.stage{border-radius:20px;border:1px solid var(--line);padding:40px 28px;display:grid;place-items:center;min-height:180px}
+.stage svg{max-width:100%;height:auto}
+.stage.dark{background:#0A0A0A}.stage.light{background:#F6F1E7}
+.clear{position:relative;outline:1px dashed #4A4234;outline-offset:18px;display:inline-block;line-height:0}
+.clear svg{width:120px;height:auto}
+.dont{display:grid;gap:8px;font-size:.9rem;color:var(--text2)}
+.x{color:var(--rose);font-weight:600}
+/* Colour */
+.sw{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.sw .c{height:92px}
+.sw .k{padding:12px 14px;display:grid;gap:2px;font-size:.85rem}
+.sw b{font-family:var(--display);font-weight:600;font-size:.95rem}
+.hex{font-variant-numeric:tabular-nums;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem}
+.themes{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))}
+.theme{border-radius:16px;padding:14px;display:grid;gap:10px;border:1px solid rgba(127,127,127,.25)}
+.theme .dots{display:flex;gap:6px}.theme .dots i{width:18px;height:18px;border-radius:50%;display:block}
+.theme b{font-family:var(--display);font-weight:600;font-size:.9rem}
+.theme span{font-size:.75rem;opacity:.75}
+/* Type */
+.spec{display:grid;gap:6px}
+.spec .big{font-family:var(--display);font-size:clamp(2rem,5vw,3rem);line-height:1;letter-spacing:-.03em}
+.spec .body{font-family:var(--body);font-size:1.9rem;line-height:1.1}
+.spec .ar{font-family:var(--arabic);font-size:2.2rem;line-height:1.4;direction:rtl}
+.scale{display:grid;gap:10px;overflow-x:auto}
+.scale div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:16px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:10px}
+.scale code{color:var(--muted);font-size:.78rem}
+/* Voice */
+.pair{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.say{border-left:2px solid var(--gold);padding-left:14px}.say.no{border-color:var(--rose)}
+.say p{font-family:var(--display);font-size:1.05rem;color:var(--text);margin-top:4px}
+ul.plain{margin:0;padding-left:18px;color:var(--text2);display:grid;gap:6px}
+/* Files */
+.files{display:grid;gap:8px}
+.files div{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;border-bottom:1px solid var(--line);padding-block:10px}
+.files code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;color:var(--text);overflow-wrap:anywhere}
+/* Motion: the rings draw themselves once on load, from a visible resting state. */
+@keyframes draw{from{stroke-dashoffset:352}to{stroke-dashoffset:0}}
+.hero .logo circle[stroke]{stroke-dasharray:352;animation:draw 1.6s cubic-bezier(.2,.9,.25,1) both}
+.hero .logo circle[stroke] + circle[stroke]{animation-delay:.25s}
+@media (prefers-reduced-motion: reduce){.hero .logo circle[stroke]{animation:none;stroke-dasharray:none}}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="glow"></div>
+  <div class="eyebrow">Brand book · v1 · November 2026</div>
+  <div class="logo dark-only"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 544 100" role="img" aria-label="Lovinity">
+<g transform="scale(.7937) translate(-32 -17)"><defs>
+<linearGradient id="gdarkh_0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="rdarkh_0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="ldarkh_0" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="cdarkh_0"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mdarkh_0"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#ldarkh_0)" clip-path="url(#cdarkh_0)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gdarkh_0)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rdarkh_0)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mdarkh_0)"/></g>
+<path transform="translate(164 85)" fill="#F5F1E8" d="M7.300000000000001 0.0V-70.0H18.1V-9.8H51.800000000000004V0.0Z M83.10000000000001 1.4000000000000001Q75.7 1.4000000000000001 69.95 -1.65Q64.2 -4.7 60.900000000000006 -10.4Q57.60000000000001 -16.1 57.60000000000001 -23.900000000000002V-25.400000000000002Q57.60000000000001 -33.2 60.900000000000006 -38.85Q64.2 -44.5 69.95 -47.6Q75.7 -50.7 83.10000000000001 -50.7Q90.5 -50.7 96.30000000000001 -47.6Q102.10000000000001 -44.5 105.4 -38.85Q108.70000000000002 -33.2 108.70000000000002 -25.400000000000002V-23.900000000000002Q108.70000000000002 -16.1 105.4 -10.4Q102.10000000000001 -4.7 96.30000000000001 -1.65Q90.5 1.4000000000000001 83.10000000000001 1.4000000000000001ZM83.10000000000001 -7.800000000000001Q89.9 -7.800000000000001 94.15 -12.15Q98.4 -16.5 98.4 -24.200000000000003V-25.1Q98.4 -32.800000000000004 94.2 -37.150000000000006Q90.0 -41.5 83.10000000000001 -41.5Q76.4 -41.5 72.15 -37.150000000000006Q67.9 -32.800000000000004 67.9 -25.1V-24.200000000000003Q67.9 -16.5 72.15 -12.15Q76.4 -7.800000000000001 83.10000000000001 -7.800000000000001Z M130.9 0.0 114.30000000000001 -49.300000000000004H125.2L138.3 -7.6000000000000005H139.9L153.0 -49.300000000000004H163.9L147.3 0.0Z M171.9 0.0V-49.300000000000004H182.20000000000002V0.0ZM177.10000000000002 -56.0Q174.10000000000002 -56.0 172.05 -57.95Q170.0 -59.900000000000006 170.0 -63.0Q170.0 -66.10000000000001 172.05 -68.05000000000001Q174.10000000000002 -70.0 177.10000000000002 -70.0Q180.20000000000002 -70.0 182.20000000000002 -68.05000000000001Q184.20000000000002 -66.10000000000001 184.20000000000002 -63.0Q184.20000000000002 -59.900000000000006 182.20000000000002 -57.95Q180.20000000000002 -56.0 177.10000000000002 -56.0Z M195.5 0.0V-49.300000000000004H205.6V-41.900000000000006H207.20000000000002Q208.60000000000002 -44.900000000000006 212.20000000000002 -47.5Q215.8 -50.1 222.9 -50.1Q228.5 -50.1 232.85000000000002 -47.6Q237.20000000000002 -45.1 239.70000000000002 -40.55Q242.20000000000002 -36.0 242.20000000000002 -29.6V0.0H231.9V-28.8Q231.9 -35.2 228.7 -38.25Q225.5 -41.300000000000004 219.9 -41.300000000000004Q213.5 -41.300000000000004 209.65 -37.1Q205.8 -32.9 205.8 -24.900000000000002V0.0Z M255.0 0.0V-49.300000000000004H265.3V0.0ZM260.2 -56.0Q257.2 -56.0 255.14999999999998 -57.95Q253.1 -59.900000000000006 253.1 -63.0Q253.1 -66.10000000000001 255.14999999999998 -68.05000000000001Q257.2 -70.0 260.2 -70.0Q263.3 -70.0 265.3 -68.05000000000001Q267.3 -66.10000000000001 267.3 -63.0Q267.3 -59.900000000000006 265.3 -57.95Q263.3 -56.0 260.2 -56.0Z M297.1 0.0Q292.6 0.0 289.95000000000005 -2.7Q287.3 -5.4 287.3 -9.9V-40.6H273.7V-49.300000000000004H287.3V-65.60000000000001H297.6V-49.300000000000004H312.3V-40.6H297.6V-11.700000000000001Q297.6 -8.700000000000001 300.4 -8.700000000000001H310.7V0.0Z M328.1 20.0V11.0H355.6Q358.40000000000003 11.0 358.40000000000003 8.0V-7.2H356.8Q355.90000000000003 -5.2 354.05 -3.35Q352.2 -1.5 349.1 -0.3Q346.0 0.9 341.3 0.9Q335.7 0.9 331.3 -1.6000000000000003Q326.90000000000003 -4.1000000000000005 324.40000000000003 -8.700000000000001Q321.90000000000003 -13.3 321.90000000000003 -19.6V-49.300000000000004H332.2V-20.400000000000002Q332.2 -14.0 335.4 -10.95Q338.6 -7.9 344.3 -7.9Q350.6 -7.9 354.45000000000005 -12.100000000000001Q358.3 -16.3 358.3 -24.3V-49.300000000000004H368.6V10.100000000000001Q368.6 14.600000000000001 365.95000000000005 17.3Q363.3 20.0 358.70000000000005 20.0Z"/>
+</svg>
+</div>
+  <div class="logo light-only"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 544 100" role="img" aria-label="Lovinity">
+<g transform="scale(.7937) translate(-32 -17)"><defs>
+<linearGradient id="glighth_1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9AE5C"/><stop offset="1" stop-color="#9C6F1E"/></linearGradient>
+<linearGradient id="rlighth_1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E3A39C"/><stop offset="1" stop-color="#A9534B"/></linearGradient>
+<radialGradient id="llighth_1" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D9AE5C" stop-opacity=".95"/><stop offset=".6" stop-color="#9C6F1E" stop-opacity=".5"/><stop offset="1" stop-color="#9C6F1E" stop-opacity=".3"/></radialGradient>
+<clipPath id="clighth_1"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mlighth_1"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#llighth_1)" clip-path="url(#clighth_1)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#glighth_1)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rlighth_1)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#F6F1E7" mask="url(#mlighth_1)"/></g>
+<path transform="translate(164 85)" fill="#1E1A14" d="M7.300000000000001 0.0V-70.0H18.1V-9.8H51.800000000000004V0.0Z M83.10000000000001 1.4000000000000001Q75.7 1.4000000000000001 69.95 -1.65Q64.2 -4.7 60.900000000000006 -10.4Q57.60000000000001 -16.1 57.60000000000001 -23.900000000000002V-25.400000000000002Q57.60000000000001 -33.2 60.900000000000006 -38.85Q64.2 -44.5 69.95 -47.6Q75.7 -50.7 83.10000000000001 -50.7Q90.5 -50.7 96.30000000000001 -47.6Q102.10000000000001 -44.5 105.4 -38.85Q108.70000000000002 -33.2 108.70000000000002 -25.400000000000002V-23.900000000000002Q108.70000000000002 -16.1 105.4 -10.4Q102.10000000000001 -4.7 96.30000000000001 -1.65Q90.5 1.4000000000000001 83.10000000000001 1.4000000000000001ZM83.10000000000001 -7.800000000000001Q89.9 -7.800000000000001 94.15 -12.15Q98.4 -16.5 98.4 -24.200000000000003V-25.1Q98.4 -32.800000000000004 94.2 -37.150000000000006Q90.0 -41.5 83.10000000000001 -41.5Q76.4 -41.5 72.15 -37.150000000000006Q67.9 -32.800000000000004 67.9 -25.1V-24.200000000000003Q67.9 -16.5 72.15 -12.15Q76.4 -7.800000000000001 83.10000000000001 -7.800000000000001Z M130.9 0.0 114.30000000000001 -49.300000000000004H125.2L138.3 -7.6000000000000005H139.9L153.0 -49.300000000000004H163.9L147.3 0.0Z M171.9 0.0V-49.300000000000004H182.20000000000002V0.0ZM177.10000000000002 -56.0Q174.10000000000002 -56.0 172.05 -57.95Q170.0 -59.900000000000006 170.0 -63.0Q170.0 -66.10000000000001 172.05 -68.05000000000001Q174.10000000000002 -70.0 177.10000000000002 -70.0Q180.20000000000002 -70.0 182.20000000000002 -68.05000000000001Q184.20000000000002 -66.10000000000001 184.20000000000002 -63.0Q184.20000000000002 -59.900000000000006 182.20000000000002 -57.95Q180.20000000000002 -56.0 177.10000000000002 -56.0Z M195.5 0.0V-49.300000000000004H205.6V-41.900000000000006H207.20000000000002Q208.60000000000002 -44.900000000000006 212.20000000000002 -47.5Q215.8 -50.1 222.9 -50.1Q228.5 -50.1 232.85000000000002 -47.6Q237.20000000000002 -45.1 239.70000000000002 -40.55Q242.20000000000002 -36.0 242.20000000000002 -29.6V0.0H231.9V-28.8Q231.9 -35.2 228.7 -38.25Q225.5 -41.300000000000004 219.9 -41.300000000000004Q213.5 -41.300000000000004 209.65 -37.1Q205.8 -32.9 205.8 -24.900000000000002V0.0Z M255.0 0.0V-49.300000000000004H265.3V0.0ZM260.2 -56.0Q257.2 -56.0 255.14999999999998 -57.95Q253.1 -59.900000000000006 253.1 -63.0Q253.1 -66.10000000000001 255.14999999999998 -68.05000000000001Q257.2 -70.0 260.2 -70.0Q263.3 -70.0 265.3 -68.05000000000001Q267.3 -66.10000000000001 267.3 -63.0Q267.3 -59.900000000000006 265.3 -57.95Q263.3 -56.0 260.2 -56.0Z M297.1 0.0Q292.6 0.0 289.95000000000005 -2.7Q287.3 -5.4 287.3 -9.9V-40.6H273.7V-49.300000000000004H287.3V-65.60000000000001H297.6V-49.300000000000004H312.3V-40.6H297.6V-11.700000000000001Q297.6 -8.700000000000001 300.4 -8.700000000000001H310.7V0.0Z M328.1 20.0V11.0H355.6Q358.40000000000003 11.0 358.40000000000003 8.0V-7.2H356.8Q355.90000000000003 -5.2 354.05 -3.35Q352.2 -1.5 349.1 -0.3Q346.0 0.9 341.3 0.9Q335.7 0.9 331.3 -1.6000000000000003Q326.90000000000003 -4.1000000000000005 324.40000000000003 -8.700000000000001Q321.90000000000003 -13.3 321.90000000000003 -19.6V-49.300000000000004H332.2V-20.400000000000002Q332.2 -14.0 335.4 -10.95Q338.6 -7.9 344.3 -7.9Q350.6 -7.9 354.45000000000005 -12.100000000000001Q358.3 -16.3 358.3 -24.3V-49.300000000000004H368.6V10.100000000000001Q368.6 14.600000000000001 365.95000000000005 17.3Q363.3 20.0 358.70000000000005 20.0Z"/>
+</svg>
+</div>
+  <div class="tag">Together in every prayer.</div>
+  <p>Lovinity is a private daily companion for a Muslim husband and wife: prayer side by side, a shared week, small daily moments, and a chat only the two of them can read. This book sets out how Lovinity looks, sounds and moves, wherever it appears.</p>
+  <div class="verse" lang="ar">وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً</div>
+  <p class="muted">“And He placed between you affection and mercy.” Qur’an 30:21. The idea the whole brand grows from.</p>
+</header>
+
+<section aria-labelledby="s-idea">
+  <div class="eyebrow">The idea</div>
+  <h2 id="s-idea">Two lives, one shared space</h2>
+  <div class="meaning">
+    <div class="dark-only"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 126" role="img" aria-label="Lovinity">
+<g transform="translate(-32 -17)"><defs>
+<linearGradient id="gdark_2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="rdark_2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="ldark_2" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="cdark_2"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mdark_2"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#ldark_2)" clip-path="url(#cdark_2)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gdark_2)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rdark_2)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mdark_2)"/></g>
+</svg>
+</div>
+    <div class="light-only"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 126" role="img" aria-label="Lovinity">
+<g transform="translate(-32 -17)"><defs>
+<linearGradient id="glight_3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9AE5C"/><stop offset="1" stop-color="#9C6F1E"/></linearGradient>
+<linearGradient id="rlight_3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E3A39C"/><stop offset="1" stop-color="#A9534B"/></linearGradient>
+<radialGradient id="llight_3" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D9AE5C" stop-opacity=".95"/><stop offset=".6" stop-color="#9C6F1E" stop-opacity=".5"/><stop offset="1" stop-color="#9C6F1E" stop-opacity=".3"/></radialGradient>
+<clipPath id="clight_3"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mlight_3"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#llight_3)" clip-path="url(#clight_3)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#glight_3)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rlight_3)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#F6F1E7" mask="url(#mlight_3)"/></g>
+</svg>
+</div>
+    <div class="legend">
+      <div><span class="dot" style="background:var(--gold)"></span><p><b>The gold ring is you.</b> In the app, everything that is yours is gold: your prayers, your plans, your messages.</p></div>
+      <div><span class="dot" style="background:var(--rose)"></span><p><b>The rose ring is your spouse.</b> Their prayers, plans and moments are always rose, so a glance tells you whose is whose.</p></div>
+      <div><span class="dot" style="background:linear-gradient(135deg,var(--goldhi),var(--gold))"></span><p><b>The overlap glows,</b> because that is what the app is for: the space only the two of you share. A crescent sits at its centre, because faith sits at the centre of the marriage.</p></div>
+      <div><span class="dot" style="background:var(--line2)"></span><p><b>The name.</b> Lovinity is love and infinity: a marriage meant to last beyond this life.</p></div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="s-logo">
+  <div class="eyebrow">Logo</div>
+  <h2 id="s-logo">One mark, three lockups</h2>
+  <p>Use the horizontal logo by default. Use the mark alone where the name is already present, such as the app icon, a favicon or a social avatar. The wordmark is Space Grotesk Medium with spacing tightened by 2%, drawn as outlines, so it never depends on an installed font.</p>
+  <div class="grid">
+    <div class="stage dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 544 100" role="img" aria-label="Lovinity">
+<g transform="scale(.7937) translate(-32 -17)"><defs>
+<linearGradient id="gdarkh_4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="rdarkh_4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="ldarkh_4" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="cdarkh_4"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mdarkh_4"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#ldarkh_4)" clip-path="url(#cdarkh_4)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gdarkh_4)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rdarkh_4)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mdarkh_4)"/></g>
+<path transform="translate(164 85)" fill="#F5F1E8" d="M7.300000000000001 0.0V-70.0H18.1V-9.8H51.800000000000004V0.0Z M83.10000000000001 1.4000000000000001Q75.7 1.4000000000000001 69.95 -1.65Q64.2 -4.7 60.900000000000006 -10.4Q57.60000000000001 -16.1 57.60000000000001 -23.900000000000002V-25.400000000000002Q57.60000000000001 -33.2 60.900000000000006 -38.85Q64.2 -44.5 69.95 -47.6Q75.7 -50.7 83.10000000000001 -50.7Q90.5 -50.7 96.30000000000001 -47.6Q102.10000000000001 -44.5 105.4 -38.85Q108.70000000000002 -33.2 108.70000000000002 -25.400000000000002V-23.900000000000002Q108.70000000000002 -16.1 105.4 -10.4Q102.10000000000001 -4.7 96.30000000000001 -1.65Q90.5 1.4000000000000001 83.10000000000001 1.4000000000000001ZM83.10000000000001 -7.800000000000001Q89.9 -7.800000000000001 94.15 -12.15Q98.4 -16.5 98.4 -24.200000000000003V-25.1Q98.4 -32.800000000000004 94.2 -37.150000000000006Q90.0 -41.5 83.10000000000001 -41.5Q76.4 -41.5 72.15 -37.150000000000006Q67.9 -32.800000000000004 67.9 -25.1V-24.200000000000003Q67.9 -16.5 72.15 -12.15Q76.4 -7.800000000000001 83.10000000000001 -7.800000000000001Z M130.9 0.0 114.30000000000001 -49.300000000000004H125.2L138.3 -7.6000000000000005H139.9L153.0 -49.300000000000004H163.9L147.3 0.0Z M171.9 0.0V-49.300000000000004H182.20000000000002V0.0ZM177.10000000000002 -56.0Q174.10000000000002 -56.0 172.05 -57.95Q170.0 -59.900000000000006 170.0 -63.0Q170.0 -66.10000000000001 172.05 -68.05000000000001Q174.10000000000002 -70.0 177.10000000000002 -70.0Q180.20000000000002 -70.0 182.20000000000002 -68.05000000000001Q184.20000000000002 -66.10000000000001 184.20000000000002 -63.0Q184.20000000000002 -59.900000000000006 182.20000000000002 -57.95Q180.20000000000002 -56.0 177.10000000000002 -56.0Z M195.5 0.0V-49.300000000000004H205.6V-41.900000000000006H207.20000000000002Q208.60000000000002 -44.900000000000006 212.20000000000002 -47.5Q215.8 -50.1 222.9 -50.1Q228.5 -50.1 232.85000000000002 -47.6Q237.20000000000002 -45.1 239.70000000000002 -40.55Q242.20000000000002 -36.0 242.20000000000002 -29.6V0.0H231.9V-28.8Q231.9 -35.2 228.7 -38.25Q225.5 -41.300000000000004 219.9 -41.300000000000004Q213.5 -41.300000000000004 209.65 -37.1Q205.8 -32.9 205.8 -24.900000000000002V0.0Z M255.0 0.0V-49.300000000000004H265.3V0.0ZM260.2 -56.0Q257.2 -56.0 255.14999999999998 -57.95Q253.1 -59.900000000000006 253.1 -63.0Q253.1 -66.10000000000001 255.14999999999998 -68.05000000000001Q257.2 -70.0 260.2 -70.0Q263.3 -70.0 265.3 -68.05000000000001Q267.3 -66.10000000000001 267.3 -63.0Q267.3 -59.900000000000006 265.3 -57.95Q263.3 -56.0 260.2 -56.0Z M297.1 0.0Q292.6 0.0 289.95000000000005 -2.7Q287.3 -5.4 287.3 -9.9V-40.6H273.7V-49.300000000000004H287.3V-65.60000000000001H297.6V-49.300000000000004H312.3V-40.6H297.6V-11.700000000000001Q297.6 -8.700000000000001 300.4 -8.700000000000001H310.7V0.0Z M328.1 20.0V11.0H355.6Q358.40000000000003 11.0 358.40000000000003 8.0V-7.2H356.8Q355.90000000000003 -5.2 354.05 -3.35Q352.2 -1.5 349.1 -0.3Q346.0 0.9 341.3 0.9Q335.7 0.9 331.3 -1.6000000000000003Q326.90000000000003 -4.1000000000000005 324.40000000000003 -8.700000000000001Q321.90000000000003 -13.3 321.90000000000003 -19.6V-49.300000000000004H332.2V-20.400000000000002Q332.2 -14.0 335.4 -10.95Q338.6 -7.9 344.3 -7.9Q350.6 -7.9 354.45000000000005 -12.100000000000001Q358.3 -16.3 358.3 -24.3V-49.300000000000004H368.6V10.100000000000001Q368.6 14.600000000000001 365.95000000000005 17.3Q363.3 20.0 358.70000000000005 20.0Z"/>
+</svg>
+</div>
+    <div class="stage light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 544 100" role="img" aria-label="Lovinity">
+<g transform="scale(.7937) translate(-32 -17)"><defs>
+<linearGradient id="glighth_5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9AE5C"/><stop offset="1" stop-color="#9C6F1E"/></linearGradient>
+<linearGradient id="rlighth_5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E3A39C"/><stop offset="1" stop-color="#A9534B"/></linearGradient>
+<radialGradient id="llighth_5" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D9AE5C" stop-opacity=".95"/><stop offset=".6" stop-color="#9C6F1E" stop-opacity=".5"/><stop offset="1" stop-color="#9C6F1E" stop-opacity=".3"/></radialGradient>
+<clipPath id="clighth_5"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mlighth_5"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#llighth_5)" clip-path="url(#clighth_5)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#glighth_5)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rlighth_5)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#F6F1E7" mask="url(#mlighth_5)"/></g>
+<path transform="translate(164 85)" fill="#1E1A14" d="M7.300000000000001 0.0V-70.0H18.1V-9.8H51.800000000000004V0.0Z M83.10000000000001 1.4000000000000001Q75.7 1.4000000000000001 69.95 -1.65Q64.2 -4.7 60.900000000000006 -10.4Q57.60000000000001 -16.1 57.60000000000001 -23.900000000000002V-25.400000000000002Q57.60000000000001 -33.2 60.900000000000006 -38.85Q64.2 -44.5 69.95 -47.6Q75.7 -50.7 83.10000000000001 -50.7Q90.5 -50.7 96.30000000000001 -47.6Q102.10000000000001 -44.5 105.4 -38.85Q108.70000000000002 -33.2 108.70000000000002 -25.400000000000002V-23.900000000000002Q108.70000000000002 -16.1 105.4 -10.4Q102.10000000000001 -4.7 96.30000000000001 -1.65Q90.5 1.4000000000000001 83.10000000000001 1.4000000000000001ZM83.10000000000001 -7.800000000000001Q89.9 -7.800000000000001 94.15 -12.15Q98.4 -16.5 98.4 -24.200000000000003V-25.1Q98.4 -32.800000000000004 94.2 -37.150000000000006Q90.0 -41.5 83.10000000000001 -41.5Q76.4 -41.5 72.15 -37.150000000000006Q67.9 -32.800000000000004 67.9 -25.1V-24.200000000000003Q67.9 -16.5 72.15 -12.15Q76.4 -7.800000000000001 83.10000000000001 -7.800000000000001Z M130.9 0.0 114.30000000000001 -49.300000000000004H125.2L138.3 -7.6000000000000005H139.9L153.0 -49.300000000000004H163.9L147.3 0.0Z M171.9 0.0V-49.300000000000004H182.20000000000002V0.0ZM177.10000000000002 -56.0Q174.10000000000002 -56.0 172.05 -57.95Q170.0 -59.900000000000006 170.0 -63.0Q170.0 -66.10000000000001 172.05 -68.05000000000001Q174.10000000000002 -70.0 177.10000000000002 -70.0Q180.20000000000002 -70.0 182.20000000000002 -68.05000000000001Q184.20000000000002 -66.10000000000001 184.20000000000002 -63.0Q184.20000000000002 -59.900000000000006 182.20000000000002 -57.95Q180.20000000000002 -56.0 177.10000000000002 -56.0Z M195.5 0.0V-49.300000000000004H205.6V-41.900000000000006H207.20000000000002Q208.60000000000002 -44.900000000000006 212.20000000000002 -47.5Q215.8 -50.1 222.9 -50.1Q228.5 -50.1 232.85000000000002 -47.6Q237.20000000000002 -45.1 239.70000000000002 -40.55Q242.20000000000002 -36.0 242.20000000000002 -29.6V0.0H231.9V-28.8Q231.9 -35.2 228.7 -38.25Q225.5 -41.300000000000004 219.9 -41.300000000000004Q213.5 -41.300000000000004 209.65 -37.1Q205.8 -32.9 205.8 -24.900000000000002V0.0Z M255.0 0.0V-49.300000000000004H265.3V0.0ZM260.2 -56.0Q257.2 -56.0 255.14999999999998 -57.95Q253.1 -59.900000000000006 253.1 -63.0Q253.1 -66.10000000000001 255.14999999999998 -68.05000000000001Q257.2 -70.0 260.2 -70.0Q263.3 -70.0 265.3 -68.05000000000001Q267.3 -66.10000000000001 267.3 -63.0Q267.3 -59.900000000000006 265.3 -57.95Q263.3 -56.0 260.2 -56.0Z M297.1 0.0Q292.6 0.0 289.95000000000005 -2.7Q287.3 -5.4 287.3 -9.9V-40.6H273.7V-49.300000000000004H287.3V-65.60000000000001H297.6V-49.300000000000004H312.3V-40.6H297.6V-11.700000000000001Q297.6 -8.700000000000001 300.4 -8.700000000000001H310.7V0.0Z M328.1 20.0V11.0H355.6Q358.40000000000003 11.0 358.40000000000003 8.0V-7.2H356.8Q355.90000000000003 -5.2 354.05 -3.35Q352.2 -1.5 349.1 -0.3Q346.0 0.9 341.3 0.9Q335.7 0.9 331.3 -1.6000000000000003Q326.90000000000003 -4.1000000000000005 324.40000000000003 -8.700000000000001Q321.90000000000003 -13.3 321.90000000000003 -19.6V-49.300000000000004H332.2V-20.400000000000002Q332.2 -14.0 335.4 -10.95Q338.6 -7.9 344.3 -7.9Q350.6 -7.9 354.45000000000005 -12.100000000000001Q358.3 -16.3 358.3 -24.3V-49.300000000000004H368.6V10.100000000000001Q368.6 14.600000000000001 365.95000000000005 17.3Q363.3 20.0 358.70000000000005 20.0Z"/>
+</svg>
+</div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="stage dark" style="min-height:170px"><span class="clear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 126" role="img" aria-label="Lovinity">
+<g transform="translate(-32 -17)"><defs>
+<linearGradient id="gdark_6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="rdark_6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="ldark_6" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="cdark_6"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mdark_6"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#ldark_6)" clip-path="url(#cdark_6)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gdark_6)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#rdark_6)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mdark_6)"/></g>
+</svg>
+</span></div><h3>Clear space</h3><p class="muted">Keep empty space around the logo at least the height of the crescent on every side. The dashed line shows the minimum.</p></div>
+    <div class="card"><h3>Minimum size</h3><p class="muted">Horizontal logo: 96px wide on screen, 25mm in print. Mark alone: 16px. Below that, the two rings blur into one.</p><h3>Backgrounds</h3><p class="muted">Use the dark version on Midnight and every dark theme, and the light version on Sandstone, Pearl and white. On photos, place the logo on a calm, dark area, never over busy detail.</p></div>
+    <div class="card dont"><h3>Don’t</h3>
+      <div><span class="x">✕</span> Swap the ring colours. Gold is always you, rose is always the spouse.</div>
+      <div><span class="x">✕</span> Recolour, stretch, outline or add drop shadows.</div>
+      <div><span class="x">✕</span> Replace the crescent with a heart or any other symbol.</div>
+      <div><span class="x">✕</span> Put the dark logo on a light background, or the reverse.</div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="s-icon">
+  <div class="eyebrow">App icon</div>
+  <h2 id="s-icon">The mark, lit from within</h2>
+  <div class="meaning">
+    <div style="display:grid;place-items:center"><div style="width:min(100%,240px);aspect-ratio:1;border-radius:22%;overflow:hidden;line-height:0;box-shadow:0 24px 60px -24px rgba(0,0,0,.6)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Lovinity">
+<defs><radialGradient id="bg_7" cx="512" cy="470" r="620" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2A2418"/><stop offset=".55" stop-color="#121110"/><stop offset="1" stop-color="#0A0A0A"/></radialGradient></defs>
+<rect width="1024" height="1024" fill="url(#bg_7)"/>
+<g transform="translate(512 512) scale(3.4) translate(-120 -80)"><defs>
+<linearGradient id="gi_7" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="ri_7" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="li_7" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="ci_7"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mi_7"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#li_7)" clip-path="url(#ci_7)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gi_7)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#ri_7)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mi_7)"/></g>
+</svg>
+</div></div>
+    <div class="legend" style="display:grid;gap:14px">
+      <p>The mark on Midnight, with a soft gold glow behind the overlap. iOS and Android round the corners themselves, so the master file is a full square.</p>
+      <p class="muted">It replaces the current illustrated icon. That artwork, with the gold L, the infinity loop and the praying couple, can still appear as a hero illustration, but it can’t work as an icon. Its fine figures disappear at small sizes, and a mark built on people won’t suit everyone in the audience.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="s-colour">
+  <div class="eyebrow">Colour</div>
+  <h2 id="s-colour">Midnight and gold, with rose for the spouse</h2>
+  <p>Midnight Gold is the brand’s home: near-black, warm paper-white text, and gold reserved for what matters most. Rose belongs only to the spouse. Never use it as a general accent.</p>
+  <div class="grid">
+    <div class="sw"><div class="c" style="background:#0A0A0A"></div><div class="k"><b>Midnight</b><span class="hex">#0A0A0A</span><span class="muted">Backgrounds</span></div></div>
+    <div class="sw"><div class="c" style="background:#141414"></div><div class="k"><b>Surface</b><span class="hex">#141414</span><span class="muted">Cards and sheets</span></div></div>
+    <div class="sw"><div class="c" style="background:#F2C14E"></div><div class="k"><b>Gold</b><span class="hex">#F2C14E</span><span class="muted">You · actions · emphasis</span></div></div>
+    <div class="sw"><div class="c" style="background:linear-gradient(135deg,#F8D891,#E3A93A)"></div><div class="k"><b>Gold light</b><span class="hex">#F8D891 → #E3A93A</span><span class="muted">Primary buttons, the overlap glow</span></div></div>
+    <div class="sw"><div class="c" style="background:#E9A6A0"></div><div class="k"><b>Rose</b><span class="hex">#E9A6A0</span><span class="muted">The spouse, only</span></div></div>
+    <div class="sw"><div class="c" style="background:#F5F1E8"></div><div class="k"><b>Paper</b><span class="hex">#F5F1E8</span><span class="muted">Text on dark</span></div></div>
+    <div class="sw"><div class="c" style="background:#A79E8E"></div><div class="k"><b>Stone</b><span class="hex">#A79E8E</span><span class="muted">Secondary text</span></div></div>
+    <div class="sw"><div class="c" style="background:#F6F1E7"></div><div class="k"><b>Sandstone</b><span class="hex">#F6F1E7</span><span class="muted">Light background</span></div></div>
+  </div>
+  <h3>The seven themes</h3>
+  <p class="muted">Couples choose their own theme in the app. Each keeps the same rule: one colour for you, another for your spouse.</p>
+  <div class="themes">
+    <div class="theme" style="background:#0A0A0A;color:#F5F1E8"><div class="dots"><i style="background:#F2C14E"></i><i style="background:#E9A6A0"></i></div><b>Midnight Gold</b><span>Black and gold</span></div>
+    <div class="theme" style="background:#06110D;color:#EEF5EF"><div class="dots"><i style="background:#E3C26F"></i><i style="background:#F0A9A0"></i></div><b>Emerald Masjid</b><span>Deep green, gilded</span></div>
+    <div class="theme" style="background:#070B16;color:#EEF2FA"><div class="dots"><i style="background:#8EC5FF"></i><i style="background:#F2B6C9"></i></div><b>Lapis Night</b><span>Navy and sky</span></div>
+    <div class="theme" style="background:#0C0809;color:#F8EEF0"><div class="dots"><i style="background:#F0A2B0"></i><i style="background:#F2C14E"></i></div><b>Rose Noir</b><span>Ink and blush</span></div>
+    <div class="theme" style="background:#120C08;color:#F7EDE3"><div class="dots"><i style="background:#E8875A"></i><i style="background:#E9C46A"></i></div><b>Desert Ember</b><span>Warm dusk</span></div>
+    <div class="theme" style="background:#F6F1E7;color:#1E1A14"><div class="dots"><i style="background:#B8862B"></i><i style="background:#C76B62"></i></div><b>Sandstone Day</b><span>Light, warm paper</span></div>
+    <div class="theme" style="background:#F3F6F4;color:#10201A"><div class="dots"><i style="background:#1F8A5B"></i><i style="background:#D9776B"></i></div><b>Pearl Mint</b><span>Light and fresh</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="s-type">
+  <div class="eyebrow">Typography</div>
+  <h2 id="s-type">Three typefaces</h2>
+  <div class="grid">
+    <div class="card spec"><span class="big">Space Grotesk</span><p class="muted">Display. Headlines, numbers, the wordmark. Medium weight, letter spacing tightened by 2–3%.</p></div>
+    <div class="card spec"><span class="body">Inter</span><p class="muted">Text. Everything people read: body, buttons, labels. Regular to Semibold.</p></div>
+    <div class="card spec"><span class="ar" lang="ar">بِسْمِ اللَّهِ</span><p class="muted">Amiri. Every Arabic verse, dua and prayer name, always with the English beside it.</p></div>
+  </div>
+  <div class="scale">
+    <div><code>Display 56</code><span style="font-family:var(--display);font-size:clamp(1.8rem,5vw,3.5rem);line-height:1.05;letter-spacing:-.03em">Two hearts. One deen.</span></div>
+    <div><code>Title 32</code><span style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2rem);letter-spacing:-.025em">Prayed together today</span></div>
+    <div><code>Heading 21</code><span style="font-family:var(--display);font-size:1.3rem">Maghrib is next, at 5:04</span></div>
+    <div><code>Body 16</code><span>Naziha said Ameen at 9:12. Say it together.</span></div>
+    <div><code>Label 12</code><span style="font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--muted)">This week, together</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="s-voice">
+  <div class="eyebrow">Voice</div>
+  <h2 id="s-voice">Warm, calm and exact</h2>
+  <p>Lovinity speaks like a kind friend who knows the deen well: gentle, never preachy, and never cute about something sacred. It states facts plainly, especially about privacy, and never promises what the app doesn’t do.</p>
+  <div class="pair">
+    <div class="say"><span class="eyebrow">Say</span><p>“Naziha prayed Asr. Maghrib is next, at 5:04.”</p></div>
+    <div class="say no"><span class="eyebrow" style="color:var(--rose)">Not</span><p>“Your bae just crushed Asr! 🔥🔥”</p></div>
+    <div class="say"><span class="eyebrow">Say</span><p>“Only the two of you can read this chat.”</p></div>
+    <div class="say no"><span class="eyebrow" style="color:var(--rose)">Not</span><p>“Military-grade, unhackable security.”</p></div>
+    <div class="say"><span class="eyebrow">Say</span><p>“Her prayers are excused today. A little extra kindness goes a long way.”</p></div>
+    <div class="say no"><span class="eyebrow" style="color:var(--rose)">Not</span><p>“She’s on her period 🩸”</p></div>
+  </div>
+  <div class="grid">
+    <div class="card"><h3>Words we use</h3><ul class="plain"><li>your spouse, husband, wife</li><li>your space of two</li><li>pray side by side, say Ameen together</li><li>moments, letters, your wall</li></ul></div>
+    <div class="card"><h3>Words we avoid</h3><ul class="plain"><li>bae, soulmate, “partner” in marketing copy</li><li>dating, match, swipe</li><li>guilt about missed prayers</li><li>“AI-powered”, “revolutionary”</li></ul></div>
+    <div class="card"><h3>Emoji</h3><p class="muted">At most one per message, and only where the app already uses them: 🤲 for duas, 📸 for moments, 🤍 for care. Never in headlines.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="s-imagery">
+  <div class="eyebrow">Imagery and motion</div>
+  <h2 id="s-imagery">Show the product, lit with gold</h2>
+  <div class="grid">
+    <div class="card"><h3>Real screens only</h3><p class="muted">Marketing shows the real app, captured from a device in the matching theme. No mock features and no invented reviews.</p></div>
+    <div class="card"><h3>No faces</h3><p class="muted">No stock couples and no drawn figures. Show light, hands, objects and moments: a prayer mat at Fajr, two cups of chai, a crescent through a window.</p></div>
+    <div class="card"><h3>Gold light, not gold paint</h3><p class="muted">Gold appears as light: a glow, a fine line, the overlap of the rings. Avoid gold textures, glitter and bevels.</p></div>
+    <div class="card"><h3>Motion that breathes</h3><p class="muted">Soft springs of about 300–600ms. The rings draw themselves, themes spread out from where you tap, numbers roll. One moving idea per screen, and nothing moves for people who turned motion off.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="s-files">
+  <div class="eyebrow">Files</div>
+  <h2 id="s-files">In the repo</h2>
+  <p class="muted">All vector, all generated from one geometry: the rings come from the app’s own emblem and the wordmark from its Space Grotesk font.</p>
+  <div class="files">
+    <div><code>website/brand/lovinity-logo.svg</code><span class="muted">Horizontal logo, for dark backgrounds</span></div>
+    <div><code>website/brand/lovinity-logo-light.svg</code><span class="muted">Horizontal logo, for light backgrounds</span></div>
+    <div><code>website/brand/lovinity-mark.svg</code><span class="muted">Mark only, for dark backgrounds</span></div>
+    <div><code>website/brand/lovinity-mark-light.svg</code><span class="muted">Mark only, for light backgrounds</span></div>
+    <div><code>website/brand/lovinity-app-icon.svg</code><span class="muted">App icon master, 1024 × 1024</span></div>
+  </div>
+</section>
+</div>

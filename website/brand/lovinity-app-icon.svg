@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Lovinity">
+<defs><radialGradient id="bg" cx="512" cy="470" r="620" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2A2418"/><stop offset=".55" stop-color="#121110"/><stop offset="1" stop-color="#0A0A0A"/></radialGradient></defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g transform="translate(512 512) scale(3.4) translate(-120 -80)"><defs>
+<linearGradient id="gi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCEACD"/><stop offset="1" stop-color="#F2C14E"/></linearGradient>
+<linearGradient id="ri" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D5D1"/><stop offset="1" stop-color="#E9A6A0"/></linearGradient>
+<radialGradient id="li" cx="145" cy="80" r="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCEACD" stop-opacity=".95"/><stop offset=".6" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity=".3"/></radialGradient>
+<clipPath id="ci"><circle cx="95" cy="80" r="56"/></clipPath>
+<mask id="mi"><circle cx="120" cy="80" r="15" fill="#fff"/><circle cx="127" cy="75" r="12.5" fill="#000"/></mask>
+</defs>
+<circle cx="145" cy="80" r="56" fill="url(#li)" clip-path="url(#ci)"/>
+<circle cx="95" cy="80" r="56" fill="none" stroke="url(#gi)" stroke-width="7"/>
+<circle cx="145" cy="80" r="56" fill="none" stroke="url(#ri)" stroke-width="7"/>
+<rect x="100" y="60" width="40" height="40" fill="#0A0A0A" mask="url(#mi)"/></g>
+</svg>
